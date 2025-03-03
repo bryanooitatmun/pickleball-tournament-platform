@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Events - Pickleball Tournament Platform{% endblock %}
+
+{% block content %}
+<!-- Hero Banner -->
+<div class="relative w-full h-64 rounded-lg overflow-hidden mb-8">
+    <img src="/static/images/placeholders/banners/events_banner.jpg" alt="Upcoming Tour Stops" class="w-full h-full object-cover">
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-900/70 to-transparent flex items-center">
+        <h1 class="text-4xl font-bold text-white px-8">EVENTS</h1>
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="bg-white rounded-lg p-6 mb-8">
+    <h2 class="text-gray-600 font-medium mb-4">LEGEND</h2>
+    <div class="flex flex-wrap gap-6">
+        {% for tier in tiers %}
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 flex items-center justify-center bg-{{ tier.color }}-100 rounded-full">
+                    <div class="w-8 h-8 bg-{{ tier.color }}-200 rounded-full"></div>
+                </div>
+                <span class="text-sm">{{ tier.name }} ({{ tier.points }} PTS)</span>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Event Filter Tabs -->
+<div class="tabs-container">
+    <div class="flex gap-2 mb-8">
+        <button id="upcoming-tab" class="tab tab-active py-2 px-4 bg-blue-800 text-white rounded-lg" data-target="upcoming-events">Upcoming Events</button>
+        <button id="past-tab" class="tab tab-inactive py-2 px-4 bg-white text-gray-700 border border-gray-200 rounded-lg" data-target="past-events">Past Event Results</button>
+    </div>
+
+    <!-- Upcoming Events -->
+    <div id="upcoming-events" class="tab-content space-y-6">
+        {% if upcoming_by_month %}
+            {% for month, tournaments in upcoming_by_month.items() %}
+                <div class="month-section">
+                    <div class="bg-blue-900 text-white font-bold py-2 px-4 rounded-t-lg">{{ month }}</div>
+                    <div class="events-list">
+                        {% for tournament in tournaments %}
+                            <div class="bg-white border border-gray-200 p-4 rounded-b-lg {% if not loop.last %}mb-px{% endif %} flex justify-between items-center">
+                                <div class="flex gap-4">
+                                    {% if tournament.logo %}
+                                        <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }} logo" class="w-16 h-16 object-contain">
+                                    {% else %}
+                                        <div class="w-16 h-16 bg-gray-200 flex items-center justify-center rounded">
+                                            <span class="text-gray-500 text-xs">No Logo</span>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <div class="text-blue-500 text-sm">{{ tournament.start_date.strftime('%B %-d') }}-{{ tournament.end_date.strftime('%-d, %Y') }}</div>
+                                        <h3 class="font-bold text-gray-800">{{ tournament.name }}</h3>
+                                        <p class="text-sm text-gray-600">{{ tournament.location }} • {{ tournament.start_date.strftime('%B %-d') }}-{{ tournament.end_date.strftime('%-d, %Y') }}</p>
+                                    </div>
+                                </div>
+                                <div class="w-16 h-16 flex items-center justify-center bg-{{ tournament.tier.value|lower }}-100 rounded-full">
+                                    <div class="text-xs font-bold">{{ tournament.tier.value }}</div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="bg-white p-6 rounded-lg shadow-sm">
+                <p class="text-gray-600 text-center">No upcoming events at this time. Check back soon!</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Past Events -->
+    <div id="past-events" class="tab-content space-y-6 hidden">
+        {% if past_by_month %}
+            {% for month, tournaments in past_by_month.items() %}
+                <div class="month-section">
+                    <div class="bg-blue-900 text-white font-bold py-2 px-4 rounded-t-lg">{{ month }}</div>
+                    <div class="events-list">
+                        {% for tournament in tournaments %}
+                            <div class="bg-white border border-gray-200 p-4 rounded-b-lg {% if not loop.last %}mb-px{% endif %}">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="flex gap-4">
+                                        {% if tournament.logo %}
+                                            <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }} logo" class="w-16 h-16 object-contain">
+                                        {% else %}
+                                            <div class="w-16 h-16 bg-gray-200 flex items-center justify-center rounded">
+                                                <span class="text-gray-500 text-xs">No Logo</span>
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <div class="text-blue-500 text-sm">{{ tournament.start_date.strftime('%B %-d') }}-{{ tournament.end_date.strftime('%-d, %Y') }}</div>
+                                            <h3 class="font-bold text-gray-800">{{ tournament.name }}</h3>
+                                            <p class="text-sm text-gray-600">{{ tournament.location }} • {{ tournament.start_date.strftime('%B %-d') }}-{{ tournament.end_date.strftime('%-d, %Y') }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="w-16 h-16 flex items-center justify-center bg-{{ tournament.tier.value|lower }}-100 rounded-full">
+                                        <div class="text-xs font-bold">{{ tournament.tier.value }}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4 border-t pt-3">
+                                    <h4 class="font-semibold text-gray-700 mb-2">Winners</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        {% for category in tournament.categories %}
+                                            {% set cat_id = category.id %}
+                                            {% if winners and cat_id in winners %}
+                                                <div class="text-sm">
+                                                    <span class="font-medium">{{ category.category_type.value }}:</span> 
+                                                    {{ winners[cat_id].full_name if winners[cat_id] else 'TBD' }}
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="bg-white p-6 rounded-lg shadow-sm">
+                <p class="text-gray-600 text-center">No past events available.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tab functionality
+        const upcomingTab = document.getElementById('upcoming-tab');
+        const pastTab = document.getElementById('past-tab');
+        const upcomingEvents = document.getElementById('upcoming-events');
+        const pastEvents = document.getElementById('past-events');
+        
+        upcomingTab.addEventListener('click', function() {
+            upcomingTab.classList.add('tab-active', 'bg-blue-800', 'text-white');
+            upcomingTab.classList.remove('tab-inactive', 'bg-white', 'text-gray-700');
+            pastTab.classList.add('tab-inactive', 'bg-white', 'text-gray-700');
+            pastTab.classList.remove('tab-active', 'bg-blue-800', 'text-white');
+            
+            upcomingEvents.classList.remove('hidden');
+            pastEvents.classList.add('hidden');
+        });
+        
+        pastTab.addEventListener('click', function() {
+            pastTab.classList.add('tab-active', 'bg-blue-800', 'text-white');
+            pastTab.classList.remove('tab-inactive', 'bg-white', 'text-gray-700');
+            upcomingTab.classList.add('tab-inactive', 'bg-white', 'text-gray-700');
+            upcomingTab.classList.remove('tab-active', 'bg-blue-800', 'text-white');
+            
+            pastEvents.classList.remove('hidden');
+            upcomingEvents.classList.add('hidden');
+        });
+    });
+</script>
+{% endblock %}
