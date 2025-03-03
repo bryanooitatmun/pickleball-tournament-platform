@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Users - Pickleball Tournament Platform{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center gap-2 text-gray-500 text-sm mb-2">
+        <a href="{{ url_for('main.index') }}" class="hover:text-blue-600">Home</a>
+        <span>/</span>
+        <a href="{{ url_for('admin.dashboard') }}" class="hover:text-blue-600">Admin Dashboard</a>
+        <span>/</span>
+        <span class="text-gray-700">Manage Users</span>
+    </div>
+    
+    <h1 class="text-3xl font-bold mb-2">Manage Users</h1>
+    <div class="text-gray-600">View and manage all users on the platform</div>
+</div>
+
+<!-- User Filters -->
+<div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+    <form method="GET" class="flex flex-wrap items-end gap-4">
+        <div>
+            <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+            <input type="text" name="search" id="search" value="{{ request.args.get('search', '') }}" 
+                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                placeholder="Username or email">
+        </div>
+        
+        <div>
+            <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+            <select name="role" id="role" 
+                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                <option value="">All Roles</option>
+                <option value="ADMIN" {% if request.args.get('role') == 'ADMIN' %}selected{% endif %}>Admin</option>
+                <option value="ORGANIZER" {% if request.args.get('role') == 'ORGANIZER' %}selected{% endif %}>Organizer</option>
+                <option value="PLAYER" {% if request.args.get('role') == 'PLAYER' %}selected{% endif %}>Player</option>
+            </select>
+        </div>
+        
+        <div>
+            <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select name="status" id="status" 
+                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                <option value="">All Status</option>
+                <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if request.args.get('status') == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+        </div>
+        
+        <div>
+            <button type="submit" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
+                Filter
+            </button>
+            {% if request.args %}
+                <a href="{{ url_for('admin.users') }}" class="ml-2 text-gray-600 hover:text-gray-800">
+                    Clear
+                </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Users Table -->
+<div class="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        User
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Email
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Role
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Joined
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for user in users.items %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <span class="text-blue-600 font-bold">{{ user.username[:1] }}</span>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ user.username }}
+                                    </div>
+                                    {% if user.role == UserRole.PLAYER and user.player_profile.first() %}
+                                        <div class="text-xs text-gray-500">
+                                            {{ user.player_profile.first().full_name }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ user.email }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                {% if user.role == UserRole.ADMIN %}
+                                    bg-purple-100 text-purple-800
+                                {% elif user.role == UserRole.ORGANIZER %}
+                                    bg-green-100 text-green-800
+                                {% else %}
+                                    bg-blue-100 text-blue-800
+                                {% endif %}">
+                                {{ user.role.value }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                {% if user.is_active %}
+                                    bg-green-100 text-green-800
+                                {% else %}
+                                    bg-red-100 text-red-800
+                                {% endif %}">
+                                {{ 'Active' if user.is_active else 'Inactive' }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ user.created_at.strftime('%b %-d, %Y') }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <a href="{{ url_for('admin.user_detail', id=user.id) }}" class="text-blue-600 hover:text-blue-900 mr-3">
+                                View
+                            </a>
+                            {% if user.id != current_user.id %}
+                                <form method="POST" action="{{ url_for('admin.toggle_active', id=user.id) }}" class="inline">
+                                    <button type="submit" class="text-{{ 'red' if user.is_active else 'green' }}-600 hover:text-{{ 'red' if user.is_active else 'green' }}-900 border-none bg-transparent p-0">
+                                        {{ 'Deactivate' if user.is_active else 'Activate' }}
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if users.pages > 1 %}
+        <div class="px-6 py-4 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Showing <span class="font-medium">{{ users.items|length }}</span> of <span class="font-medium">{{ users.total }}</span> users
+                </div>
+                <div class="pagination">
+                    {% if users.has_prev %}
+                        <a href="{{ url_for('admin.users', page=users.prev_num, **request.args) }}" class="page-item page-inactive">
+                            Previous
+                        </a>
+                    {% endif %}
+                    
+                    {% for page_num in users.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                            {% if page_num == users.page %}
+                                <span class="page-item page-active">{{ page_num }}</span>
+                            {% else %}
+                                <a href="{{ url_for('admin.users', page=page_num, **request.args) }}" class="page-item page-inactive">
+                                    {{ page_num }}
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            <span class="page-item page-inactive">...</span>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if users.has_next %}
+                        <a href="{{ url_for('admin.users', page=users.next_num, **request.args) }}" class="page-item page-inactive">
+                            Next
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

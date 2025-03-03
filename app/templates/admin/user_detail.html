@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}User Details - {{ user.username }} - Pickleball Tournament Platform{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center gap-2 text-gray-500 text-sm mb-2">
+        <a href="{{ url_for('main.index') }}" class="hover:text-blue-600">Home</a>
+        <span>/</span>
+        <a href="{{ url_for('admin.dashboard') }}" class="hover:text-blue-600">Admin Dashboard</a>
+        <span>/</span>
+        <a href="{{ url_for('admin.users') }}" class="hover:text-blue-600">Manage Users</a>
+        <span>/</span>
+        <span class="text-gray-700">{{ user.username }}</span>
+    </div>
+    
+    <div class="flex justify-between items-start">
+        <h1 class="text-3xl font-bold mb-2">User: {{ user.username }}</h1>
+        
+        <div class="flex space-x-3">
+            {% if user.id != current_user.id %}
+                <form method="POST" action="{{ url_for('admin.toggle_active', id=user.id) }}">
+                    <button type="submit" class="px-4 py-2 bg-{{ 'red' if user.is_active else 'green' }}-600 text-white rounded-lg hover:bg-{{ 'red' if user.is_active else 'green' }}-700 transition">
+                        {{ 'Deactivate Account' if user.is_active else 'Activate Account' }}
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <!-- User Info -->
+    <div class="md:col-span-1 space-y-6">
+        <!-- Basic Info Card -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-xl font-bold mb-4">Basic Information</h2>
+            
+            <div class="space-y-4">
+                <div class="flex justify-center mb-6">
+                    <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-blue-600 text-4xl font-bold">{{ user.username[:1] }}</span>
+                    </div>
+                </div>
+                
+                <div>
+                    <span class="text-gray-500 text-sm">Username</span>
+                    <div class="font-medium">{{ user.username }}</div>
+                </div>
+                
+                <div>
+                    <span class="text-gray-500 text-sm">Email</span>
+                    <div class="font-medium">{{ user.email }}</div>
+                </div>
+                
+                <div>
+                    <span class="text-gray-500 text-sm">Role</span>
+                    <div>
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            {% if user.role == UserRole.ADMIN %}
+                                bg-purple-100 text-purple-800
+                            {% elif user.role == UserRole.ORGANIZER %}
+                                bg-green-100 text-green-800
+                            {% else %}
+                                bg-blue-100 text-blue-800
+                            {% endif %}">
+                            {{ user.role.value }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div>
+                    <span class="text-gray-500 text-sm">Status</span>
+                    <div>
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            {% if user.is_active %}
+                                bg-green-100 text-green-800
+                            {% else %}
+                                bg-red-100 text-red-800
+                            {% endif %}">
+                            {{ 'Active' if user.is_active else 'Inactive' }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div>
+                    <span class="text-gray-500 text-sm">Joined</span>
+                    <div class="font-medium">{{ user.created_at.strftime('%B %-d, %Y') }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Actions Card -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-xl font-bold mb-4">Actions</h2>
+            
+            {% if user.id != current_user.id %}
+                <form method="POST" action="{{ url_for('admin.change_role', id=user.id) }}" class="mb-4">
+                    <div class="mb-4">
+                        <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Change Role</label>
+                        <select name="role" id="role" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                            {% for role in UserRole %}
+                                <option value="{{ role.name }}" {% if user.role == role %}selected{% endif %}>
+                                    {{ role.value }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        Update Role
+                    </button>
+                </form>
+            {% endif %}
+            
+            <div class="space-y-3">
+                {% if profile %}
+                    <a href="{{ url_for('main.player_detail', id=profile.id) }}" class="block w-full text-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                        View Public Profile
+                    </a>
+                {% endif %}
+                
+                {% if user.id != current_user.id and user.is_active %}
+                    <form method="POST" action="{{ url_for('admin.toggle_active', id=user.id) }}">
+                        <button type="submit" class="w-full px-4 py-2 bg-white border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition">
+                            Deactivate Account
+                        </button>
+                    </form>
+                {% elif user.id != current_user.id and not user.is_active %}
+                    <form method="POST" action="{{ url_for('admin.toggle_active', id=user.id) }}">
+                        <button type="submit" class="w-full px-4 py-2 bg-white border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition">
+                            Activate Account
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- User Content -->
+    <div class="md:col-span-2 space-y-6">
+        <!-- Player Profile -->
+        {% if profile %}
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-bold mb-4">Player Profile</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <span class="text-gray-500 text-sm">Full Name</span>
+                        <div class="font-medium">{{ profile.full_name }}</div>
+                    </div>
+                    
+                    <div>
+                        <span class="text-gray-500 text-sm">Country</span>
+                        <div class="font-medium">{{ profile.country }}</div>
+                    </div>
+                    
+                    <div>
+                        <span class="text-gray-500 text-sm">City</span>
+                        <div class="font-medium">{{ profile.city }}</div>
+                    </div>
+                    
+                    <div>
+                        <span class="text-gray-500 text-sm">Age</span>
+                        <div class="font-medium">{{ profile.age }}</div>
+                    </div>
+                    
+                    <div>
+                        <span class="text-gray-500 text-sm">Plays</span>
+                        <div class="font-medium">{{ profile.plays }}</div>
+                    </div>
+                    
+                    <div>
+                        <span class="text-gray-500 text-sm">Turned Pro</span>
+                        <div class="font-medium">{{ profile.turned_pro }}</div>
+                    </div>
+                </div>
+                
+                <!-- Rankings -->
+                <h3 class="font-bold text-lg mb-2">Rankings</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    {% if profile.mens_singles_points > 0 %}
+                        <div class="border border-gray-200 rounded-lg p-3">
+                            <div class="text-sm text-gray-500">Men's Singles</div>
+                            <div class="text-xl font-bold text-blue-600">{{ profile.mens_singles_points }}</div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if profile.womens_singles_points > 0 %}
+                        <div class="border border-gray-200 rounded-lg p-3">
+                            <div class="text-sm text-gray-500">Women's Singles</div>
+                            <div class="text-xl font-bold text-pink-600">{{ profile.womens_singles_points }}</div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if profile.mens_doubles_points > 0 %}
+                        <div class="border border-gray-200 rounded-lg p-3">
+                            <div class="text-sm text-gray-500">Men's Doubles</div>
+                            <div class="text-xl font-bold text-blue-600">{{ profile.mens_doubles_points }}</div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if profile.womens_doubles_points > 0 %}
+                        <div class="border border-gray-200 rounded-lg p-3">
+                            <div class="text-sm text-gray-500">Women's Doubles</div>
+                            <div class="text-xl font-bold text-pink-600">{{ profile.womens_doubles_points }}</div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if profile.mixed_doubles_points > 0 %}
+                        <div class="border border-gray-200 rounded-lg p-3">
+                            <div class="text-sm text-gray-500">Mixed Doubles</div>
+                            <div class="text-xl font-bold text-purple-600">{{ profile.mixed_doubles_points }}</div>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <a href="{{ url_for('admin.player_detail', id=profile.id) }}" class="text-blue-600 hover:text-blue-800">
+                    View Full Player Details →
+                </a>
+            </div>
+        {% endif %}
+        
+        <!-- Tournaments (For organizers and admins) -->
+        {% if tournaments %}
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-bold mb-4">Organized Tournaments</h2>
+                
+                <div class="space-y-4">
+                    {% for tournament in tournaments %}
+                        <div class="border-b border-gray-100 pb-4 {% if loop.last %}border-b-0 pb-0{% endif %}">
+                            <div class="flex items-start">
+                                {% if tournament.logo %}
+                                    <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="w-12 h-12 object-contain mr-4">
+                                {% else %}
+                                    <div class="w-12 h-12 bg-gray-200 flex items-center justify-center rounded mr-4">
+                                        <span class="text-xs text-gray-500">No Logo</span>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <a href="{{ url_for('admin.tournament_detail', id=tournament.id) }}" class="font-medium hover:text-blue-600">
+                                        {{ tournament.name }}
+                                    </a>
+                                    <div class="text-sm text-gray-500">{{ tournament.start_date.strftime('%b %-d') }}-{{ tournament.end_date.strftime('%-d, %Y') }}</div>
+                                    <div class="text-sm text-gray-500">{{ tournament.location }}</div>
+                                    
+                                    <div class="mt-1">
+                                        <span class="inline-block px-2 py-1 text-xs rounded-full bg-{{ tournament.tier.value|lower }}-100 text-{{ tournament.tier.value|lower }}-800">
+                                            {{ tournament.tier.value }}
+                                        </span>
+                                        <span class="inline-block px-2 py-1 text-xs rounded-full 
+                                            {% if tournament.status.value == 'upcoming' %}
+                                                bg-blue-100 text-blue-800
+                                            {% elif tournament.status.value == 'ongoing' %}
+                                                bg-yellow-100 text-yellow-800
+                                            {% else %}
+                                                bg-green-100 text-green-800
+                                            {% endif %}">
+                                            {{ tournament.status.value|capitalize }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Activity Log (Future Feature) -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-xl font-bold mb-4">Recent Activity</h2>
+            
+            <div class="text-center text-gray-500 py-8">
+                Activity tracking is coming soon.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
