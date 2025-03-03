@@ -1,0 +1,366 @@
+{
+  `path`: `app/templates/tournament/results.html`,
+  `repo`: `pickleball-tournament-platform`,
+  `owner`: `bryanooitatmun`,
+  `branch`: `main`,
+  `content`: `{% extends 'base.html' %}
+
+{% block title %}{{ tournament.name }} - Results{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Breadcrumb navigation -->
+        <div class="mb-6 flex items-center text-sm">
+            <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-800">
+                {{ tournament.name }}
+            </a>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mx-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            <span class="text-gray-600">Results</span>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <!-- Tournament header -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-6 text-white">
+                <div class="flex items-center">
+                    {% if tournament.logo %}
+                        <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="h-16 w-16 rounded-full bg-white p-1 mr-4">
+                    {% else %}
+                        <div class="h-16 w-16 rounded-full bg-white flex items-center justify-center mr-4">
+                            <span class="text-blue-600 text-xl font-bold">{{ tournament.name[:2] }}</span>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold">{{ tournament.name }}</h1>
+                        <div class="flex items-center mt-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-blue-200" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                            </svg>
+                            <span class="text-blue-200">{{ tournament.location }}</span>
+                            
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-4 mr-1 text-blue-200" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                            </svg>
+                            <span class="text-blue-200">
+                                {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Tournament tier badge -->
+                    <div class="ml-auto">
+                        <span class="px-3 py-1 rounded-full text-sm font-semibold bg-white text-blue-800">
+                            {{ tournament.tier.value }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Category selector tabs -->
+            <div class="bg-white border-b px-6 pt-4">
+                <div class="flex overflow-x-auto">
+                    {% for category in categories %}
+                        <a href="{{ url_for('tournament.results', id=tournament.id, category=category.id) }}" 
+                           class="tab whitespace-nowrap {% if category.id == selected_category.id %}tab-active{% else %}tab-inactive{% endif %}">
+                            {{ category.category_type.value }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <!-- Winners podium -->
+                <div class="mb-12">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">{{ selected_category.category_type.value }} Results</h2>
+                    
+                    <div class="flex flex-wrap justify-center">
+                        <!-- Podium layout for top 3 -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl mx-auto">
+                            <!-- Second place (left) -->
+                            <div class="md:order-1 flex flex-col items-center justify-end">
+                                {% if winners.second %}
+                                    <div class="relative">
+                                        {% if winners.second.profile_image %}
+                                            <img src="{{ url_for('static', filename=winners.second.profile_image) }}" alt="{{ winners.second.full_name }}" class="h-24 w-24 md:h-32 md:w-32 rounded-full object-cover border-4 border-gray-300">
+                                        {% else %}
+                                            <div class="h-24 w-24 md:h-32 md:w-32 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-300">
+                                                <span class="text-gray-500 text-xl font-bold">{{ winners.second.full_name[:2] }}</span>
+                                            </div>
+                                        {% endif %}
+                                        <div class="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold shadow-md">2</div>
+                                    </div>
+                                    <div class="mt-4 text-center">
+                                        <a href="{{ url_for('main.player_detail', id=winners.second.id) }}" class="font-medium text-gray-900 hover:text-blue-600">
+                                            {{ winners.second.full_name }}
+                                        </a>
+                                        <p class="text-sm text-gray-500">{{ winners.second.country }}</p>
+                                    </div>
+                                    <div class="h-16 md:h-24 w-full bg-gray-300 mt-4 flex items-center justify-center rounded-t-lg">
+                                        <span class="text-2xl font-bold text-gray-600">2nd</span>
+                                    </div>
+                                {% else %}
+                                    <div class="h-24 w-24 md:h-32 md:w-32 rounded-full bg-gray-100 flex items-center justify-center border-4 border-gray-200">
+                                        <span class="text-gray-400">N/A</span>
+                                    </div>
+                                    <div class="mt-4 text-center text-gray-400">
+                                        <p>Runner-Up</p>
+                                    </div>
+                                    <div class="h-16 md:h-24 w-full bg-gray-100 mt-4 flex items-center justify-center rounded-t-lg">
+                                        <span class="text-xl font-bold text-gray-400">2nd</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- First place (middle) -->
+                            <div class="md:order-2 flex flex-col items-center">
+                                {% if winners.first %}
+                                    <div class="relative mt-0 md:-mt-8">
+                                        {% if winners.first.profile_image %}
+                                            <img src="{{ url_for('static', filename=winners.first.profile_image) }}" alt="{{ winners.first.full_name }}" class="h-28 w-28 md:h-40 md:w-40 rounded-full object-cover border-4 border-yellow-400">
+                                        {% else %}
+                                            <div class="h-28 w-28 md:h-40 md:w-40 rounded-full bg-yellow-50 flex items-center justify-center border-4 border-yellow-400">
+                                                <span class="text-yellow-500 text-2xl font-bold">{{ winners.first.full_name[:2] }}</span>
+                                            </div>
+                                        {% endif %}
+                                        <div class="absolute -bottom-2 -right-2 w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center text-white font-bold text-xl shadow-md">1</div>
+                                    </div>
+                                    <div class="mt-4 text-center">
+                                        <a href="{{ url_for('main.player_detail', id=winners.first.id) }}" class="font-medium text-gray-900 hover:text-blue-600 text-lg">
+                                            {{ winners.first.full_name }}
+                                        </a>
+                                        <p class="text-sm text-gray-500">{{ winners.first.country }}</p>
+                                    </div>
+                                    <div class="h-24 md:h-32 w-full bg-yellow-400 mt-4 flex items-center justify-center rounded-t-lg">
+                                        <div class="flex flex-col items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-700" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" clip-rule="evenodd" />
+                                            </svg>
+                                            <span class="text-2xl font-bold text-yellow-700">1st</span>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="h-28 w-28 md:h-40 md:w-40 rounded-full bg-gray-100 flex items-center justify-center border-4 border-gray-200">
+                                        <span class="text-gray-400">N/A</span>
+                                    </div>
+                                    <div class="mt-4 text-center text-gray-400">
+                                        <p>Champion</p>
+                                    </div>
+                                    <div class="h-24 md:h-32 w-full bg-gray-100 mt-4 flex items-center justify-center rounded-t-lg">
+                                        <span class="text-xl font-bold text-gray-400">1st</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Third place (right) -->
+                            <div class="md:order-3 flex flex-col items-center justify-end">
+                                {% if winners.third %}
+                                    <div class="relative">
+                                        {% if winners.third.profile_image %}
+                                            <img src="{{ url_for('static', filename=winners.third.profile_image) }}" alt="{{ winners.third.full_name }}" class="h-24 w-24 md:h-32 md:w-32 rounded-full object-cover border-4 border-amber-700">
+                                        {% else %}
+                                            <div class="h-24 w-24 md:h-32 md:w-32 rounded-full bg-amber-50 flex items-center justify-center border-4 border-amber-700">
+                                                <span class="text-amber-700 text-xl font-bold">{{ winners.third.full_name[:2] }}</span>
+                                            </div>
+                                        {% endif %}
+                                        <div class="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-amber-700 flex items-center justify-center text-white font-bold shadow-md">3</div>
+                                    </div>
+                                    <div class="mt-4 text-center">
+                                        <a href="{{ url_for('main.player_detail', id=winners.third.id) }}" class="font-medium text-gray-900 hover:text-blue-600">
+                                            {{ winners.third.full_name }}
+                                        </a>
+                                        <p class="text-sm text-gray-500">{{ winners.third.country }}</p>
+                                    </div>
+                                    <div class="h-12 md:h-16 w-full bg-amber-700 mt-4 flex items-center justify-center rounded-t-lg">
+                                        <span class="text-xl font-bold text-white">3rd</span>
+                                    </div>
+                                {% else %}
+                                    <div class="h-24 w-24 md:h-32 md:w-32 rounded-full bg-gray-100 flex items-center justify-center border-4 border-gray-200">
+                                        <span class="text-gray-400">N/A</span>
+                                    </div>
+                                    <div class="mt-4 text-center text-gray-400">
+                                        <p>3rd Place</p>
+                                    </div>
+                                    <div class="h-12 md:h-16 w-full bg-gray-100 mt-4 flex items-center justify-center rounded-t-lg">
+                                        <span class="text-xl font-bold text-gray-400">3rd</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Match results -->
+                <div class="mt-12">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">Match Results</h2>
+                    
+                    <div class="overflow-hidden border border-gray-200 rounded-lg">
+                        {% if matches %}
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Round</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Players</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Winner</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for match in matches %}
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm font-medium text-gray-900">
+                                                    {% if match.round == 1 %}
+                                                        Final
+                                                    {% elif match.round == 1.5 %}
+                                                        3rd Place Match
+                                                    {% elif match.round == 2 %}
+                                                        Semifinal
+                                                    {% elif match.round == 3 %}
+                                                        Quarterfinal
+                                                    {% else %}
+                                                        Round of {{ 2 ** match.round }}
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <div class="text-sm text-gray-900">
+                                                    {% if match.player1 %}
+                                                        <a href="{{ url_for('main.player_detail', id=match.player1.id) }}" class="hover:text-blue-600">
+                                                            {{ match.player1.full_name }}
+                                                        </a>
+                                                        {% if match.player1_partner %}
+                                                            / 
+                                                            <a href="{{ url_for('main.player_detail', id=match.player1_partner.id) }}" class="hover:text-blue-600">
+                                                                {{ match.player1_partner.full_name }}
+                                                            </a>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        TBD
+                                                    {% endif %}
+                                                </div>
+                                                <div class="text-sm text-gray-500 mt-1">vs</div>
+                                                <div class="text-sm text-gray-900">
+                                                    {% if match.player2 %}
+                                                        <a href="{{ url_for('main.player_detail', id=match.player2.id) }}" class="hover:text-blue-600">
+                                                            {{ match.player2.full_name }}
+                                                        </a>
+                                                        {% if match.player2_partner %}
+                                                            / 
+                                                            <a href="{{ url_for('main.player_detail', id=match.player2_partner.id) }}" class="hover:text-blue-600">
+                                                                {{ match.player2_partner.full_name }}
+                                                            </a>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        TBD
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                {% for score in match.scores %}
+                                                    <span class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                                                        {{ score.player1_score }}-{{ score.player2_score }}
+                                                    </span>
+                                                    {% if not loop.last %} {% endif %}
+                                                {% endfor %}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                {% if match.winner %}
+                                                    <a href="{{ url_for('main.player_detail', id=match.winner.id) }}" class="text-sm font-medium text-green-600 hover:text-green-800">
+                                                        {{ match.winner.full_name }}
+                                                    </a>
+                                                {% else %}
+                                                    <span class="text-sm text-gray-500">N/A</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <a href="{{ url_for('tournament.match_detail', id=tournament.id, match_id=match.id) }}" class="text-blue-600 hover:text-blue-900">
+                                                    View
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <div class="px-6 py-8 text-center text-gray-500">
+                                No match results available for this category.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Point Distribution -->
+                <div class="mt-12">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">Point Distribution</h2>
+                    
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <p class="text-sm text-gray-600 mb-4">
+                            Points awarded to players based on their final placement in the tournament.
+                            Total points for {{ selected_category.category_type.value }}: <span class="font-medium">{{ selected_category.points_awarded }}</span>
+                        </p>
+                        
+                        <div class="overflow-hidden border border-gray-200 rounded-lg bg-white">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Placement</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Champion (1st)</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">100%</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ selected_category.points_awarded }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Runner-Up (2nd)</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">70%</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ (selected_category.points_awarded * 0.7) | int }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Semi-Finalist (3rd-4th)</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">50%</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ (selected_category.points_awarded * 0.5) | int }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Quarter-Finalist (5th-8th)</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">25%</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ (selected_category.points_awarded * 0.25) | int }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Round of 16 (9th-16th)</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">15%</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ (selected_category.points_awarded * 0.15) | int }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="mt-8 flex justify-between">
+                    <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        Back to Tournament
+                    </a>
+                    
+                    <a href="{{ url_for('tournament.bracket', id=tournament.id, category=selected_category.id) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
+                        View Bracket
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
