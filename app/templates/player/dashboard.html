@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}Player Dashboard - Pickleball Tournament Platform{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-3xl font-bold mb-2">Player Dashboard</h1>
+    <div class="text-gray-600">Manage your tournament registrations and profile</div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Left Column - Player Info and Actions -->
+    <div class="space-y-6">
+        <!-- Player Profile Card -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="relative h-48 bg-gradient-to-r from-blue-600 to-indigo-700">
+                {% if profile.banner_image %}
+                    <img src="{{ url_for('static', filename=profile.banner_image) }}" alt="Banner" class="w-full h-full object-cover mix-blend-overlay">
+                {% endif %}
+                <div class="absolute -bottom-12 left-6">
+                    <div class="w-24 h-24 rounded-full border-4 border-white overflow-hidden bg-white">
+                        {% if profile.profile_image %}
+                            <img src="{{ url_for('static', filename=profile.profile_image) }}" alt="Profile" class="w-full h-full object-cover">
+                        {% else %}
+                            <div class="w-full h-full flex items-center justify-center bg-blue-100">
+                                <span class="text-blue-600 text-3xl font-bold">{{ profile.full_name[:1] }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="pt-16 px-6 pb-6">
+                <h2 class="text-2xl font-bold">{{ profile.full_name }}</h2>
+                <div class="text-gray-600 mb-4">{{ profile.city }}, {{ profile.country }}</div>
+                
+                <div class="flex space-x-4 mb-4">
+                    {% if profile.instagram %}
+                        <a href="{{ profile.instagram }}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                    {% endif %}
+                    {% if profile.facebook %}
+                        <a href="{{ profile.facebook }}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                    {% endif %}
+                    {% if profile.twitter %}
+                        <a href="{{ profile.twitter }}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                    {% endif %}
+                </div>
+                
+                <a href="{{ url_for('player.edit_profile') }}" class="block w-full text-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                    Edit Profile
+                </a>
+            </div>
+        </div>
+        
+        <!-- Player Rankings Card -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden p-6">
+            <h2 class="text-xl font-bold mb-4">Your Rankings</h2>
+            
+            <div class="space-y-3">
+                {% if profile.mens_singles_points > 0 %}
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <div class="font-medium">Men's Singles</div>
+                        <div class="text-blue-600 font-bold">{{ profile.mens_singles_points }}</div>
+                    </div>
+                {% endif %}
+                
+                {% if profile.womens_singles_points > 0 %}
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <div class="font-medium">Women's Singles</div>
+                        <div class="text-pink-600 font-bold">{{ profile.womens_singles_points }}</div>
+                    </div>
+                {% endif %}
+                
+                {% if profile.mens_doubles_points > 0 %}
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <div class="font-medium">Men's Doubles</div>
+                        <div class="text-blue-600 font-bold">{{ profile.mens_doubles_points }}</div>
+                    </div>
+                {% endif %}
+                
+                {% if profile.womens_doubles_points > 0 %}
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <div class="font-medium">Women's Doubles</div>
+                        <div class="text-pink-600 font-bold">{{ profile.womens_doubles_points }}</div>
+                    </div>
+                {% endif %}
+                
+                {% if profile.mixed_doubles_points > 0 %}
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <div class="font-medium">Mixed Doubles</div>
+                        <div class="text-purple-600 font-bold">{{ profile.mixed_doubles_points }}</div>
+                    </div>
+                {% endif %}
+                
+                {% if not profile.mens_singles_points and not profile.womens_singles_points and not profile.mens_doubles_points and not profile.womens_doubles_points and not profile.mixed_doubles_points %}
+                    <div class="text-gray-600 text-center py-4">
+                        You haven't earned any ranking points yet. Participate in tournaments to get started!
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mt-4">
+                <a href="{{ url_for('main.rankings') }}" class="text-blue-600 hover:text-blue-800 text-sm flex items-center">
+                    View Full Rankings <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden p-6">
+            <h2 class="text-xl font-bold mb-4">Quick Actions</h2>
+            <div class="space-y-3">
+                <a href="{{ url_for('main.events') }}" class="block w-full text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    Find Tournaments
+                </a>
+                <a href="{{ url_for('player.my_registrations') }}" class="block w-full text-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                    View All Registrations
+                </a>
+                <a href="{{ url_for('main.player_detail', id=profile.id) }}" class="block w-full text-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                    View Public Profile
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column - Tournaments -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Upcoming Tournaments -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-xl font-bold">Your Upcoming Tournaments</h2>
+            </div>
+            
+            {% if upcoming_tournaments %}
+                <div class="divide-y divide-gray-200">
+                    {% for tournament in upcoming_tournaments %}
+                        <div class="p-6">
+                            <div class="sm:flex sm:justify-between sm:items-start">
+                                <div class="flex items-start">
+                                    {% if tournament.logo %}
+                                        <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="w-16 h-16 object-contain mr-4">
+                                    {% else %}
+                                        <div class="w-16 h-16 bg-gray-200 flex items-center justify-center rounded mr-4">
+                                            <span class="text-xs text-gray-500">No Logo</span>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <h3 class="font-bold text-lg">{{ tournament.name }}</h3>
+                                        <div class="text-sm text-gray-600 mb-2">{{ tournament.start_date.strftime('%B %-d') }}-{{ tournament.end_date.strftime('%-d, %Y') }}</div>
+                                        <div class="text-sm text-gray-600">{{ tournament.location }}</div>
+                                        
+                                        <!-- Categories Registered For -->
+                                        <div class="mt-3 flex flex-wrap gap-2">
+                                            {% for category in tournament.categories %}
+                                                <span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
+                                                    {{ category.category_type.value }}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4 sm:mt-0 sm:ml-4 flex flex-col space-y-2">
+                                    <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-center">
+                                        Tournament Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="p-6 text-center text-gray-600">
+                    You're not registered for any upcoming tournaments.
+                    <a href="{{ url_for('main.events') }}" class="text-blue-600 hover:text-blue-800 block mt-2">
+                        Find tournaments to register for
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Ongoing Tournaments -->
+        {% if ongoing_tournaments %}
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 bg-green-50">
+                    <h2 class="text-xl font-bold">Your Active Tournaments</h2>
+                </div>
+                
+                <div class="divide-y divide-gray-200">
+                    {% for tournament in ongoing_tournaments %}
+                        <div class="p-6">
+                            <div class="sm:flex sm:justify-between sm:items-start">
+                                <div class="flex items-start">
+                                    {% if tournament.logo %}
+                                        <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="w-16 h-16 object-contain mr-4">
+                                    {% else %}
+                                        <div class="w-16 h-16 bg-gray-200 flex items-center justify-center rounded mr-4">
+                                            <span class="text-xs text-gray-500">No Logo</span>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <h3 class="font-bold text-lg">{{ tournament.name }}</h3>
+                                        <div class="text-sm text-gray-600 mb-2">{{ tournament.start_date.strftime('%B %-d') }}-{{ tournament.end_date.strftime('%-d, %Y') }}</div>
+                                        <div class="text-sm text-gray-600">{{ tournament.location }}</div>
+                                        
+                                        <!-- Categories Registered For -->
+                                        <div class="mt-3 flex flex-wrap gap-2">
+                                            {% for category in tournament.categories %}
+                                                <span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
+                                                    {{ category.category_type.value }}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4 sm:mt-0 sm:ml-4 flex flex-col space-y-2">
+                                    <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-center">
+                                        Tournament Details
+                                    </a>
+                                    <a href="{{ url_for('tournament.live_scoring', id=tournament.id) }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-center">
+                                        Live Scoring
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Past Tournaments -->
+        {% if past_tournaments %}
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-xl font-bold">Your Past Tournaments</h2>
+                </div>
+                
+                <div class="divide-y divide-gray-200">
+                    {% for tournament in past_tournaments %}
+                        <div class="p-6">
+                            <div class="sm:flex sm:justify-between sm:items-start">
+                                <div class="flex items-start">
+                                    {% if tournament.logo %}
+                                        <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="w-16 h-16 object-contain mr-4">
+                                    {% else %}
+                                        <div class="w-16 h-16 bg-gray-200 flex items-center justify-center rounded mr-4">
+                                            <span class="text-xs text-gray-500">No Logo</span>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <h3 class="font-bold text-lg">{{ tournament.name }}</h3>
+                                        <div class="text-sm text-gray-600 mb-2">{{ tournament.start_date.strftime('%B %-d') }}-{{ tournament.end_date.strftime('%-d, %Y') }}</div>
+                                        <div class="text-sm text-gray-600">{{ tournament.location }}</div>
+                                        
+                                        <!-- Categories Registered For -->
+                                        <div class="mt-3 flex flex-wrap gap-2">
+                                            {% for category in tournament.categories %}
+                                                <span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
+                                                    {{ category.category_type.value }}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4 sm:mt-0 sm:ml-4">
+                                    <a href="{{ url_for('tournament.results', id=tournament.id) }}" class="block px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-center">
+                                        View Results
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                {% if past_tournaments|length > 3 %}
+                    <div class="px-6 py-4 border-t border-gray-200 text-center">
+                        <a href="{{ url_for('player.my_registrations') }}" class="text-blue-600 hover:text-blue-800">
+                            View All Past Tournaments
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
