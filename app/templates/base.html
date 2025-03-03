@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pickleball Tournament Platform{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    {% block styles %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- Header Navigation -->
+    <header class="bg-white border-b border-gray-200">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-8">
+                    <a href="{{ url_for('main.index') }}" class="text-2xl font-bold text-blue-900">Pickleball Tournament</a>
+                    <nav class="hidden md:flex space-x-6">
+                        <a href="{{ url_for('main.index') }}" class="text-gray-600 hover:text-blue-600">Home</a>
+                        <a href="{{ url_for('main.events') }}" class="text-gray-600 hover:text-blue-600">Events</a>
+                        <a href="{{ url_for('main.rankings') }}" class="text-gray-600 hover:text-blue-600">Rankings</a>
+                        {% if current_user.is_authenticated %}
+                            {% if current_user.is_player() %}
+                                <a href="{{ url_for('player.dashboard') }}" class="text-gray-600 hover:text-blue-600">My Profile</a>
+                            {% elif current_user.is_organizer() %}
+                                <a href="{{ url_for('organizer.dashboard') }}" class="text-gray-600 hover:text-blue-600">Organize</a>
+                            {% elif current_user.is_admin() %}
+                                <a href="{{ url_for('admin.dashboard') }}" class="text-gray-600 hover:text-blue-600">Admin</a>
+                            {% endif %}
+                        {% endif %}
+                    </nav>
+                </div>
+                <div class="flex space-x-4">
+                    {% if current_user.is_authenticated %}
+                        <span class="hidden md:inline-block px-4 py-2 text-gray-700">Welcome, {{ current_user.username }}</span>
+                        <a href="{{ url_for('auth.logout') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">Logout</a>
+                    {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Sign In</a>
+                        <a href="{{ url_for('auth.register') }}" class="px-4 py-2 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 transition">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Menu (Hidden by default) -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-gray-200 p-4">
+        <nav class="flex flex-col space-y-4">
+            <a href="{{ url_for('main.index') }}" class="text-gray-600 hover:text-blue-600">Home</a>
+            <a href="{{ url_for('main.events') }}" class="text-gray-600 hover:text-blue-600">Events</a>
+            <a href="{{ url_for('main.rankings') }}" class="text-gray-600 hover:text-blue-600">Rankings</a>
+            {% if current_user.is_authenticated %}
+                {% if current_user.is_player() %}
+                    <a href="{{ url_for('player.dashboard') }}" class="text-gray-600 hover:text-blue-600">My Profile</a>
+                {% elif current_user.is_organizer() %}
+                    <a href="{{ url_for('organizer.dashboard') }}" class="text-gray-600 hover:text-blue-600">Organize</a>
+                {% elif current_user.is_admin() %}
+                    <a href="{{ url_for('admin.dashboard') }}" class="text-gray-600 hover:text-blue-600">Admin</a>
+                {% endif %}
+            {% endif %}
+        </nav>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mx-auto px-4 py-4">
+                {% for category, message in messages %}
+                    {% set alert_class = {
+                        'success': 'bg-green-100 border-green-500 text-green-700',
+                        'info': 'bg-blue-100 border-blue-500 text-blue-700',
+                        'warning': 'bg-yellow-100 border-yellow-500 text-yellow-700',
+                        'danger': 'bg-red-100 border-red-500 text-red-700'
+                    } %}
+                    <div class="flash-message {{ alert_class.get(category, 'bg-blue-100 border-blue-500 text-blue-700') }} px-4 py-3 rounded border mb-4 relative" role="alert">
+                        <span class="block sm:inline">{{ message }}</span>
+                        <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3 close-flash">
+                            <svg class="fill-current h-6 w-6 text-gray-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <title>Close</title>
+                                <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
+                            </svg>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-6">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-10">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Pickleball Tournament Platform</h3>
+                    <p class="text-gray-300">The ultimate platform for organizing and participating in pickleball tournaments.</p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="{{ url_for('main.index') }}" class="text-gray-300 hover:text-white">Home</a></li>
+                        <li><a href="{{ url_for('main.events') }}" class="text-gray-300 hover:text-white">Events</a></li>
+                        <li><a href="{{ url_for('main.rankings') }}" class="text-gray-300 hover:text-white">Rankings</a></li>
+                        {% if not current_user.is_authenticated %}
+                            <li><a href="{{ url_for('auth.login') }}" class="text-gray-300 hover:text-white">Sign In</a></li>
+                            <li><a href="{{ url_for('auth.register') }}" class="text-gray-300 hover:text-white">Register</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Connect With Us</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-300 hover:text-white text-xl"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-gray-300 hover:text-white text-xl"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-300 hover:text-white text-xl"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-gray-300 hover:text-white text-xl"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 pt-8 border-t border-gray-700 text-center text-gray-400">
+                <p>&copy; {{ now.year if now else 2025 }} Pickleball Tournament Platform. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Toggle mobile menu
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuButton = document.querySelector('#menu-button');
+            const mobileMenu = document.querySelector('#mobile-menu');
+            
+            if (menuButton && mobileMenu) {
+                menuButton.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+            
+            // Flash message close buttons
+            const closeButtons = document.querySelectorAll('.close-flash');
+            closeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    this.parentElement.style.display = 'none';
+                });
+            });
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
