@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Pickleball Tournament Platform - Home{% endblock %}
+
+{% block content %}
+<!-- Hero Banner -->
+<div class="relative w-full h-96 rounded-lg overflow-hidden mb-8">
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-900/70 to-transparent flex items-center">
+        <div class="px-8 max-w-xl">
+            <h1 class="text-4xl font-bold text-white mb-4">PICKLEBALL TOURNAMENT PLATFORM</h1>
+            <p class="text-xl text-white mb-6">The ultimate platform for organizing and participating in pickleball tournaments</p>
+            <div class="flex space-x-4">
+                {% if not current_user.is_authenticated %}
+                    <a href="{{ url_for('auth.register') }}" class="px-6 py-3 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 transition font-bold">Register Now</a>
+                {% else %}
+                    <a href="{{ url_for('main.events') }}" class="px-6 py-3 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 transition font-bold">View Events</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <img src="/static/uploads/banners/hero.jpg" alt="Pickleball Tournament" class="w-full h-full object-cover">
+</div>
+
+<!-- Features Section -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+    <div class="bg-white p-6 rounded-lg shadow-sm">
+        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+            <i class="fas fa-trophy text-blue-600 text-xl"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Tournaments</h3>
+        <p class="text-gray-600 mb-4">Participate in pickleball tournaments of various formats and tiers.</p>
+        <a href="{{ url_for('main.events') }}" class="text-blue-600 hover:text-blue-800 font-medium">Browse Events →</a>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow-sm">
+        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+            <i class="fas fa-chart-line text-blue-600 text-xl"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Rankings</h3>
+        <p class="text-gray-600 mb-4">Track your performance and rankings in different categories.</p>
+        <a href="{{ url_for('main.rankings') }}" class="text-blue-600 hover:text-blue-800 font-medium">View Rankings →</a>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow-sm">
+        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+            <i class="fas fa-users text-blue-600 text-xl"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Community</h3>
+        <p class="text-gray-600 mb-4">Connect with other pickleball players and tournament organizers.</p>
+        {% if not current_user.is_authenticated %}
+            <a href="{{ url_for('auth.register') }}" class="text-blue-600 hover:text-blue-800 font-medium">Join Now →</a>
+        {% else %}
+            <a href="{{ url_for('main.events') }}" class="text-blue-600 hover:text-blue-800 font-medium">Explore Events →</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Upcoming Tournaments Section -->
+<div class="mb-12">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold">Upcoming Tournaments</h2>
+        <a href="{{ url_for('main.events') }}" class="text-blue-600 hover:text-blue-800">View All →</a>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for tournament in upcoming_tournaments %}
+            <div class="bg-white rounded-lg overflow-hidden shadow-sm">
+                <div class="h-40 bg-gray-200 relative">
+                    {% if tournament.banner %}
+                        <img src="{{ url_for('static', filename=tournament.banner) }}" alt="{{ tournament.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                        <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600">
+                            <span class="text-white text-xl font-bold">{{ tournament.name }}</span>
+                        </div>
+                    {% endif %}
+                    <div class="absolute top-0 right-0 m-2 px-2 py-1 bg-{{ tournament.tier.value|lower }}-100 text-{{ tournament.tier.value|lower }}-800 rounded text-xs font-medium">
+                        {{ tournament.tier.value }}
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h3 class="font-bold text-lg mb-2">{{ tournament.name }}</h3>
+                    <p class="text-gray-600 mb-2">{{ tournament.location }}</p>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-blue-600">{{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}</span>
+                        <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-800 font-medium">Details →</a>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="bg-white p-6 rounded-lg shadow-sm col-span-full">
+                <p class="text-gray-600 text-center">No upcoming tournaments at the moment. Check back soon!</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Top Players Section -->
+<div class="mb-12">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold">Top Players</h2>
+        <a href="{{ url_for('main.rankings') }}" class="text-blue-600 hover:text-blue-800">View All Rankings →</a>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Men's Singles Rankings -->
+        <div class="bg-white p-6 rounded-lg shadow-sm">
+            <h3 class="font-bold text-lg mb-4">Men's Singles</h3>
+            <div class="space-y-3">
+                {% for player in top_mens_singles[:5] %}
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center mr-3 font-bold">
+                                {{ loop.index }}
+                            </div>
+                            <div>
+                                <a href="{{ url_for('main.player_detail', id=player.id) }}" class="font-medium hover:text-blue-600">{{ player.full_name }}</a>
+                                <div class="text-xs text-gray-500">{{ player.country }}</div>
+                            </div>
+                        </div>
+                        <div class="font-bold text-blue-600">{{ player.mens_singles_points }}</div>
+                    </div>
+                {% else %}
+                    <p class="text-gray-600 text-center">No rankings available.</p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Women's Singles Rankings -->
+        <div class="bg-white p-6 rounded-lg shadow-sm">
+            <h3 class="font-bold text-lg mb-4">Women's Singles</h3>
+            <div class="space-y-3">
+                {% for player in top_womens_singles[:5] %}
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-pink-600 text-white rounded-full flex items-center justify-center mr-3 font-bold">
+                                {{ loop.index }}
+                            </div>
+                            <div>
+                                <a href="{{ url_for('main.player_detail', id=player.id) }}" class="font-medium hover:text-blue-600">{{ player.full_name }}</a>
+                                <div class="text-xs text-gray-500">{{ player.country }}</div>
+                            </div>
+                        </div>
+                        <div class="font-bold text-pink-600">{{ player.womens_singles_points }}</div>
+                    </div>
+                {% else %}
+                    <p class="text-gray-600 text-center">No rankings available.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Join as Organizer Section -->
+<div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-lg p-8 mb-12 text-white">
+    <div class="md:flex items-center justify-between">
+        <div class="mb-6 md:mb-0 md:w-2/3">
+            <h2 class="text-2xl font-bold mb-2">Want to organize your own tournament?</h2>
+            <p class="mb-4">Join as an organizer and start creating your own pickleball tournaments today.</p>
+        </div>
+        <div class="md:w-1/3 text-center md:text-right">
+            <a href="{{ url_for('auth.register') }}" class="inline-block px-6 py-3 bg-white text-blue-700 rounded-lg hover:bg-gray-100 transition font-bold">Become an Organizer</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
