@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Registrations - {{ category.category_type.value }} - {{ tournament.name }} - Pickleball Tournament Platform{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center gap-2 text-gray-500 text-sm mb-2">
+        <a href="{{ url_for('main.index') }}" class="hover:text-blue-600">Home</a>
+        <span>/</span>
+        <a href="{{ url_for('organizer.dashboard') }}" class="hover:text-blue-600">Organizer Dashboard</a>
+        <span>/</span>
+        <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="hover:text-blue-600">{{ tournament.name }}</a>
+        <span>/</span>
+        <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" class="hover:text-blue-600">{{ category.category_type.value }}</a>
+        <span>/</span>
+        <span class="text-gray-700">Manage Registrations</span>
+    </div>
+    
+    <div class="flex justify-between items-start">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">Manage Registrations</h1>
+            <div class="text-gray-600">{{ category.category_type.value }} • {{ tournament.name }}</div>
+        </div>
+        
+        <div class="flex space-x-3">
+            <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                Back to Category
+            </a>
+            {% if tournament.status == 'upcoming' and registrations|selectattr('is_approved', 'eq', true)|list|length >= 2 %}
+                <a href="{{ url_for('organizer.generate_bracket', id=tournament.id, category_id=category.id) }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    Generate Bracket
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Registration Status -->
+<div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold">Registration Status</h2>
+        
+        <div class="text-sm text-gray-600">
+            <span class="font-medium">Deadline:</span> {{ tournament.registration_deadline.strftime('%B %-d, %Y') }}
+            {% if tournament.is_registration_open() %}
+                <span class="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Registration Open</span>
+            {% else %}
+                <span class="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">Registration Closed</span>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="border border-gray-200 rounded-lg p-4">
+            <div class="text-sm text-gray-500">Total Registrations</div>
+            <div class="text-3xl font-bold text-blue-600">{{ registrations|length }}</div>
+            <div class="text-xs text-gray-500">out of {{ category.max_participants }} available spots</div>
+            
+            <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
+                {% set percentage = (registrations|length / category.max_participants * 100)|round|int if category.max_participants > 0 else 0 %}
+                <div class="bg-blue-600 h-2 rounded-full" style="width: {{ percentage }}%"></div>
+            </div>
+        </div>
+        
+        <div class="border border-gray-200 rounded-lg p-4">
+            <div class="text-sm text-gray-500">Approved</div>
+            <div class="text-3xl font-bold text-green-600">{{ registrations|selectattr('is_approved', 'eq', true)|list|length }}</div>
+            <div class="text-xs text-gray-500">approved registrations</div>
+        </div>
+        
+        <div class="border border-gray-200 rounded-lg p-4">
+            <div class="text-sm text-gray-500">Pending</div>
+            <div class="text-3xl font-bold text-yellow-600">{{ registrations|selectattr('is_approved', 'eq', false)|list|length }}</div>
+            <div class="text-xs text-gray-500">pending approval</div>
+        </div>
+    </div>
+</div>
+
+<!-- Registrations List -->
+<div class="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
+    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <h2 class="text-xl font-bold">Registrations</h2>
+        
+        <div class="flex space-x-2">
+            <button id="view-all" class="px-3 py-1 bg-gray-100 text-gray-800 rounded hover:bg-gray-200 text-sm font-medium active-filter">
+                All
+            </button>
+            <button id="view-approved" class="px-3 py-1 bg-gray-100 text-gray-800 rounded hover:bg-gray-200 text-sm font-medium">
+                Approved
+            </button>
+            <button id="view-pending" class="px-3 py-1 bg-gray-100 text-gray-800 rounded hover:bg-gray-200 text-sm font-medium">
+                Pending
+            </button>
+        </div>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Player
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Info
+                    </th>
+                    {% if category.category_type.value in ['Men\'s Doubles', 'Women\'s Doubles', 'Mixed Doubles'] %}
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Partner
+                        </th>
+                    {% endif %}
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Registration Date
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Seeding
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for registration in registrations %}
+                    <tr class="registration-row {{ 'approved' if registration.is_approved else 'pending' }}">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden">
+                                    {% if registration.player.profile_image %}
+                                        <img src="{{ url_for('static', filename=registration.player.profile_image) }}" alt="{{ registration.player.full_name }}" class="w-full h-full object-cover">
+                                    {% else %}
+                                        <div class="w-full h-full bg-blue-100 flex items-center justify-center">
+                                            <span class="text-blue-600 font-bold">{{ registration.player.full_name[:1] }}</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ registration.player.full_name }}
+                                    </div>
+                                    <div class="text-xs text-gray-500">
+                                        {{ registration.player.country }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ registration.player.city }}</div>
+                            <div class="text-xs text-gray-500">{{ registration.player.plays }}</div>
+                        </td>
+                        {% if category.category_type.value in ['Men\'s Doubles', 'Women\'s Doubles', 'Mixed Doubles'] %}
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if registration.partner %}
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden">
+                                            {% if registration.partner.profile_image %}
+                                                <img src="{{ url_for('static', filename=registration.partner.profile_image) }}" alt="{{ registration.partner.full_name }}" class="w-full h-full object-cover">
+                                            {% else %}
+                                                <div class="w-full h-full bg-blue-100 flex items-center justify-center">
+                                                    <span class="text-blue-600 font-bold text-xs">{{ registration.partner.full_name[:1] }}</span>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">
+                                                {{ registration.partner.full_name }}
+                                            </div>
+                                            <div class="text-xs text-gray-500">
+                                                {{ registration.partner.country }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-sm text-gray-500">No partner specified</span>
+                                {% endif %}
+                            </td>
+                        {% endif %}
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ registration.registration_date.strftime('%b %-d, %Y') }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <form method="POST" action="{{ url_for('organizer.update_seed', id=tournament.id, category_id=category.id, registration_id=registration.id) }}" class="flex items-center">
+                                <input type="hidden" name="player_id" value="{{ registration.player_id }}">
+                                <input type="number" name="seed" value="{{ registration.seed }}" min="1" max="{{ category.max_participants }}" 
+                                       class="w-16 px-2 py-1 border border-gray-300 rounded text-sm mr-2">
+                                <button type="submit" class="px-2 py-1 bg-blue-600 text-white rounded text-xs">
+                                    Update
+                                </button>
+                            </form>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                {% if registration.is_approved %}
+                                    bg-green-100 text-green-800
+                                {% else %}
+                                    bg-yellow-100 text-yellow-800
+                                {% endif %}">
+                                {{ 'Approved' if registration.is_approved else 'Pending' }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <div class="flex space-x-3">
+                                {% if registration.is_approved %}
+                                    <form method="POST" action="{{ url_for('organizer.reject_registration', id=tournament.id, category_id=category.id, registration_id=registration.id) }}">
+                                        <button type="submit" class="text-red-600 hover:text-red-900">
+                                            Reject
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <form method="POST" action="{{ url_for('organizer.approve_registration', id=tournament.id, category_id=category.id, registration_id=registration.id) }}">
+                                        <button type="submit" class="text-green-600 hover:text-green-900">
+                                            Approve
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                
+                                <a href="{{ url_for('main.player_detail', id=registration.player_id) }}" class="text-blue-600 hover:text-blue-900">
+                                    View Profile
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="{% if category.category_type.value in ['Men\'s Doubles', 'Women\'s Doubles', 'Mixed Doubles'] %}7{% else %}6{% endif %}" class="px-6 py-8 text-center text-gray-500">
+                            No registrations for this category yet.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Generate Bracket Section -->
+{% if tournament.status == 'upcoming' and registrations|selectattr('is_approved', 'eq', true)|list|length >= 2 %}
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+        <h2 class="text-xl font-bold mb-4">Generate Tournament Bracket</h2>
+        
+        <div class="text-gray-600 mb-6">
+            <p>You can generate the tournament bracket when you have at least 2 approved participants.</p>
+            <p class="mt-2">The bracket will be created based on the tournament format ({{ tournament.format.value }}) and seeding.</p>
+        </div>
+        
+        <a href="{{ url_for('organizer.generate_bracket', id=tournament.id, category_id=category.id) }}" class="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            Generate Bracket
+        </a>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter buttons functionality
+        const viewAllBtn = document.getElementById('view-all');
+        const viewApprovedBtn = document.getElementById('view-approved');
+        const viewPendingBtn = document.getElementById('view-pending');
+        const registrationRows = document.querySelectorAll('.registration-row');
+        
+        viewAllBtn.addEventListener('click', function() {
+            registrationRows.forEach(row => {
+                row.style.display = '';
+            });
+            
+            // Update active filter
+            viewAllBtn.classList.add('active-filter');
+            viewApprovedBtn.classList.remove('active-filter');
+            viewPendingBtn.classList.remove('active-filter');
+        });
+        
+        viewApprovedBtn.addEventListener('click', function() {
+            registrationRows.forEach(row => {
+                if (row.classList.contains('approved')) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Update active filter
+            viewAllBtn.classList.remove('active-filter');
+            viewApprovedBtn.classList.add('active-filter');
+            viewPendingBtn.classList.remove('active-filter');
+        });
+        
+        viewPendingBtn.addEventListener('click', function() {
+            registrationRows.forEach(row => {
+                if (row.classList.contains('pending')) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Update active filter
+            viewAllBtn.classList.remove('active-filter');
+            viewApprovedBtn.classList.remove('active-filter');
+            viewPendingBtn.classList.add('active-filter');
+        });
+        
+        // Style for active filter
+        const filterBtns = [viewAllBtn, viewApprovedBtn, viewPendingBtn];
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                filterBtns.forEach(b => {
+                    b.classList.remove('bg-blue-600', 'text-white');
+                    b.classList.add('bg-gray-100', 'text-gray-800');
+                });
+                
+                this.classList.remove('bg-gray-100', 'text-gray-800');
+                this.classList.add('bg-blue-600', 'text-white');
+            });
+        });
+        
+        // Initialize first button as active
+        viewAllBtn.classList.remove('bg-gray-100', 'text-gray-800');
+        viewAllBtn.classList.add('bg-blue-600', 'text-white');
+    });
+</script>
+{% endblock %}

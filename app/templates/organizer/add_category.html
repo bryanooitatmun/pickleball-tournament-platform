@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Add Category - {{ tournament.name }} - Pickleball Tournament Platform{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center gap-2 text-gray-500 text-sm mb-2">
+        <a href="{{ url_for('main.index') }}" class="hover:text-blue-600">Home</a>
+        <span>/</span>
+        <a href="{{ url_for('organizer.dashboard') }}" class="hover:text-blue-600">Organizer Dashboard</a>
+        <span>/</span>
+        <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="hover:text-blue-600">{{ tournament.name }}</a>
+        <span>/</span>
+        <span class="text-gray-700">Add Category</span>
+    </div>
+    
+    <div class="flex justify-between items-start">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">Add Tournament Category</h1>
+            <div class="text-gray-600">{{ tournament.name }}</div>
+        </div>
+        
+        <div class="flex space-x-3">
+            <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                Back to Tournament
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Add Category Form -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <form method="POST" action="{{ url_for('organizer.add_category', id=tournament.id) }}" class="space-y-6">
+                {{ form.hidden_tag() }}
+                
+                <div>
+                    <label for="category_type" class="block text-sm font-medium text-gray-700 mb-1">Category Type</label>
+                    {{ form.category_type(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                    {% for error in form.category_type.errors %}
+                        <div class="text-red-600 text-xs mt-1">{{ error }}</div>
+                    {% endfor %}
+                    <p class="mt-1 text-xs text-gray-500">Select the type of event for this category.</p>
+                </div>
+                
+                <div>
+                    <label for="max_participants" class="block text-sm font-medium text-gray-700 mb-1">Maximum Participants</label>
+                    {{ form.max_participants(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                    {% for error in form.max_participants.errors %}
+                        <div class="text-red-600 text-xs mt-1">{{ error }}</div>
+                    {% endfor %}
+                    <p class="mt-1 text-xs text-gray-500">Maximum number of players or teams that can participate. For doubles, this is the number of teams (not individual players).</p>
+                </div>
+                
+                <div>
+                    <label for="points_awarded" class="block text-sm font-medium text-gray-700 mb-1">Points Awarded</label>
+                    {{ form.points_awarded(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                    {% for error in form.points_awarded.errors %}
+                        <div class="text-red-600 text-xs mt-1">{{ error }}</div>
+                    {% endfor %}
+                    <p class="mt-1 text-xs text-gray-500">Ranking points awarded to the winner of this category.</p>
+                </div>
+                
+                <!-- Points Distribution Information -->
+                <div class="bg-blue-50 p-4 rounded-lg text-sm text-blue-700">
+                    <h3 class="font-medium mb-2">Points Distribution</h3>
+                    <p>Points will be distributed based on tournament tier and placement:</p>
+                    <ul class="list-disc list-inside space-y-1 mt-2">
+                        <li>1st place: 100% of points</li>
+                        <li>2nd place: 70% of points</li>
+                        <li>3rd-4th place: 45% of points</li>
+                        <li>5th-8th place: 25% of points</li>
+                        <li>9th-16th place: 10% of points</li>
+                    </ul>
+                    
+                    <div class="mt-3 pt-3 border-t border-blue-200">
+                        <p>Recommended points based on tournament tier:</p>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <div>SLATE: 2,000 points</div>
+                            <div>CUP: 3,200 points</div>
+                            <div>OPEN: 1,400 points</div>
+                            <div>CHALLENGE: 925 points</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form buttons -->
+                <div class="pt-6 border-t border-gray-200 flex justify-end space-x-4">
+                    <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                        Cancel
+                    </a>
+                    {{ form.submit(class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition") }}
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="space-y-6">
+        <!-- Existing Categories -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-xl font-bold mb-4">Existing Categories</h2>
+            
+            {% if tournament.categories.all() %}
+                <div class="space-y-3">
+                    {% for category in tournament.categories %}
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100 {% if loop.last %}border-b-0{% endif %}">
+                            <span class="font-medium">{{ category.category_type.value }}</span>
+                            <div class="text-sm text-gray-500">{{ category.max_participants }} max</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-center text-gray-500 py-4">No categories have been added yet.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Category Information -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-xl font-bold mb-4">Category Information</h2>
+            
+            <div class="text-sm text-gray-600 space-y-3">
+                <p>Categories define the different events that will be held during your tournament.</p>
+                
+                <div class="space-y-2">
+                    <div class="font-medium">Men's Singles</div>
+                    <p>Individual men's competition with one player per side.</p>
+                </div>
+                
+                <div class="space-y-2">
+                    <div class="font-medium">Women's Singles</div>
+                    <p>Individual women's competition with one player per side.</p>
+                </div>
+                
+                <div class="space-y-2">
+                    <div class="font-medium">Men's Doubles</div>
+                    <p>Team competition with two male players per side.</p>
+                </div>
+                
+                <div class="space-y-2">
+                    <div class="font-medium">Women's Doubles</div>
+                    <p>Team competition with two female players per side.</p>
+                </div>
+                
+                <div class="space-y-2">
+                    <div class="font-medium">Mixed Doubles</div>
+                    <p>Team competition with one male and one female player per side.</p>
+                </div>
+            </div>
+            
+            <div class="mt-4 pt-4 border-t border-gray-100">
+                <div class="text-blue-600 font-medium mb-2">Tips</div>
+                <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
+                    <li>Adjust maximum participants based on venue capacity and time constraints</li>
+                    <li>Higher prize pools typically warrant higher ranking points</li>
+                    <li>Consider player appeal when selecting which categories to offer</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

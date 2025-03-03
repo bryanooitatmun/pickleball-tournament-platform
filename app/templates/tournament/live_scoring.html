@@ -164,10 +164,22 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/live-scoring.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize live scoring updates
         initLiveScoring();
+
+        /*
+        const tournamentId = {{ tournament.id }};
+        const liveScoring = new LiveScoring(tournamentId);
+        liveScoring.startPolling();
+        
+        // Stop polling when the user leaves the page
+        window.addEventListener('beforeunload', function() {
+            liveScoring.stopPolling();
+        });
+        */
     });
     
     function initLiveScoring() {

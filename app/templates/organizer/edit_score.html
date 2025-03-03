@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Match Score - {{ tournament.name }} - Pickleball Tournament Platform{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center gap-2 text-gray-500 text-sm mb-2">
+        <a href="{{ url_for('main.index') }}" class="hover:text-blue-600">Home</a>
+        <span>/</span>
+        <a href="{{ url_for('organizer.dashboard') }}" class="hover:text-blue-600">Organizer Dashboard</a>
+        <span>/</span>
+        <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="hover:text-blue-600">{{ tournament.name }}</a>
+        <span>/</span>
+        <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" class="hover:text-blue-600">{{ category.category_type.value }}</a>
+        <span>/</span>
+        <span class="text-gray-700">Edit Score</span>
+    </div>
+    
+    <div class="flex justify-between items-start">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">Edit Match Score</h1>
+            <div class="text-gray-600">{{ category.category_type.value }} • {{ tournament.name }}</div>
+        </div>
+        
+        <div class="flex space-x-3">
+            <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                Back to Category
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Match Information -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Match Details -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-xl font-bold mb-4">Match Details</h2>
+            
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-gray-500 text-sm">Round</span>
+                        <div class="font-medium">
+                            {% if match.round == 1 %}
+                                Final
+                            {% elif match.round == 1.5 %}
+                                3rd Place
+                            {% elif match.round == 2 %}
+                                Semifinal
+                            {% elif match.round == 3 %}
+                                Quarterfinal
+                            {% elif match.round == 4 %}
+                                Round of 16
+                            {% elif match.round == 5 %}
+                                Round of 32
+                            {% elif match.round == 6 %}
+                                Round of 64
+                            {% else %}
+                                Round {{ match.round }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <span class="text-gray-500 text-sm">Court</span>
+                        <div class="font-medium">
+                            {% if match.court %}
+                                {{ match.court }}
+                            {% else %}
+                                Not assigned
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <span class="text-gray-500 text-sm">Scheduled Time</span>
+                        <div class="font-medium">
+                            {% if match.scheduled_time %}
+                                {{ match.scheduled_time.strftime('%b %-d, %Y at %I:%M %p') }}
+                            {% else %}
+                                Not scheduled
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <span class="text-gray-500 text-sm">Status</span>
+                        <div class="font-medium">
+                            {% if match.completed %}
+                                <span class="text-green-600">Completed</span>
+                            {% else %}
+                                <span class="text-yellow-600">In Progress</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-8">
+                    <!-- Player 1 -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                {% if match.player1 and match.player1.profile_image %}
+                                    <img src="{{ url_for('static', filename=match.player1.profile_image) }}" 
+                                        class="w-10 h-10 rounded-full object-cover" 
+                                        alt="{{ match.player1.full_name }}">
+                                {% elif match.player1 %}
+                                    <span class="text-blue-600 font-bold">{{ match.player1.full_name[:1] }}</span>
+                                {% else %}
+                                    <span class="text-blue-600 font-bold">?</span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                {% if match.player1 %}
+                                    <div class="font-medium">{{ match.player1.full_name }}</div>
+                                    <div class="text-xs text-gray-500">{{ match.player1.country }}</div>
+                                {% else %}
+                                    <div class="text-gray-500">TBD</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if match.player1_partner %}
+                            <div class="flex items-center mb-3 pl-5">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                    {% if match.player1_partner.profile_image %}
+                                        <img src="{{ url_for('static', filename=match.player1_partner.profile_image) }}" 
+                                            class="w-8 h-8 rounded-full object-cover" 
+                                            alt="{{ match.player1_partner.full_name }}">
+                                    {% else %}
+                                        <span class="text-blue-600 font-bold text-xs">{{ match.player1_partner.full_name[:1] }}</span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium">{{ match.player1_partner.full_name }}</div>
+                                    <div class="text-xs text-gray-500">{{ match.player1_partner.country }}</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if match.winner_id == match.player1_id %}
+                            <div class="mt-2 text-center py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
+                                Winner
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Player 2 -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                {% if match.player2 and match.player2.profile_image %}
+                                    <img src="{{ url_for('static', filename=match.player2.profile_image) }}" 
+                                        class="w-10 h-10 rounded-full object-cover" 
+                                        alt="{{ match.player2.full_name }}">
+                                {% elif match.player2 %}
+                                    <span class="text-blue-600 font-bold">{{ match.player2.full_name[:1] }}</span>
+                                {% else %}
+                                    <span class="text-blue-600 font-bold">?</span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                {% if match.player2 %}
+                                    <div class="font-medium">{{ match.player2.full_name }}</div>
+                                    <div class="text-xs text-gray-500">{{ match.player2.country }}</div>
+                                {% else %}
+                                    <div class="text-gray-500">TBD</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if match.player2_partner %}
+                            <div class="flex items-center mb-3 pl-5">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                    {% if match.player2_partner.profile_image %}
+                                        <img src="{{ url_for('static', filename=match.player2_partner.profile_image) }}" 
+                                            class="w-8 h-8 rounded-full object-cover" 
+                                            alt="{{ match.player2_partner.full_name }}">
+                                    {% else %}
+                                        <span class="text-blue-600 font-bold text-xs">{{ match.player2_partner.full_name[:1] }}</span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium">{{ match.player2_partner.full_name }}</div>
+                                    <div class="text-xs text-gray-500">{{ match.player2_partner.country }}</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if match.winner_id == match.player2_id %}
+                            <div class="mt-2 text-center py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
+                                Winner
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Match Scores -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-xl font-bold">Match Scores</h2>
+            </div>
+            
+            <div class="p-6">
+                {% if scores %}
+                    <div class="mb-6">
+                        <h3 class="font-medium text-gray-700 mb-3">Existing Scores</h3>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Set
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            {% if match.player1 %}{{ match.player1.full_name }}{% else %}Player 1{% endif %}
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            {% if match.player2 %}{{ match.player2.full_name }}{% else %}Player 2{% endif %}
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Winner
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for score in scores %}
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm font-medium text-gray-900">{{ score.set_number }}</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm font-medium {% if score.player1_score > score.player2_score %}text-green-600 font-bold{% else %}text-gray-900{% endif %}">
+                                                    {{ score.player1_score }}
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm font-medium {% if score.player2_score > score.player1_score %}text-green-600 font-bold{% else %}text-gray-900{% endif %}">
+                                                    {{ score.player2_score }}
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900">
+                                                    {% if score.player1_score > score.player2_score %}
+                                                        {% if match.player1 %}{{ match.player1.full_name }}{% else %}Player 1{% endif %}
+                                                    {% elif score.player2_score > score.player1_score %}
+                                                        {% if match.player2 %}{{ match.player2.full_name }}{% else %}Player 2{% endif %}
+                                                    {% else %}
+                                                        Tie
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <form method="POST" action="{{ url_for('organizer.edit_score', id=tournament.id, category_id=category.id, match_id=match.id) }}" class="space-y-6">
+                    {{ form.hidden_tag() }}
+                    
+                    <h3 class="font-medium text-gray-700">Add/Update Set Score</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label for="set_number" class="block text-sm font-medium text-gray-700 mb-1">Set Number</label>
+                            {{ form.set_number(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                            {% for error in form.set_number.errors %}
+                                <div class="text-red-600 text-xs mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div>
+                            <label for="player1_score" class="block text-sm font-medium text-gray-700 mb-1">
+                                {% if match.player1 %}{{ match.player1.full_name }}{% else %}Player 1{% endif %} Score
+                            </label>
+                            {{ form.player1_score(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                            {% for error in form.player1_score.errors %}
+                                <div class="text-red-600 text-xs mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div>
+                            <label for="player2_score" class="block text-sm font-medium text-gray-700 mb-1">
+                                {% if match.player2 %}{{ match.player2.full_name }}{% else %}Player 2{% endif %} Score
+                            </label>
+                            {{ form.player2_score(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                            {% for error in form.player2_score.errors %}
+                                <div class="text-red-600 text-xs mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        {{ form.submit(class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actions Sidebar -->
+    <div class="space-y-6">
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-xl font-bold mb-4">Actions</h2>
+            
+            <div class="space-y-3">
+                <a href="{{ url_for('organizer.edit_match', id=tournament.id, category_id=category.id, match_id=match.id) }}" class="block w-full text-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                    Edit Match Details
+                </a>
+                
+                <form method="POST" action="{{ url_for('organizer.complete_match', id=tournament.id, category_id=category.id, match_id=match.id) }}">
+                    <input type="hidden" name="match_id" value="{{ match.id }}">
+                    
+                    {% if match.player1 and match.player2 %}
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Set Winner</label>
+                            
+                            <div class="space-y-2">
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" name="winner_id" value="{{ match.player1_id }}" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300" {{ 'checked' if match.winner_id == match.player1_id }}>
+                                    <span>{% if match.player1 %}{{ match.player1.full_name }}{% else %}Player 1{% endif %}</span>
+                                </label>
+                                
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" name="winner_id" value="{{ match.player2_id }}" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300" {{ 'checked' if match.winner_id == match.player2_id }}>
+                                    <span>{% if match.player2 %}{{ match.player2.full_name }}{% else %}Player 2{% endif %}</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" name="completed" value="1">
+                        <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                            {% if match.completed %}
+                                Update Winner
+                            {% else %}
+                                Complete Match
+                            {% endif %}
+                        </button>
+                    {% else %}
+                        <div class="text-sm text-center text-gray-500 py-2">
+                            Cannot complete match until both players are assigned.
+                        </div>
+                    {% endif %}
+                </form>
+                
+                <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" class="block w-full text-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                    Back to Bracket
+                </a>
+            </div>
+        </div>
+        
+        <!-- Pickleball Scoring Help -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-xl font-bold mb-4">Pickleball Scoring</h2>
+            
+            <div class="text-sm text-gray-600 space-y-3">
+                <p>In tournament play, most matches are played to 11 points (win by 2) or 15 points (win by 2).</p>
+                
+                <p>Common scoring formats:</p>
+                <ul class="list-disc list-inside space-y-1">
+                    <li>Best of 3 sets to 11 points</li>
+                    <li>Best of 3 sets to 15 points</li>
+                    <li>Single set to 21 points</li>
+                </ul>
+                
+                <p class="text-blue-600 font-medium">Remember to select the match winner after entering all set scores.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block title %}Generate Bracket - {{ category.category_type.value }} - {{ tournament.name }} - Pickleball Tournament Platform{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center gap-2 text-gray-500 text-sm mb-2">
+        <a href="{{ url_for('main.index') }}" class="hover:text-blue-600">Home</a>
+        <span>/</span>
+        <a href="{{ url_for('organizer.dashboard') }}" class="hover:text-blue-600">Organizer Dashboard</a>
+        <span>/</span>
+        <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="hover:text-blue-600">{{ tournament.name }}</a>
+        <span>/</span>
+        <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" class="hover:text-blue-600">{{ category.category_type.value }}</a>
+        <span>/</span>
+        <span class="text-gray-700">Generate Bracket</span>
+    </div>
+    
+    <div class="flex justify-between items-start">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">Generate Tournament Bracket</h1>
+            <div class="text-gray-600">{{ category.category_type.value }} • {{ tournament.name }}</div>
+        </div>
+        
+        <div class="flex space-x-3">
+            <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                Back to Category
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Warning Message -->
+{% if tournament.status != 'upcoming' %}
+    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-yellow-700">
+                    Warning: This tournament is already {{ tournament.status.value }}. Generating a new bracket will replace any existing matches and results.
+                </p>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Generate Bracket Form -->
+<div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+    <form method="POST" action="{{ url_for('organizer.generate_bracket', id=tournament.id, category_id=category.id) }}" class="space-y-6">
+        {{ form.hidden_tag() }}
+        
+        <div>
+            <label for="use_seeding" class="flex items-center">
+                {{ form.use_seeding(class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-2") }}
+                <span class="text-sm font-medium text-gray-700">Use Player Seeding</span>
+            </label>
+            <p class="mt-1 text-xs text-gray-500">
+                When enabled, seeded players will be placed strategically in the bracket to avoid early matchups between top seeds.
+            </p>
+        </div>
+        
+        <div>
+            <label for="third_place_match" class="flex items-center">
+                {{ form.third_place_match(class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-2") }}
+                <span class="text-sm font-medium text-gray-700">Include Third Place Match</span>
+            </label>
+            <p class="mt-1 text-xs text-gray-500">
+                Adds a consolation match between semifinal losers to determine third place.
+            </p>
+        </div>
+        
+        <div class="bg-blue-50 p-4 rounded-lg">
+            <h3 class="font-medium text-blue-700 mb-2">Bracket Information</h3>
+            
+            <div class="space-y-2 text-sm text-blue-700">
+                <div>
+                    <span class="font-medium">Tournament Format:</span> {{ tournament.format.value }}
+                </div>
+                
+                <div>
+                    <span class="font-medium">Approved Participants:</span> {{ approved_count }}
+                </div>
+                
+                <div>
+                    <span class="font-medium">Bracket Size:</span> 
+                    {% set bracket_size = 2 %}
+                    {% while bracket_size < approved_count %}
+                        {% set bracket_size = bracket_size * 2 %}
+                    {% endwhile %}
+                    {{ bracket_size }} (with {{ bracket_size - approved_count }} byes)
+                </div>
+                
+                <div>
+                    <span class="font-medium">Number of Rounds:</span> {{ bracket_size|log(2)|int }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Seed Preview -->
+        {% if approved_count > 0 %}
+            <div>
+                <h3 class="font-medium text-gray-700 mb-2">Participant Seeding</h3>
+                <div class="bg-gray-50 p-4 rounded-lg max-h-60 overflow-y-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Seed
+                                </th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Player
+                                </th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Country
+                                </th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Points
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for registration in seeded_registrations %}
+                                <tr>
+                                    <td class="px-4 py-2 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">
+                                            {% if registration.seed %}
+                                                {{ registration.seed }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-2 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-6 w-6 rounded-full overflow-hidden">
+                                                {% if registration.player.profile_image %}
+                                                    <img src="{{ url_for('static', filename=registration.player.profile_image) }}" alt="{{ registration.player.full_name }}" class="w-full h-full object-cover">
+                                                {% else %}
+                                                    <div class="w-full h-full bg-blue-100 flex items-center justify-center">
+                                                        <span class="text-blue-600 font-bold text-xs">{{ registration.player.full_name[:1] }}</span>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="ml-3 text-sm font-medium text-gray-900">
+                                                {{ registration.player.full_name }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-2 whitespace-nowrap">
+                                        <div class="text-sm text-gray-500">
+                                            {{ registration.player.country }}
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-2 whitespace-nowrap">
+                                        <div class="text-sm text-gray-500">
+                                            {% if category.category_type.value == 'Men\'s Singles' %}
+                                                {{ registration.player.mens_singles_points }}
+                                            {% elif category.category_type.value == 'Women\'s Singles' %}
+                                                {{ registration.player.womens_singles_points }}
+                                            {% elif category.category_type.value == 'Men\'s Doubles' %}
+                                                {{ registration.player.mens_doubles_points }}
+                                            {% elif category.category_type.value == 'Women\'s Doubles' %}
+                                                {{ registration.player.womens_doubles_points }}
+                                            {% elif category.category_type.value == 'Mixed Doubles' %}
+                                                {{ registration.player.mixed_doubles_points }}
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <p class="mt-2 text-xs text-gray-500">
+                    You can adjust player seeding in the <a href="{{ url_for('organizer.manage_registrations', id=tournament.id, category_id=category.id) }}" class="text-blue-600 hover:text-blue-800">registration management</a> page.
+                </p>
+            </div>
+        {% endif %}
+        
+        <div class="pt-6 border-t border-gray-200 flex items-center justify-between">
+            <div class="text-sm text-gray-600">
+                {% if existing_matches > 0 %}
+                    <div class="text-red-600">
+                        <i class="fas fa-exclamation-triangle mr-1"></i> 
+                        Warning: Generating a new bracket will delete {{ existing_matches }} existing matches.
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="flex space-x-3">
+                <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                    Cancel
+                </a>
+                
+                {% if approved_count >= 2 %}
+                    {{ form.submit(class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition") }}
+                {% else %}
+                    <button type="button" class="px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed" disabled>
+                        Generate Bracket
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Help and Information -->
+<div class="bg-white rounded-lg shadow-sm p-6">
+    <h2 class="text-xl font-bold mb-4">About Tournament Brackets</h2>
+    
+    <div class="space-y-4 text-gray-600">
+        <p>A tournament bracket determines the order of matches and progression through the tournament. Different formats have different advantages:</p>
+        
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="border border-gray-200 rounded-lg p-4">
+                <h3 class="font-medium text-gray-800 mb-2">Single Elimination</h3>
+                <p class="text-sm">Players are eliminated after one loss. Efficient format that quickly determines a winner.</p>
+                <ul class="list-disc list-inside text-sm mt-2 space-y-1 text-gray-600">
+                    <li>Fastest format to complete</li>
+                    <li>Players get fewer guaranteed matches</li>
+                    <li>Best for large tournaments with time constraints</li>
+                </ul>
+            </div>
+            
+            <div class="border border-gray-200 rounded-lg p-4">
+                <h3 class="font-medium text-gray-800 mb-2">Double Elimination</h3>
+                <p class="text-sm">Players are eliminated after two losses. Provides a second chance through a "losers bracket".</p>
+                <ul class="list-disc list-inside text-sm mt-2 space-y-1 text-gray-600">
+                    <li>More matches for players</li>
+                    <li>Second chance after a loss</li>
+                    <li>Good balance of fairness and efficiency</li>
+                </ul>
+            </div>
+            
+            <div class="border border-gray-200 rounded-lg p-4">
+                <h3 class="font-medium text-gray-800 mb-2">Round Robin</h3>
+                <p class="text-sm">Each player plays against every other player. Most fair format with maximum number of matches.</p>
+                <ul class="list-disc list-inside text-sm mt-2 space-y-1 text-gray-600">
+                    <li>Everyone plays the same number of matches</li>
+                    <li>Best for small groups (8 or fewer)</li>
+                    <li>Time-consuming for larger groups</li>
+                </ul>
+            </div>
+            
+            <div class="border border-gray-200 rounded-lg p-4">
+                <h3 class="font-medium text-gray-800 mb-2">Group Stage + Knockout</h3>
+                <p class="text-sm">Players compete in groups, with top finishers advancing to a knockout stage.</p>
+                <ul class="list-disc list-inside text-sm mt-2 space-y-1 text-gray-600">
+                    <li>Guaranteed minimum number of matches</li>
+                    <li>Exciting knockout phase for top players</li>
+                    <li>Good format for medium to large tournaments</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

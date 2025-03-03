@@ -152,10 +152,12 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/bracket-visualization.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize bracket view
-        initBracketView();
+        //initBracketView();
+        new BracketVisualization('tournament-bracket');
     });
     
     function initBracketView() {
