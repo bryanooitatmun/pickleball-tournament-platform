@@ -163,22 +163,6 @@
             </div>
         </div>
         
-        <!-- Note about categories -->
-        <div class="bg-blue-50 p-4 rounded-lg">
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="ml-3 flex-1 md:flex md:justify-between">
-                    <p class="text-sm text-blue-700">
-                        You'll be able to add categories (Men's Singles, Women's Singles, etc.) after creating the tournament.
-                    </p>
-                </div>
-            </div>
-        </div>
-        
         <!-- Form buttons -->
         <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
             <a href="{{ url_for('organizer.dashboard') }}" class="px-6 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
@@ -188,4 +172,64 @@
         </div>
     </form>
 </div>
+
+<div class="bg-blue-50 rounded-lg p-6 mb-8">
+    <h2 class="text-xl font-bold text-blue-800 mb-2">What's Next?</h2>
+    <p class="mb-4">After creating your tournament, you'll need to:</p>
+    <ol class="list-decimal pl-5 space-y-2 text-blue-800">
+        <li>Add tournament categories (Men's Singles, Women's Singles, etc.)</li>
+        <li>Review and approve player registrations</li>
+        <li>Generate tournament brackets</li>
+        <li>Schedule matches</li>
+        <li>Update scores during the tournament</li>
+    </ol>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Calculate registration deadline based on start date
+        const startDateField = document.getElementById('start_date');
+        const regDeadlineField = document.getElementById('registration_deadline');
+        
+        if (startDateField && regDeadlineField) {
+            startDateField.addEventListener('change', function() {
+                if (this.value) {
+                    // Set registration deadline to 7 days before start date by default
+                    const startDate = new Date(this.value);
+                    const regDeadline = new Date(startDate);
+                    regDeadline.setDate(startDate.getDate() - 7);
+                    
+                    // Format the date as YYYY-MM-DD for the input field
+                    const year = regDeadline.getFullYear();
+                    const month = String(regDeadline.getMonth() + 1).padStart(2, '0');
+                    const day = String(regDeadline.getDate()).padStart(2, '0');
+                    
+                    regDeadlineField.value = `${year}-${month}-${day}`;
+                }
+            });
+        }
+        
+        // Set end date to start date + 3 days by default
+        const endDateField = document.getElementById('end_date');
+        
+        if (startDateField && endDateField) {
+            startDateField.addEventListener('change', function() {
+                if (this.value) {
+                    const startDate = new Date(this.value);
+                    const endDate = new Date(startDate);
+                    endDate.setDate(startDate.getDate() + 3);
+                    
+                    // Format the date as YYYY-MM-DD for the input field
+                    const year = endDate.getFullYear();
+                    const month = String(endDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(endDate.getDate()).padStart(2, '0');
+                    
+                    endDateField.value = `${year}-${month}-${day}`;
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}
