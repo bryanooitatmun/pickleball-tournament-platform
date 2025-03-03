@@ -1,0 +1,25 @@
+document.getElementById('tournament-registration-form').querySelector('select[name="category_id"]');
+        const partnerField = document.getElementById('partner-field');
+        
+        function updatePartnerField() {
+            const selectedOption = categorySelect.options[categorySelect.selectedIndex].text;
+            
+            // If selected category is doubles, show partner field
+            if (selectedOption.includes('Doubles')) {
+                partnerField.classList.remove('hidden');
+                partnerField.querySelector('select').required = true;
+            } else {
+                partnerField.classList.add('hidden');
+                partnerField.querySelector('select').required = false;
+            }
+        }
+        
+        // Set initial state
+        updatePartnerField();
+        
+        // Add change event listener
+        categorySelect.addEventListener('change', updatePartnerField);
+    });
+</script>
+{% endblock %}
+{% endblock %}
