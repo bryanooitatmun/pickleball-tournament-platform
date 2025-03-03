@@ -1,0 +1,97 @@
+ match.winner %}
+                                                    <a href="{{ url_for('main.player_detail', id=match.winner.id) }}" class="text-sm font-medium text-green-600 hover:text-green-800">
+                                                        {{ match.winner.full_name }}
+                                                    </a>
+                                                {% else %}
+                                                    <span class="text-sm text-gray-500">N/A</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <a href="{{ url_for('tournament.match_detail', id=tournament.id, match_id=match.id) }}" class="text-blue-600 hover:text-blue-900">
+                                                    View
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <div class="px-6 py-8 text-center text-gray-500">
+                                No match results available for this category.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Point Distribution -->
+                <div class="mt-12">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">Point Distribution</h2>
+                    
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <p class="text-sm text-gray-600 mb-4">
+                            Points awarded to players based on their final placement in the tournament.
+                            Total points for {{ selected_category.category_type.value }}: <span class="font-medium">{{ selected_category.points_awarded }}</span>
+                        </p>
+                        
+                        <div class="overflow-hidden border border-gray-200 rounded-lg bg-white">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Placement</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Champion (1st)</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">100%</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ selected_category.points_awarded }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Runner-Up (2nd)</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">70%</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ (selected_category.points_awarded * 0.7) | int }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Semi-Finalist (3rd-4th)</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">50%</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ (selected_category.points_awarded * 0.5) | int }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Quarter-Finalist (5th-8th)</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">25%</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ (selected_category.points_awarded * 0.25) | int }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Round of 16 (9th-16th)</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">15%</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ (selected_category.points_awarded * 0.15) | int }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="mt-8 flex justify-between">
+                    <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        Back to Tournament
+                    </a>
+                    
+                    <a href="{{ url_for('tournament.bracket', id=tournament.id, category=selected_category.id) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
+                        View Bracket
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
