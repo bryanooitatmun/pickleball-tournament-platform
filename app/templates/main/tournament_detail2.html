@@ -1,0 +1,207 @@
+<!-- This is the second part of tournament_detail.html -->
+
+<!-- Matches and Schedule Section -->
+{% if tournament.status.value in ['ongoing', 'completed'] %}
+<div class="mb-8">
+    <h2 class="text-2xl font-bold mb-6">Current Matches</h2>
+    
+    <!-- Category Selection Tabs -->
+    <div class="tabs mb-6 border-b border-gray-200">
+        {% for category in categories %}
+            <button class="tab {% if loop.first %}tab-active{% else %}tab-inactive{% endif %}" 
+                data-target="category-matches-{{ category.id }}">
+                {{ category.category_type.value }}
+            </button>
+        {% endfor %}
+    </div>
+    
+    <!-- Category Matches -->
+    {% for category in categories %}
+        <div id="category-matches-{{ category.id }}" class="tab-content {% if not loop.first %}hidden{% endif %}">
+            {% if matches and category.id in matches and matches[category.id] %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for match in matches[category.id] %}
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="text-sm text-gray-500 mb-2">
+                                Round {{ match.round }} • Match {{ match.match_order }}
+                                {% if match.court %}
+                                    • Court {{ match.court }}
+                                {% endif %}
+                                {% if match.scheduled_time %}
+                                    • {{ match.scheduled_time.strftime('%b %-d, %I:%M %p') }}
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Players -->
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <div class="flex items-center">
+                                        {% if match.player1 %}
+                                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                                {% if match.player1.profile_image %}
+                                                    <img src="{{ url_for('static', filename=match.player1.profile_image) }}" 
+                                                        class="w-10 h-10 rounded-full object-cover" 
+                                                        alt="{{ match.player1.full_name }}">
+                                                {% else %}
+                                                    <span class="text-blue-600 font-bold">{{ match.player1.full_name[:1] }}</span>
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <a href="{{ url_for('main.player_detail', id=match.player1.id) }}" class="font-medium hover:text-blue-600">
+                                                    {{ match.player1.full_name }}
+                                                </a>
+                                                {% if match.player1_partner %}
+                                                    <span class="text-gray-500">/</span>
+                                                    <a href="{{ url_for('main.player_detail', id=match.player1_partner.id) }}" class="font-medium hover:text-blue-600">
+                                                        {{ match.player1_partner.full_name }}
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        {% else %}
+                                            <div class="text-gray-500">TBD</div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% if scores and match.id in scores and scores[match.id] %}
+                                        <div class="flex space-x-2">
+                                            {% for score in scores[match.id] %}
+                                                <div class="text-gray-900 {% if score.player1_score > score.player2_score %}font-bold{% endif %}">
+                                                    {{ score.player1_score }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="flex justify-between items-center">
+                                    <div class="flex items-center">
+                                        {% if match.player2 %}
+                                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                                {% if match.player2.profile_image %}
+                                                    <img src="{{ url_for('static', filename=match.player2.profile_image) }}" 
+                                                        class="w-10 h-10 rounded-full object-cover" 
+                                                        alt="{{ match.player2.full_name }}">
+                                                {% else %}
+                                                    <span class="text-blue-600 font-bold">{{ match.player2.full_name[:1] }}</span>
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <a href="{{ url_for('main.player_detail', id=match.player2.id) }}" class="font-medium hover:text-blue-600">
+                                                    {{ match.player2.full_name }}
+                                                </a>
+                                                {% if match.player2_partner %}
+                                                    <span class="text-gray-500">/</span>
+                                                    <a href="{{ url_for('main.player_detail', id=match.player2_partner.id) }}" class="font-medium hover:text-blue-600">
+                                                        {{ match.player2_partner.full_name }}
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        {% else %}
+                                            <div class="text-gray-500">TBD</div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% if scores and match.id in scores and scores[match.id] %}
+                                        <div class="flex space-x-2">
+                                            {% for score in scores[match.id] %}
+                                                <div class="text-gray-900 {% if score.player2_score > score.player1_score %}font-bold{% endif %}">
+                                                    {{ score.player2_score }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Match Status -->
+                            {% if match.completed %}
+                                <div class="mt-2 text-sm text-green-600">Match Completed</div>
+                            {% elif match.scheduled_time and match.scheduled_time > now %}
+                                <div class="mt-2 text-sm text-blue-600">Upcoming</div>
+                            {% elif match.scheduled_time %}
+                                <div class="mt-2 text-sm text-orange-600">In Progress</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <p class="text-gray-600 text-center">No matches available for this category.</p>
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Tournament Winners Section (For completed tournaments) -->
+{% if tournament.status.value == 'completed' and winners %}
+<div class="mb-8">
+    <h2 class="text-2xl font-bold mb-6">Tournament Champions</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for category in categories %}
+            {% if category.id in winners and winners[category.id] %}
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="font-bold text-lg mb-4">{{ category.category_type.value }}</h3>
+                    <div class="flex items-center">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                            {% if winners[category.id].profile_image %}
+                                <img src="{{ url_for('static', filename=winners[category.id].profile_image) }}" 
+                                    class="w-16 h-16 rounded-full object-cover" 
+                                    alt="{{ winners[category.id].full_name }}">
+                            {% else %}
+                                <span class="text-blue-600 text-xl font-bold">{{ winners[category.id].full_name[:1] }}</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <a href="{{ url_for('main.player_detail', id=winners[category.id].id) }}" class="font-bold text-lg hover:text-blue-600">
+                                {{ winners[category.id].full_name }}
+                            </a>
+                            <div class="text-gray-600">{{ winners[category.id].country }}</div>
+                            <div class="text-blue-600 font-medium">+{{ category.points_awarded }} pts</div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- JavaScript for tabs functionality -->
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tab functionality for category matches
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Get target content ID
+                const targetId = this.getAttribute('data-target');
+                
+                // Reset all tabs and contents
+                tabs.forEach(t => {
+                    t.classList.remove('tab-active');
+                    t.classList.add('tab-inactive');
+                });
+                
+                tabContents.forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // Activate clicked tab and content
+                this.classList.add('tab-active');
+                this.classList.remove('tab-inactive');
+                
+                const targetContent = document.getElementById(targetId);
+                if (targetContent) {
+                    targetContent.classList.remove('hidden');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
