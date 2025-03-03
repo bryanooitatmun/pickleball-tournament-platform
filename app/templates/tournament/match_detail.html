@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ tournament.name }} - Match Details{% endblock %}
+
+{% block styles %}
+<style>
+    .score-box {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+    }
+    
+    .winning-score {
+        background-color: #d1fae5;
+        color: #047857;
+        font-weight: bold;
+    }
+    
+    .losing-score {
+        background-color: #f3f4f6;
+        color: #6b7280;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Breadcrumb navigation -->
+        <div class="mb-6 flex items-center text-sm">
+            <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-800">
+                {{ tournament.name }}
+            </a>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mx-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            <a href="{{ url_for('tournament.bracket', id=tournament.id, category=match.category_id) }}" class="text-blue-600 hover:text-blue-800">
+                {{ match.category.category_type.value }}
+            </a>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mx-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            <span class="text-gray-600">Match #{{ match.id }}</span>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <!-- Match header with round info -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-4 text-white">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-xl font-bold">
+                            {% if match.round == 1 %}
+                                Final
+                            {% elif match.round == 1.5 %}
+                                Third Place Match
+                            {% elif match.round == 2 %}
+                                Semifinal
+                            {% elif match.round == 3 %}
+                                Quarterfinal
+                            {% else %}
+                                Round of {{ 2 ** match.round }}
+                            {% endif %}
+                        </h1>
+                        <p class="text-blue-200">{{ match.category.category_type.value }}</p>
+                    </div>
+                    <div class="text-right">
+                        {% if match.scheduled_time %}
+                            <p class="text-white font-medium">{{ match.scheduled_time.strftime('%b %d, %Y') }}</p>
+                            <p class="text-blue-200">{{ match.scheduled_time.strftime('%I:%M %p') }}</p>
+                        {% endif %}
+                        {% if match.court %}
+                            <p class="text-blue-200">Court: {{ match.court }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Match status -->
+            <div class="px-6 py-3 border-b {% if match.completed %}bg-green-50 text-green-700{% else %}bg-yellow-50 text-yellow-700{% endif %}">
+                <div class="flex items-center">
+                    {% if match.completed %}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="font-medium">Match Completed</span>
+                    {% else %}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="font-medium">Match Pending</span>
+                    {% endif %}
+
+                    {% if match.completed %}
+                        <div class="ml-auto">
+                            {% if match.winner %}
+                                <span class="font-medium">Winner: {{ match.winner.full_name }}</span>
+                            {% endif %}
+                        </div>
+                    {% elif match.scheduled_time and match.scheduled_time > now %}
+                        <div class="ml-auto">
+                            <span class="text-sm">
+                                Scheduled in {{ (match.scheduled_time - now).days }} days
+                            </span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Players and Scores -->
+            <div class="p-6">
+                <div class="mb-8">
+                    <div class="grid grid-cols-7 gap-4 items-center mb-4">
+                        <!-- Player 1 -->
+                        <div class="col-span-3">
+                            <div class="flex items-center">
+                                {% if match.player1 %}
+                                    {% if match.player1.profile_image %}
+                                        <img src="{{ url_for('static', filename=match.player1.profile_image) }}" alt="{{ match.player1.full_name }}" class="h-12 w-12 rounded-full mr-3">
+                                    {% else %}
+                                        <div class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                            <span class="text-blue-600 font-bold">{{ match.player1.full_name[:2] }}</span>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <a href="{{ url_for('main.player_detail', id=match.player1.id) }}" class="font-medium text-gray-900 hover:text-blue-600">
+                                            {{ match.player1.full_name }}
+                                        </a>
+                                        <p class="text-sm text-gray-500">{{ match.player1.country }}</p>
+                                    </div>
+                                {% else %}
+                                    <div class="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                                        <span class="text-gray-400">TBD</span>
+                                    </div>
+                                    <span class="text-gray-500">To Be Determined</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- For doubles, show partner -->
+                            {% if match.player1_partner %}
+                                <div class="flex items-center mt-2 ml-4">
+                                    <span class="text-sm text-gray-500 mr-2">Partner:</span>
+                                    <a href="{{ url_for('main.player_detail', id=match.player1_partner.id) }}" class="text-sm text-gray-600 hover:text-blue-600">
+                                        {{ match.player1_partner.full_name }}
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Score -->
+                        <div class="col-span-1 text-center">
+                            {% if match.completed %}
+                                <div class="text-xl font-bold {% if match.winner_id == match.player1_id %}text-green-600{% else %}text-gray-400{% endif %}">
+                                    vs
+                                </div>
+                            {% else %}
+                                <div class="text-xl font-bold text-gray-400">vs</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Player 2 -->
+                        <div class="col-span-3">
+                            <div class="flex items-center justify-end">
+                                {% if match.player2 %}
+                                    <div class="text-right mr-3">
+                                        <a href="{{ url_for('main.player_detail', id=match.player2.id) }}" class="font-medium text-gray-900 hover:text-blue-600">
+                                            {{ match.player2.full_name }}
+                                        </a>
+                                        <p class="text-sm text-gray-500">{{ match.player2.country }}</p>
+                                    </div>
+                                    {% if match.player2.profile_image %}
+                                        <img src="{{ url_for('static', filename=match.player2.profile_image) }}" alt="{{ match.player2.full_name }}" class="h-12 w-12 rounded-full">
+                                    {% else %}
+                                        <div class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <span class="text-blue-600 font-bold">{{ match.player2.full_name[:2] }}</span>
+                                        </div>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-gray-500 mr-3">To Be Determined</span>
+                                    <div class="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center">
+                                        <span class="text-gray-400">TBD</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- For doubles, show partner -->
+                            {% if match.player2_partner %}
+                                <div class="flex items-center justify-end mt-2 mr-4">
+                                    <a href="{{ url_for('main.player_detail', id=match.player2_partner.id) }}" class="text-sm text-gray-600 hover:text-blue-600">
+                                        {{ match.player2_partner.full_name }}
+                                    </a>
+                                    <span class="text-sm text-gray-500 ml-2">:Partner</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Scores -->
+                    {% if scores %}
+                        <div class="mt-8 border rounded-lg overflow-hidden">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Set</th>
+                                        {% if match.player1 %}
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ match.player1.full_name }}</th>
+                                        {% else %}
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player 1</th>
+                                        {% endif %}
+                                        {% if match.player2 %}
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ match.player2.full_name }}</th>
+                                        {% else %}
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player 2</th>
+                                        {% endif %}
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for score in scores %}
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm font-medium text-gray-900">Set {{ score.set_number }}</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="score-box {% if score.player1_score > score.player2_score %}winning-score{% else %}losing-score{% endif %} inline-block">
+                                                    {{ score.player1_score }}
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="score-box {% if score.player2_score > score.player1_score %}winning-score{% else %}losing-score{% endif %} inline-block">
+                                                    {{ score.player2_score }}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="mt-8 py-4 px-6 bg-gray-50 rounded-lg text-center text-gray-500">
+                            No scores available for this match yet.
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Match info -->
+                <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Match Information</h3>
+                        <div class="bg-gray-50 rounded p-4">
+                            <dl class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Round</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">
+                                        {% if match.round == 1 %}
+                                            Final
+                                        {% elif match.round == 1.5 %}
+                                            Third Place Match
+                                        {% elif match.round == 2 %}
+                                            Semifinal
+                                        {% elif match.round == 3 %}
+                                            Quarterfinal
+                                        {% else %}
+                                            Round of {{ 2 ** match.round }}
+                                        {% endif %}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Format</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">{{ tournament.format.value }}</dd>
+                                </div>
+                                {% if match.court %}
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">Court</dt>
+                                        <dd class="mt-1 text-sm text-gray-900">{{ match.court }}</dd>
+                                    </div>
+                                {% endif %}
+                                {% if match.scheduled_time %}
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">Scheduled Time</dt>
+                                        <dd class="mt-1 text-sm text-gray-900">
+                                            {{ match.scheduled_time.strftime('%b %d, %Y at %I:%M %p') }}
+                                        </dd>
+                                    </div>
+                                {% endif %}
+                            </dl>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Tournament Information</h3>
+                        <div class="bg-gray-50 rounded p-4">
+                            <dl class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Tournament</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">
+                                        <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-800">
+                                            {{ tournament.name }}
+                                        </a>
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Category</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">{{ match.category.category_type.value }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Location</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">{{ tournament.location }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Status</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full 
+                                            {% if tournament.status.value == 'upcoming' %}
+                                                bg-blue-100 text-blue-800
+                                            {% elif tournament.status.value == 'ongoing' %}
+                                                bg-green-100 text-green-800
+                                            {% else %}
+                                                bg-gray-100 text-gray-800
+                                            {% endif %}
+                                        ">
+                                            {{ tournament.status.value | capitalize }}
+                                        </span>
+                                    </dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="mt-8 flex justify-between">
+                    <div>
+                        <a href="{{ url_for('tournament.bracket', id=tournament.id, category=match.category_id) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Back to Bracket
+                        </a>
+                    </div>
+                    
+                    {% if tournament.status.value == 'ongoing' and not match.completed %}
+                        <a href="{{ url_for('tournament.live_match', id=tournament.id, match_id=match.id) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                            </svg>
+                            Live Scoring
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
