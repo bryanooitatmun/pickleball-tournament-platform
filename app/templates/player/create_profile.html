@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Player Profile{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Create Your Player Profile</h1>
+        
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            {{ form.hidden_tag() }}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Personal Information Section -->
+                <div class="space-y-4">
+                    <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Personal Information</h2>
+                    
+                    <div class="form-group">
+                        {{ form.full_name.label(class="form-label") }}
+                        {{ form.full_name(class="form-input") }}
+                        {% if form.full_name.errors %}
+                            {% for error in form.full_name.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.country.label(class="form-label") }}
+                        {{ form.country(class="form-input") }}
+                        {% if form.country.errors %}
+                            {% for error in form.country.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.city.label(class="form-label") }}
+                        {{ form.city(class="form-input") }}
+                        {% if form.city.errors %}
+                            {% for error in form.city.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.age.label(class="form-label") }}
+                        {{ form.age(class="form-input") }}
+                        {% if form.age.errors %}
+                            {% for error in form.age.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.plays.label(class="form-label") }}
+                        {{ form.plays(class="form-input") }}
+                        {% if form.plays.errors %}
+                            {% for error in form.plays.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.height.label(class="form-label") }}
+                        {{ form.height(class="form-input", placeholder="e.g. 5'10\"") }}
+                        {% if form.height.errors %}
+                            {% for error in form.height.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.turned_pro.label(class="form-label") }}
+                        {{ form.turned_pro(class="form-input") }}
+                        {% if form.turned_pro.errors %}
+                            {% for error in form.turned_pro.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Equipment and Bio Section -->
+                <div class="space-y-4">
+                    <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Equipment & Biography</h2>
+                    
+                    <div class="form-group">
+                        {{ form.paddle.label(class="form-label") }}
+                        {{ form.paddle(class="form-input") }}
+                        {% if form.paddle.errors %}
+                            {% for error in form.paddle.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.bio.label(class="form-label") }}
+                        {{ form.bio(class="form-input h-32") }}
+                        {% if form.bio.errors %}
+                            {% for error in form.bio.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                        <p class="text-sm text-gray-500 mt-1">Share your pickleball journey, achievements, and goals</p>
+                    </div>
+                    
+                    <h2 class="text-lg font-semibold text-gray-700 border-b pb-2 mt-6">Social Media</h2>
+                    
+                    <div class="form-group">
+                        {{ form.instagram.label(class="form-label") }}
+                        {{ form.instagram(class="form-input", placeholder="https://instagram.com/yourusername") }}
+                        {% if form.instagram.errors %}
+                            {% for error in form.instagram.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.facebook.label(class="form-label") }}
+                        {{ form.facebook(class="form-input", placeholder="https://facebook.com/yourusername") }}
+                        {% if form.facebook.errors %}
+                            {% for error in form.facebook.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.twitter.label(class="form-label") }}
+                        {{ form.twitter(class="form-input", placeholder="https://twitter.com/yourusername") }}
+                        {% if form.twitter.errors %}
+                            {% for error in form.twitter.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Images Section -->
+            <div class="mt-8 space-y-4">
+                <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Profile Images</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="form-group">
+                        {{ form.profile_image.label(class="form-label") }}
+                        {{ form.profile_image(class="form-input") }}
+                        {% if form.profile_image.errors %}
+                            {% for error in form.profile_image.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                        <p class="text-sm text-gray-500 mt-1">Headshot or close-up portrait</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.action_image.label(class="form-label") }}
+                        {{ form.action_image(class="form-input") }}
+                        {% if form.action_image.errors %}
+                            {% for error in form.action_image.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                        <p class="text-sm text-gray-500 mt-1">Action shot of you playing</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.banner_image.label(class="form-label") }}
+                        {{ form.banner_image(class="form-input") }}
+                        {% if form.banner_image.errors %}
+                            {% for error in form.banner_image.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                        <p class="text-sm text-gray-500 mt-1">Banner image for your profile page</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end mt-8">
+                <a href="{{ url_for('main.index') }}" class="btn btn-secondary mr-4">Cancel</a>
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
