@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - Pickleball Tournament Platform{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center gap-2 text-gray-500 text-sm mb-2">
+        <a href="{{ url_for('main.index') }}" class="hover:text-blue-600">Home</a>
+        <span>/</span>
+        <a href="{{ url_for('player.dashboard') }}" class="hover:text-blue-600">Dashboard</a>
+        <span>/</span>
+        <span class="text-gray-700">Edit Profile</span>
+    </div>
+    
+    <h1 class="text-3xl font-bold mb-2">Edit Your Profile</h1>
+    <div class="text-gray-600">Update your personal information and images</div>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
+    <form method="POST" enctype="multipart/form-data" class="p-6 space-y-6">
+        {{ form.hidden_tag() }}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Personal Information -->
+            <div class="space-y-6">
+                <h2 class="text-xl font-bold">Personal Information</h2>
+                
+                <div>
+                    <label for="full_name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                    <div class="mt-1">
+                        {{ form.full_name(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.full_name.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="country" class="block text-sm font-medium text-gray-700">Country</label>
+                    <div class="mt-1">
+                        {{ form.country(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.country.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="city" class="block text-sm font-medium text-gray-700">City</label>
+                    <div class="mt-1">
+                        {{ form.city(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.city.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="age" class="block text-sm font-medium text-gray-700">Age</label>
+                    <div class="mt-1">
+                        {{ form.age(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.age.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="plays" class="block text-sm font-medium text-gray-700">Plays</label>
+                    <div class="mt-1">
+                        {{ form.plays(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.plays.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="height" class="block text-sm font-medium text-gray-700">Height</label>
+                    <div class="mt-1">
+                        {{ form.height(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.height.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="paddle" class="block text-sm font-medium text-gray-700">Paddle</label>
+                    <div class="mt-1">
+                        {{ form.paddle(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.paddle.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="turned_pro" class="block text-sm font-medium text-gray-700">Turned Pro (Year)</label>
+                    <div class="mt-1">
+                        {{ form.turned_pro(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.turned_pro.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bio and Social Media -->
+            <div class="space-y-6">
+                <h2 class="text-xl font-bold">Bio & Social Media</h2>
+                
+                <div>
+                    <label for="bio" class="block text-sm font-medium text-gray-700">Bio</label>
+                    <div class="mt-1">
+                        {{ form.bio(rows=5, class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.bio.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    <p class="mt-1 text-sm text-gray-500">Brief description of your pickleball career and background.</p>
+                </div>
+                
+                <div>
+                    <label for="instagram" class="block text-sm font-medium text-gray-700">Instagram Link</label>
+                    <div class="mt-1">
+                        {{ form.instagram(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.instagram.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="facebook" class="block text-sm font-medium text-gray-700">Facebook Link</label>
+                    <div class="mt-1">
+                        {{ form.facebook(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.facebook.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="twitter" class="block text-sm font-medium text-gray-700">Twitter Link</label>
+                    <div class="mt-1">
+                        {{ form.twitter(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.twitter.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Profile Images -->
+        <div class="space-y-6 border-t border-gray-200 pt-6">
+            <h2 class="text-xl font-bold">Profile Images</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="profile_image" class="block text-sm font-medium text-gray-700">Profile Picture</label>
+                    <div class="mt-1 flex items-center">
+                        <div class="w-24 h-24 rounded-full overflow-hidden bg-gray-100 mr-4">
+                            {% if profile.profile_image %}
+                                <img src="{{ url_for('static', filename=profile.profile_image) }}" alt="Current Profile Image" class="w-full h-full object-cover">
+                            {% else %}
+                                <div class="w-full h-full flex items-center justify-center">
+                                    <span class="text-gray-400 text-lg">No Image</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        {{ form.profile_image(class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100") }}
+                        {% for error in form.profile_image.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    <p class="mt-1 text-sm text-gray-500">Square portrait photo, recommended 400x400 pixels.</p>
+                </div>
+                
+                <div>
+                    <label for="action_image" class="block text-sm font-medium text-gray-700">Action Photo</label>
+                    <div class="mt-1 flex items-center">
+                        <div class="w-24 h-24 rounded overflow-hidden bg-gray-100 mr-4">
+                            {% if profile.action_image %}
+                                <img src="{{ url_for('static', filename=profile.action_image) }}" alt="Current Action Image" class="w-full h-full object-cover">
+                            {% else %}
+                                <div class="w-full h-full flex items-center justify-center">
+                                    <span class="text-gray-400 text-lg">No Image</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        {{ form.action_image(class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100") }}
+                        {% for error in form.action_image.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    <p class="mt-1 text-sm text-gray-500">Photo of you playing, recommended 800x600 pixels.</p>
+                </div>
+                
+                <div>
+                    <label for="banner_image" class="block text-sm font-medium text-gray-700">Banner Image</label>
+                    <div class="mt-1 flex items-center">
+                        <div class="w-24 h-12 rounded overflow-hidden bg-gray-100 mr-4">
+                            {% if profile.banner_image %}
+                                <img src="{{ url_for('static', filename=profile.banner_image) }}" alt="Current Banner Image" class="w-full h-full object-cover">
+                            {% else %}
+                                <div class="w-full h-full flex items-center justify-center">
+                                    <span class="text-gray-400 text-xs">No Image</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        {{ form.banner_image(class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100") }}
+                        {% for error in form.banner_image.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    <p class="mt-1 text-sm text-gray-500">Wide banner image, recommended 1200x400 pixels.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Form buttons -->
+        <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+            <a href="{{ url_for('player.dashboard') }}" class="px-6 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Cancel
+            </a>
+            {{ form.submit(class="px-6 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500") }}
+        </div>
+    </form>
+</div>
+{% endblock %}
