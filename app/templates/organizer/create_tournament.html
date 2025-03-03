@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Create Tournament - Pickleball Tournament Platform{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center gap-2 text-gray-500 text-sm mb-2">
+        <a href="{{ url_for('main.index') }}" class="hover:text-blue-600">Home</a>
+        <span>/</span>
+        <a href="{{ url_for('organizer.dashboard') }}" class="hover:text-blue-600">Organizer Dashboard</a>
+        <span>/</span>
+        <span class="text-gray-700">Create Tournament</span>
+    </div>
+    
+    <h1 class="text-3xl font-bold mb-2">Create a New Tournament</h1>
+    <div class="text-gray-600">Fill in the details to create your tournament</div>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
+    <form method="POST" enctype="multipart/form-data" class="p-6 space-y-6">
+        {{ form.hidden_tag() }}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Basic Information -->
+            <div class="space-y-6">
+                <h2 class="text-xl font-bold">Basic Information</h2>
+                
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700">Tournament Name</label>
+                    <div class="mt-1">
+                        {{ form.name(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.name.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="location" class="block text-sm font-medium text-gray-700">Location</label>
+                    <div class="mt-1">
+                        {{ form.location(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.location.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="tier" class="block text-sm font-medium text-gray-700">Tournament Tier</label>
+                    <div class="mt-1">
+                        {{ form.tier(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.tier.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    <p class="mt-1 text-sm text-gray-500">Determines the ranking points awarded.</p>
+                </div>
+                
+                <div>
+                    <label for="format" class="block text-sm font-medium text-gray-700">Tournament Format</label>
+                    <div class="mt-1">
+                        {{ form.format(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.format.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="prize_pool" class="block text-sm font-medium text-gray-700">Prize Pool ($)</label>
+                    <div class="mt-1">
+                        {{ form.prize_pool(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.prize_pool.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700">Tournament Status</label>
+                    <div class="mt-1">
+                        {{ form.status(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.status.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dates and Description -->
+            <div class="space-y-6">
+                <h2 class="text-xl font-bold">Dates and Description</h2>
+                
+                <div>
+                    <label for="start_date" class="block text-sm font-medium text-gray-700">Start Date</label>
+                    <div class="mt-1">
+                        {{ form.start_date(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md", type="date") }}
+                        {% for error in form.start_date.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="end_date" class="block text-sm font-medium text-gray-700">End Date</label>
+                    <div class="mt-1">
+                        {{ form.end_date(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md", type="date") }}
+                        {% for error in form.end_date.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="registration_deadline" class="block text-sm font-medium text-gray-700">Registration Deadline</label>
+                    <div class="mt-1">
+                        {{ form.registration_deadline(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md", type="date") }}
+                        {% for error in form.registration_deadline.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                    <div class="mt-1">
+                        {{ form.description(rows=5, class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.description.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    <p class="mt-1 text-sm text-gray-500">Provide detailed information about the tournament, venue, and any special instructions.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tournament Images -->
+        <div class="space-y-6 border-t border-gray-200 pt-6">
+            <h2 class="text-xl font-bold">Tournament Images</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="logo" class="block text-sm font-medium text-gray-700">Tournament Logo</label>
+                    <div class="mt-1">
+                        {{ form.logo(class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100") }}
+                        {% for error in form.logo.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    <p class="mt-1 text-sm text-gray-500">Square logo, recommended 400x400 pixels.</p>
+                </div>
+                
+                <div>
+                    <label for="banner" class="block text-sm font-medium text-gray-700">Tournament Banner</label>
+                    <div class="mt-1">
+                        {{ form.banner(class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100") }}
+                        {% for error in form.banner.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    <p class="mt-1 text-sm text-gray-500">Wide banner image, recommended 1200x400 pixels.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Form buttons -->
+        <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+            <a href="{{ url_for('organizer.dashboard') }}" class="px-6 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Cancel
+            </a>
+            {{ form.submit(class="px-6 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500") }}
+        </div>
+    </form>
+</div>
+
+<div class="bg-blue-50 rounded-lg p-6 mb-8">
+    <h2 class="text-xl font-bold text-blue-800 mb-2">What's Next?</h2>
+    <p class="mb-4">After creating your tournament, you'll need to:</p>
+    <ol class="list-decimal pl-5 space-y-2 text-blue-800">
+        <li>Add tournament categories (Men's Singles, Women's Singles, etc.)</li>
+        <li>Review and approve player registrations</li>
+        <li>Generate tournament brackets</li>
+        <li>Schedule matches</li>
+        <li>Update scores during the tournament</li>
+    </ol>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Calculate registration deadline based on start date
+        const startDateField = document.getElementById('start_date');
+        const regDeadlineField = document.getElementById('registration_deadline');
+        
+        if (startDateField && regDeadlineField) {
+            startDateField.addEventListener('change', function() {
+                if (this.value) {
+                    // Set registration deadline to 7 days before start date by default
+                    const startDate = new Date(this.value);
+                    const regDeadline = new Date(startDate);
+                    regDeadline.setDate(startDate.getDate() - 7);
+                    
+                    // Format the date as YYYY-MM-DD for the input field
+                    const year = regDeadline.getFullYear();
+                    const month = String(regDeadline.getMonth() + 1).padStart(2, '0');
+                    const day = String(regDeadline.getDate()).padStart(2, '0');
+                    
+                    regDeadlineField.value = `${year}-${month}-${day}`;
+                }
+            });
+        }
+        
+        // Set end date to start date + 3 days by default
+        const endDateField = document.getElementById('end_date');
+        
+        if (startDateField && endDateField) {
+            startDateField.addEventListener('change', function() {
+                if (this.value) {
+                    const startDate = new Date(this.value);
+                    const endDate = new Date(startDate);
+                    endDate.setDate(startDate.getDate() + 3);
+                    
+                    // Format the date as YYYY-MM-DD for the input field
+                    const year = endDate.getFullYear();
+                    const month = String(endDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(endDate.getDate()).padStart(2, '0');
+                    
+                    endDateField.value = `${year}-${month}-${day}`;
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
