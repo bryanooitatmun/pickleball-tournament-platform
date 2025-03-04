@@ -70,6 +70,16 @@
                                     <p class="text-sm text-gray-500">Registration Deadline:</p>
                                     <p class="text-sm font-medium">{{ tournament.registration_deadline.strftime('%b %d, %Y') }}</p>
                                 </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Registration Fee:</p>
+                                    <p class="text-sm font-medium">
+                                        {% if tournament.registration_fee > 0 %}
+                                            ${{ tournament.registration_fee }}
+                                        {% else %}
+                                            Free
+                                        {% endif %}
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>

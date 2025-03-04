@@ -138,6 +138,7 @@ class Tournament(db.Model):
     prize_pool = db.Column(db.Float)
     logo = db.Column(db.String(255))
     banner = db.Column(db.String(255))
+    registration_fee = db.Column(db.Float, default=0.0)
     created_at = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     
     # Relationships
@@ -172,6 +173,15 @@ class Registration(db.Model):
     is_approved = db.Column(db.Boolean, default=False)
     seed = db.Column(db.Integer, nullable=True)  # For tournament seeding
     
+    PAYMENT_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('paid', 'Paid'),
+        ('refunded', 'Refunded')
+    ]
+    payment_status = db.Column(db.String(20), default='pending')
+    payment_date = db.Column(db.DateTime, nullable=True)
+    payment_reference = db.Column(db.String(100), nullable=True)
+
     def __repr__(self):
         return f'<Registration {self.player_id} for Category {self.category_id}>'
 

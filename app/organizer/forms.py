@@ -12,6 +12,7 @@ class TournamentForm(FlaskForm):
     start_date = DateField('Start Date', validators=[DataRequired()], format='%Y-%m-%d')
     end_date = DateField('End Date', validators=[DataRequired()], format='%Y-%m-%d')
     registration_deadline = DateField('Registration Deadline', validators=[DataRequired()], format='%Y-%m-%d')
+    registration_fee = FloatField('Registration Fee ($)', validators=[DataRequired(), NumberRange(min=0)])
     tier = SelectField('Tournament Tier', validators=[DataRequired()], choices=[
         (TournamentTier.SLATE.name, 'SLATE (2,000 PTS)'),
         (TournamentTier.CUP.name, 'CUP (3,200 PTS)'), 

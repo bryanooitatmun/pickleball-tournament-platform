@@ -75,7 +75,17 @@
                         {% endfor %}
                     </div>
                 </div>
-                
+
+                <div>
+                    <label for="registration_fee" class="block text-sm font-medium text-gray-700">Registration Fee ($)</label>
+                    <div class="mt-1">
+                        {{ form.registration_fee(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.registration_fee.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
                 <div>
                     <label for="status" class="block text-sm font-medium text-gray-700">Tournament Status</label>
                     <div class="mt-1">

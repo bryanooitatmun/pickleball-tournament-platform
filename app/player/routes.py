@@ -214,14 +214,54 @@ def register_tournament(tournament_id):
             db.session.add(registration)
             db.session.commit()
             
-            flash('You have successfully registered for the tournament!', 'success')
-            return redirect(url_for('player.dashboard'))
+            # Redirect to payment page if tournament has a fee
+            if tournament.registration_fee > 0:
+                return redirect(url_for('player.payment', registration_id=registration.id))
+            else:
+                flash('You have successfully registered for the tournament!', 'success')
+                return redirect(url_for('player.dashboard'))
     
     return render_template('player/register_tournament.html',
                            title='Tournament Registration',
                            tournament=tournament,
                            form=form)
 
+@bp.route('/payment/<int:registration_id>', methods=['GET', 'POST'])
+@login_required
+def payment(registration_id):
+    registration = Registration.query.get_or_404(registration_id)
+    
+    # Ensure this registration belongs to the current user
+    profile = PlayerProfile.query.filter_by(user_id=current_user.id).first_or_404()
+    if registration.player_id != profile.id:
+        flash('You do not have permission to access this payment.', 'danger')
+        return redirect(url_for('player.dashboard'))
+    
+    tournament = registration.category.tournament
+    
+    # If already paid, redirect to dashboard
+    if registration.payment_status == 'paid':
+        flash('This registration has already been paid.', 'info')
+        return redirect(url_for('player.dashboard'))
+    
+    if request.method == 'POST':
+        # Process payment (in a real app, this would integrate with a payment gateway)
+        payment_reference = f"PBT-{int(datetime.utcnow().timestamp())}"
+        
+        # Update registration with payment info
+        registration.payment_status = 'paid'
+        registration.payment_date = datetime.utcnow()
+        registration.payment_reference = payment_reference
+        db.session.commit()
+        
+        flash('Payment successful! Your tournament registration is confirmed.', 'success')
+        return redirect(url_for('player.my_registrations'))
+    
+    return render_template('player/payment.html',
+                          title='Tournament Registration Payment',
+                          registration=registration,
+                          tournament=tournament)
+                          
 @bp.route('/my_registrations')
 @login_required
 def my_registrations():

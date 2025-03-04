@@ -75,6 +75,8 @@ def create_tournament():
             prize_pool=form.prize_pool.data
         )
         
+        tournament.registration_fee = form.registration_fee.data
+
         # Handle logo upload
         if form.logo.data:
             tournament.logo = save_picture(form.logo.data, 'tournament_logos')
@@ -142,7 +144,8 @@ def edit_tournament(id):
         tournament.format = TournamentFormat[form.format.data]
         tournament.status = TournamentStatus[form.status.data]
         tournament.prize_pool = form.prize_pool.data
-        
+        tournament.registration_fee = form.registration_fee.data
+
         # Handle logo upload
         if form.logo.data:
             tournament.logo = save_picture(form.logo.data, 'tournament_logos')
@@ -280,6 +283,12 @@ def approve_registration(id, category_id, registration_id):
     # Check if registration belongs to this category
     if registration.category_id != category_id:
         flash('Registration not found in this category.', 'danger')
+        return redirect(url_for('organizer.manage_registrations', id=id, category_id=category_id))
+    
+    # Only approve if payment is completed or tournament is free
+    tournament = Tournament.query.get_or_404(id)
+    if tournament.registration_fee > 0 and registration.payment_status != 'paid':
+        flash('Cannot approve registration until payment is completed.', 'warning')
         return redirect(url_for('organizer.manage_registrations', id=id, category_id=category_id))
     
     # Approve registration

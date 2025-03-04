@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Tournament Registration Payment{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto">
+        <div class="mb-6">
+            <a href="{{ url_for('player.my_registrations') }}" class="text-blue-600 hover:text-blue-800 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                Back to My Registrations
+            </a>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="bg-gradient-to-r from-green-600 to-green-800 px-6 py-4">
+                <h1 class="text-xl md:text-2xl font-bold text-white">Tournament Registration Payment</h1>
+            </div>
+
+            <div class="p-6">
+                <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Registration Details</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-500">Tournament:</p>
+                            <p class="font-medium">{{ tournament.name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Category:</p>
+                            <p class="font-medium">{{ registration.category.category_type.value }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Registration Date:</p>
+                            <p class="font-medium">{{ registration.registration_date.strftime('%b %d, %Y') }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Payment Status:</p>
+                            <p class="font-medium">
+                                <span class="px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">Pending</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-200 pt-6 mb-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Payment Summary</h2>
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <div class="flex justify-between py-2 border-b border-gray-200">
+                            <span class="text-gray-700">Registration Fee</span>
+                            <span class="font-medium">${{ tournament.registration_fee }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 font-bold mt-4">
+                            <span class="text-gray-800">Total</span>
+                            <span class="text-green-700">${{ tournament.registration_fee }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST" class="mt-6">
+                    <div class="mb-6">
+                        <h2 class="text-lg font-semibold text-gray-800 mb-4">Payment Method</h2>
+                        
+                        <!-- In a real application, this would be a payment form with credit card fields -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <div class="flex items-center mb-4">
+                                <input id="card-payment" name="payment_method" type="radio" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+                                <label for="card-payment" class="ml-2 block text-sm font-medium text-gray-700">Credit Card</label>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Card Number</label>
+                                    <input type="text" class="form-input mt-1" placeholder="4242 4242 4242 4242">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Cardholder Name</label>
+                                    <input type="text" class="form-input mt-1" placeholder="John Doe">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Expiration Date</label>
+                                    <input type="text" class="form-input mt-1" placeholder="MM/YY">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">CVC</label>
+                                    <input type="text" class="form-input mt-1" placeholder="123">
+                                </div>
+                            </div>
+                            
+                            <p class="text-sm text-gray-500 mt-4">This is a demonstration payment form. In a real application, this would securely process payments.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <a href="{{ url_for('player.my_registrations') }}" class="btn btn-secondary mr-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Pay Now ${{ tournament.registration_fee }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
