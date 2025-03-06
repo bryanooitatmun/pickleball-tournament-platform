@@ -21,11 +21,10 @@ def bracket(id):
     
     # Get matches for this category, ordered by round and match_order
     matches = Match.query.filter_by(category_id=category_id).order_by(Match.round.desc(), Match.match_order).all()
-    
+
     # Get match scores
     scores = {}
     for match in matches:
-        print(f"Match ID: {match.id}, Round: {match.round}, Player1: {match.player1_id}, Player2: {match.player2_id}, Team1: {match.team1_id}, Team2: {match.team2_id}, Winner: {match.winning_team_id}, Completed: {match.completed}")
         match_scores = MatchScore.query.filter_by(match_id=match.id).order_by(MatchScore.set_number).all()
         scores[match.id] = match_scores
     

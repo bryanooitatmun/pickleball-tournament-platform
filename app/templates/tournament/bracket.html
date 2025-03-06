@@ -39,6 +39,93 @@
     .bracket-winner {
         background-color: #f0fdf4;
     }
+    
+    /* Group stage specific styling */
+    .group-stage {
+        margin-bottom: 40px;
+    }
+    
+    .group-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .group-box {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+    
+    .group-header {
+        background-color: #f3f4f6;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #e5e7eb;
+        font-weight: 600;
+    }
+    
+    .group-standings {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .group-standings th {
+        background-color: #f9fafb;
+        padding: 0.5rem;
+        text-align: left;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .group-standings td {
+        padding: 0.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        font-size: 0.875rem;
+    }
+    
+    .group-standings tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .group-standings .advancing {
+        background-color: #ecfdf5;
+    }
+    
+    .group-matches {
+        margin-top: 1rem;
+    }
+    
+    /* Tab styling */
+    .tab-container {
+        margin-bottom: 24px;
+    }
+    
+    .tabs {
+        display: flex;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .tab {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+    }
+    
+    .tab.active {
+        border-bottom-color: #3b82f6;
+        color: #3b82f6;
+        font-weight: 500;
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
 </style>
 {% endblock %}
 
@@ -68,9 +155,411 @@
     </div>
 </div>
 
-<!-- Bracket View -->
+<!-- Tournament Bracket and Results -->
 <div class="bg-white p-4 rounded-lg shadow-sm mb-8">
-    {% if matches %}
+    {% if tournament.format.name == 'GROUP_KNOCKOUT' and matches %}
+        <!-- For Group + Knockout format -->
+        <div class="tab-container">
+            <div class="tabs">
+                <div class="tab active" data-tab="group-stage">Group Stage</div>
+                <div class="tab" data-tab="knockout-stage">Knockout Stage</div>
+            </div>
+            
+            <div class="tab-content active" id="group-stage">
+                <!-- Group Stage Display -->
+                <div class="group-stage mt-4">
+                    <h2 class="text-xl font-semibold mb-4">Group Stage Results</h2>
+                    
+                    <!-- Group containers -->
+                    <div class="group-container">
+                        {% set group_matches = matches | selectattr('round', 'equalto', 4) | list %}
+                        {% set groups = [] %}
+                        {% set group_numbers = {} %}
+
+                        {# First collect unique group numbers based on the first digit of match_order #}
+                        {% for match in group_matches %}
+                            {% set group_number = match.match_order // 10 %}
+                            {% if group_number not in group_numbers %}
+                                {% set _ = group_numbers.update({group_number: True}) %}
+                            {% endif %}
+                        {% endfor %}
+
+                        {# Now create the group data #}
+                        {% for group_number in group_numbers.keys() %}
+                            {% set group_data = {'group_number': group_number, 'matches': []} %}
+                            {% for match in group_matches %}
+                                {% if match.match_order // 10 == group_number %}
+                                    {% set _ = group_data.matches.append(match) %}
+                                {% endif %}
+                            {% endfor %}
+                            {% set _ = groups.append(group_data) %}
+                        {% endfor %}
+                        
+                        
+                        {% for group_data in groups %}
+                            {% set group_idx = group_data.group_number %}
+                            {% set group_matches = group_data.matches %}
+
+                            <div class="group-box">
+                                <div class="group-header">Group {{ ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'][group_idx|int] }}</div>
+                                
+                                <!-- Group standings -->
+                                <table class="group-standings">
+                                    <thead>
+                                        <tr>
+                                            <th>Team</th>
+                                            <th class="text-center">W</th>
+                                            <th class="text-center">L</th>
+                                            <th class="text-center">Sets</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% set unique_teams = {} %}
+                                        {% for match in group_matches %}
+                                            {% if match.team1 %}
+                                                {% if match.team1.id not in unique_teams %}
+                                                    {% set _ = unique_teams.update({match.team1.id: {'team': match.team1, 'wins': 0, 'losses': 0, 'sets_won': 0, 'sets_lost': 0}}) %}
+                                                {% endif %}
+                                            {% elif match.player1 %}
+                                                {% if match.player1.id not in unique_teams %}
+                                                    {% set _ = unique_teams.update({match.player1.id: {'team': match.player1, 'wins': 0, 'losses': 0, 'sets_won': 0, 'sets_lost': 0}}) %}
+                                                {% endif %}
+                                            {% endif %}
+                                            
+                                            {% if match.team2 %}
+                                                {% if match.team2.id not in unique_teams %}
+                                                    {% set _ = unique_teams.update({match.team2.id: {'team': match.team2, 'wins': 0, 'losses': 0, 'sets_won': 0, 'sets_lost': 0}}) %}
+                                                {% endif %}
+                                            {% elif match.player2 %}
+                                                {% if match.player2.id not in unique_teams %}
+                                                    {% set _ = unique_teams.update({match.player2.id: {'team': match.player2, 'wins': 0, 'losses': 0, 'sets_won': 0, 'sets_lost': 0}}) %}
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        <!-- Calculate standings -->
+                                        {% for match in group_matches %}
+                                            {% if match.completed %}
+                                                {% if match.team1 and match.team2 %}
+                                                    {% if match.winning_team_id == match.team1_id %}
+                                                        {% set _ = unique_teams[match.team1.id].update({'wins': unique_teams[match.team1.id]['wins'] + 1}) %}
+                                                        {% set _ = unique_teams[match.team2.id].update({'losses': unique_teams[match.team2.id]['losses'] + 1}) %}
+                                                        
+                                                        {% if match.id in scores %}
+                                                            {% for score in scores[match.id] %}
+                                                                {% if score.player1_score > score.player2_score %}
+                                                                    {% set _ = unique_teams[match.team1.id].update({'sets_won': unique_teams[match.team1.id]['sets_won'] + 1}) %}
+                                                                    {% set _ = unique_teams[match.team2.id].update({'sets_lost': unique_teams[match.team2.id]['sets_lost'] + 1}) %}
+                                                                {% else %}
+                                                                    {% set _ = unique_teams[match.team1.id].update({'sets_lost': unique_teams[match.team1.id]['sets_lost'] + 1}) %}
+                                                                    {% set _ = unique_teams[match.team2.id].update({'sets_won': unique_teams[match.team2.id]['sets_won'] + 1}) %}
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        {% endif %}
+                                                    {% else %}
+                                                        {% set _ = unique_teams[match.team2.id].update({'wins': unique_teams[match.team2.id]['wins'] + 1}) %}
+                                                        {% set _ = unique_teams[match.team1.id].update({'losses': unique_teams[match.team1.id]['losses'] + 1}) %}
+                                                        
+                                                        {% if match.id in scores %}
+                                                            {% for score in scores[match.id] %}
+                                                                {% if score.player2_score > score.player1_score %}
+                                                                    {% set _ = unique_teams[match.team2.id].update({'sets_won': unique_teams[match.team2.id]['sets_won'] + 1}) %}
+                                                                    {% set _ = unique_teams[match.team1.id].update({'sets_lost': unique_teams[match.team1.id]['sets_lost'] + 1}) %}
+                                                                {% else %}
+                                                                    {% set _ = unique_teams[match.team2.id].update({'sets_lost': unique_teams[match.team2.id]['sets_lost'] + 1}) %}
+                                                                    {% set _ = unique_teams[match.team1.id].update({'sets_won': unique_teams[match.team1.id]['sets_won'] + 1}) %}
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        {% endif %}
+                                                    {% endif %}
+                                                {% elif match.player1 and match.player2 %}
+                                                    {% if match.winning_player_id == match.player1_id %}
+                                                        {% set _ = unique_teams[match.player1.id].update({'wins': unique_teams[match.player1.id]['wins'] + 1}) %}
+                                                        {% set _ = unique_teams[match.player2.id].update({'losses': unique_teams[match.player2.id]['losses'] + 1}) %}
+                                                        
+                                                        {% if match.id in scores %}
+                                                            {% for score in scores[match.id] %}
+                                                                {% if score.player1_score > score.player2_score %}
+                                                                    {% set _ = unique_teams[match.player1.id].update({'sets_won': unique_teams[match.player1.id]['sets_won'] + 1}) %}
+                                                                    {% set _ = unique_teams[match.player2.id].update({'sets_lost': unique_teams[match.player2.id]['sets_lost'] + 1}) %}
+                                                                {% else %}
+                                                                    {% set _ = unique_teams[match.player1.id].update({'sets_lost': unique_teams[match.player1.id]['sets_lost'] + 1}) %}
+                                                                    {% set _ = unique_teams[match.player2.id].update({'sets_won': unique_teams[match.player2.id]['sets_won'] + 1}) %}
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        {% endif %}
+                                                    {% else %}
+                                                        {% set _ = unique_teams[match.player2.id].update({'wins': unique_teams[match.player2.id]['wins'] + 1}) %}
+                                                        {% set _ = unique_teams[match.player1.id].update({'losses': unique_teams[match.player1.id]['losses'] + 1}) %}
+                                                        
+                                                        {% if match.id in scores %}
+                                                            {% for score in scores[match.id] %}
+                                                                {% if score.player2_score > score.player1_score %}
+                                                                    {% set _ = unique_teams[match.player2.id].update({'sets_won': unique_teams[match.player2.id]['sets_won'] + 1}) %}
+                                                                    {% set _ = unique_teams[match.player1.id].update({'sets_lost': unique_teams[match.player1.id]['sets_lost'] + 1}) %}
+                                                                {% else %}
+                                                                    {% set _ = unique_teams[match.player2.id].update({'sets_lost': unique_teams[match.player2.id]['sets_lost'] + 1}) %}
+                                                                    {% set _ = unique_teams[match.player1.id].update({'sets_won': unique_teams[match.player1.id]['sets_won'] + 1}) %}
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        {% endif %}
+                                                    {% endif %}
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        <!-- Sort teams by wins, then sets -->
+                                        {% set sorted_teams = unique_teams.values() | sort(attribute='wins', reverse=True) %}
+                                        
+                                        {% for team_data in sorted_teams %}
+                                            <tr class="{% if loop.index <= 1 %}advancing{% endif %}">
+                                                <td>
+                                                    {% set team = team_data['team'] %}
+                                                    {% if team is defined %}
+                                                        {% if team.player1 is defined %}
+                                                            <!-- Doubles team -->
+                                                            {{ team.player1.full_name.split()[-1] }}/{{ team.player2.full_name.split()[-1] }}
+                                                        {% else %}
+                                                            <!-- Singles player -->
+                                                            {{ team.full_name }}
+                                                        {% endif %}
+                                                    {% else %}
+                                                        TBD
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-center">{{ team_data['wins'] }}</td>
+                                                <td class="text-center">{{ team_data['losses'] }}</td>
+                                                <td class="text-center">
+                                                    {{ team_data['sets_won'] }}-{{ team_data['sets_lost'] }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                
+                                <!-- Group matches -->
+                                <div class="p-3">
+                                    <h4 class="text-sm font-medium mb-2">Match Results</h4>
+                                    {% for match in group_matches %}
+                                        <div class="text-sm mb-2 pb-2 {% if not loop.last %}border-b border-gray-100{% endif %}">
+                                            <div class="flex justify-between mb-1">
+                                                <div>
+                                                    {% if match.team1 %}
+                                                        {{ match.team1.player1.full_name.split()[-1] }}/{{ match.team1.player2.full_name.split()[-1] }}
+                                                    {% elif match.player1 %}
+                                                        {{ match.player1.full_name }}
+                                                    {% else %}
+                                                        TBD
+                                                    {% endif %}
+                                                </div>
+                                                
+                                                <div>
+                                                    {% if match.completed and match.id in scores %}
+                                                        {% for score in scores[match.id] %}
+                                                            <span class="{% if score.player1_score > score.player2_score %}font-medium text-green-600{% endif %}">
+                                                                {{ score.player1_score }}
+                                                            </span>
+                                                            {% if not loop.last %} - {% endif %}
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex justify-between">
+                                                <div>
+                                                    {% if match.team2 %}
+                                                        {{ match.team2.player1.full_name.split()[-1] }}/{{ match.team2.player2.full_name.split()[-1] }}
+                                                    {% elif match.player2 %}
+                                                        {{ match.player2.full_name }}
+                                                    {% else %}
+                                                        TBD
+                                                    {% endif %}
+                                                </div>
+                                                
+                                                <div>
+                                                    {% if match.completed and match.id in scores %}
+                                                        {% for score in scores[match.id] %}
+                                                            <span class="{% if score.player2_score > score.player1_score %}font-medium text-green-600{% endif %}">
+                                                                {{ score.player2_score }}
+                                                            </span>
+                                                            {% if not loop.last %} - {% endif %}
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="knockout-stage">
+                <!-- Knockout Stage Display -->
+                <div id="tournament-bracket" class="bracket-container">
+                    {% set knockout_matches = matches | rejectattr('round', 'equalto', 4) | list %}
+                    {% set rounds = {} %}
+                    {% for match in knockout_matches %}
+                        {% set _ = rounds.update({match.round: (rounds.get(match.round, []) + [match])}) %}
+                    {% endfor %}
+                    
+                    {% for round_num in rounds.keys()|sort(reverse=true) %}
+                        <div class="bracket-round">
+                            <h3 class="text-center font-medium text-gray-700 mb-4">
+                                {% if round_num == 1 %}
+                                    Final
+                                {% elif round_num == 1.5 %}
+                                    3rd Place
+                                {% elif round_num == 2 %}
+                                    Semifinals
+                                {% elif round_num == 3 %}
+                                    Quarterfinals
+                                {% elif round_num == 5 %}
+                                    Round of 32
+                                {% elif round_num == 6 %}
+                                    Round of 64
+                                {% else %}
+                                    Round {{ round_num }}
+                                {% endif %}
+                            </h3>
+                            
+                            {% for match in rounds[round_num]|sort(attribute='match_order') %}
+                                <div id="match-{{ match.id }}" class="bracket-match">
+                                    <div class="bracket-team {% if match.winner_id == match.player1_id or match.winning_team_id == match.team1_id %}bracket-winner{% endif %}">
+                                        <div class="flex items-center">
+                                        {% if match.is_doubles %}
+                                            {% if match.team1 %}
+                                                <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                                    {% if match.team1.player1 and match.team1.player1.profile_image %}
+                                                        <img src="{{ url_for('static', filename=match.team1.player1.profile_image) }}" 
+                                                            class="w-6 h-6 rounded-full object-cover" 
+                                                            alt="{{ match.team1.player1.full_name }}">
+                                                    {% else %}
+                                                        <span class="text-blue-600 text-xs font-bold">{{ match.team1.player1.full_name[:1] if match.team1.player1 else 'T' }}</span>
+                                                    {% endif %}
+                                                </div>
+                                                <a href="{{ url_for('main.player_detail', id=match.team1.player1_id) }}" class="hover:text-blue-600 truncate max-w-[120px]">
+                                                    {{ match.team1.player1.full_name.split()[-1] }}
+                                                </a>
+                                                <span class="mx-1">/</span>
+                                                <a href="{{ url_for('main.player_detail', id=match.team1.player2_id) }}" class="hover:text-blue-600 truncate max-w-[120px]">
+                                                    {{ match.team1.player2.full_name.split()[-1] }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-sm text-gray-500">TBD</span>
+                                            {% endif %}                                
+                                        {% else %}
+                                            {% if match.player1 %}
+                                                <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                                    {% if match.player1.profile_image %}
+                                                        <img src="{{ url_for('static', filename=match.player1.profile_image) }}" 
+                                                            class="w-6 h-6 rounded-full object-cover" 
+                                                            alt="{{ match.player1.full_name }}">
+                                                    {% else %}
+                                                        <span class="text-blue-600 text-xs font-bold">{{ match.player1.full_name[:1] }}</span>
+                                                    {% endif %}
+                                                </div>
+                                                <a href="{{ url_for('main.player_detail', id=match.player1.id) }}" class="hover:text-blue-600 truncate max-w-[150px]">
+                                                    {{ match.player1.full_name }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-sm text-gray-500">TBD</span>
+                                            {% endif %}
+                                        {% endif %}
+                                        </div>
+                                        
+                                        <div class="flex items-center ml-2">
+                                            {% if scores and match.id in scores %}
+                                                <div class="text-sm flex space-x-1">
+                                                    {% for score in scores[match.id] %}
+                                                        <span class="w-5 h-5 flex items-center justify-center {% if score.player1_score > score.player2_score %}bg-green-100 text-green-800 font-medium rounded{% endif %}">
+                                                            {{ score.player1_score }}
+                                                        </span>
+                                                        {% if not loop.last %}<span>-</span>{% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="bracket-team {% if match.winner_id == match.player2_id or match.winning_team_id == match.team2_id %}bracket-winner{% endif %}">
+                                        <div class="flex items-center">
+                                            {% if match.is_doubles %}
+                                                {% if match.team2 %}
+                                                    <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                                        {% if match.team2.player1 and match.team2.player1.profile_image %}
+                                                            <img src="{{ url_for('static', filename=match.team2.player1.profile_image) }}" 
+                                                                class="w-6 h-6 rounded-full object-cover" 
+                                                                alt="{{ match.team2.player1.full_name }}">
+                                                        {% else %}
+                                                            <span class="text-blue-600 text-xs font-bold">{{ match.team2.player1.full_name[:1] if match.team2.player1 else 'T' }}</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    <a href="{{ url_for('main.player_detail', id=match.team2.player1_id) }}" class="hover:text-blue-600 truncate max-w-[120px]">
+                                                        {{ match.team2.player1.full_name.split()[-1] }}
+                                                    </a>
+                                                    <span class="mx-1">/</span>
+                                                    <a href="{{ url_for('main.player_detail', id=match.team2.player2_id) }}" class="hover:text-blue-600 truncate max-w-[120px]">
+                                                        {{ match.team2.player2.full_name.split()[-1] }}
+                                                    </a>
+                                                {% else %}
+                                                    <span class="text-sm text-gray-500">TBD</span>
+                                                {% endif %}                                    
+                                            {% else %}
+                                                {% if match.player2 %}
+                                                    <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                                        {% if match.player2.profile_image %}
+                                                            <img src="{{ url_for('static', filename=match.player2.profile_image) }}" 
+                                                                class="w-6 h-6 rounded-full object-cover" 
+                                                                alt="{{ match.player2.full_name }}">
+                                                        {% else %}
+                                                            <span class="text-blue-600 text-xs font-bold">{{ match.player2.full_name[:1] }}</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    <a href="{{ url_for('main.player_detail', id=match.player2.id) }}" class="hover:text-blue-600 truncate max-w-[150px]">
+                                                        {{ match.player2.full_name }}
+                                                    </a>
+                                                {% else %}
+                                                    <span class="text-sm text-gray-500">TBD</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="flex items-center ml-2">
+                                            {% if scores and match.id in scores %}
+                                                <div class="text-sm flex space-x-1">
+                                                    {% for score in scores[match.id] %}
+                                                        <span class="w-5 h-5 flex items-center justify-center {% if score.player2_score > score.player1_score %}bg-green-100 text-green-800 font-medium rounded{% endif %}">
+                                                            {{ score.player2_score }}
+                                                        </span>
+                                                        {% if not loop.last %}<span>-</span>{% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="px-3 py-1 text-xs">
+                                        {% if match.completed %}
+                                            <span class="text-green-600">Completed</span>
+                                        {% elif match.scheduled_time %}
+                                            <span class="text-gray-500">
+                                                {{ match.scheduled_time.strftime('%b %d, %I:%M %p') }}
+                                                {% if match.court %}• Court {{ match.court }}{% endif %}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- Standard elimination bracket -->
         <div id="tournament-bracket" class="bracket-container">
             {% set rounds = {} %}
             {% for match in matches %}
@@ -101,7 +590,7 @@
                     
                     {% for match in rounds[round_num]|sort(attribute='match_order') %}
                         <div id="match-{{ match.id }}" class="bracket-match">
-                            <div class="bracket-team {% if match.winner_id == match.player1_id %}bracket-winner{% endif %}">
+                            <div class="bracket-team {% if match.winner_id == match.player1_id or match.winning_team_id == match.team1_id %}bracket-winner{% endif %}">
                                 <div class="flex items-center">
                                 {% if match.is_doubles %}
                                     {% if match.team1 %}
@@ -115,11 +604,11 @@
                                             {% endif %}
                                         </div>
                                         <a href="{{ url_for('main.player_detail', id=match.team1.player1_id) }}" class="hover:text-blue-600 truncate max-w-[120px]">
-                                            {{ match.team1.player1.full_name }}
+                                            {{ match.team1.player1.full_name.split()[-1] }}
                                         </a>
                                         <span class="mx-1">/</span>
                                         <a href="{{ url_for('main.player_detail', id=match.team1.player2_id) }}" class="hover:text-blue-600 truncate max-w-[120px]">
-                                            {{ match.team1.player2.full_name }}
+                                            {{ match.team1.player2.full_name.split()[-1] }}
                                         </a>
                                     {% else %}
                                         <span class="text-sm text-gray-500">TBD</span>
@@ -158,7 +647,7 @@
                                 </div>
                             </div>
                             
-                            <div class="bracket-team {% if match.winner_id == match.player2_id %}bracket-winner{% endif %}">
+                            <div class="bracket-team {% if match.winner_id == match.player2_id or match.winning_team_id == match.team2_id %}bracket-winner{% endif %}">
                                 <div class="flex items-center">
                                     {% if match.is_doubles %}
                                         {% if match.team2 %}
@@ -172,11 +661,11 @@
                                                 {% endif %}
                                             </div>
                                             <a href="{{ url_for('main.player_detail', id=match.team2.player1_id) }}" class="hover:text-blue-600 truncate max-w-[120px]">
-                                                {{ match.team2.player1.full_name }}
+                                                {{ match.team2.player1.full_name.split()[-1] }}
                                             </a>
                                             <span class="mx-1">/</span>
                                             <a href="{{ url_for('main.player_detail', id=match.team2.player2_id) }}" class="hover:text-blue-600 truncate max-w-[120px]">
-                                                {{ match.team2.player2.full_name }}
+                                                {{ match.team2.player2.full_name.split()[-1] }}
                                             </a>
                                         {% else %}
                                             <span class="text-sm text-gray-500">TBD</span>
@@ -230,8 +719,6 @@
                 </div>
             {% endfor %}
         </div>
-    {% else %}
-        <p class="text-center py-8 text-gray-600">No bracket available for this category yet.</p>
     {% endif %}
 </div>
 
@@ -251,6 +738,48 @@
         // Initialize the bracket visualization once the DOM is fully loaded
         if (document.getElementById('tournament-bracket')) {
             const bracketViz = new BracketVisualization('tournament-bracket');
+        }
+        
+        // Tab functionality for group stage + knockout format
+        const tabs = document.querySelectorAll('.tab');
+        if (tabs.length > 0) {
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Hide all tab content
+                    const tabContents = document.querySelectorAll('.tab-content');
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Show the selected tab content
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    // Reinitialize bracket visualization if showing knockout stage
+                    if (tabId === 'knockout-stage') {
+                        // Small delay to ensure DOM is updated
+                        setTimeout(() => {
+                            if (document.getElementById('tournament-bracket')) {
+                                // Clear any existing visualizations
+                                const container = document.getElementById('tournament-bracket');
+                                const existingSvg = container.querySelector('.bracket-connectors');
+                                if (existingSvg) {
+                                    existingSvg.remove();
+                                }
+                                
+                                // Initialize new visualization
+                                const bracketViz = new BracketVisualization('tournament-bracket');
+                            }
+                        }, 100);
+                    }
+                });
+            });
         }
     });
 </script>
