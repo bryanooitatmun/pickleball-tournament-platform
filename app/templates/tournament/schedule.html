@@ -15,7 +15,7 @@
     </div>
     
     <h1 class="text-3xl font-bold mb-2">{{ tournament.name }}</h1>
-    <div class="text-gray-600 mb-6">{{ tournament.start_date.strftime('%B %-d') }}-{{ tournament.end_date.strftime('%-d, %Y') }} • {{ tournament.location }}</div>
+    <div class="text-gray-600 mb-6">{{ tournament.start_date.strftime('%B %d') }}-{{ tournament.end_date.strftime('%d, %Y') }} • {{ tournament.location }}</div>
 </div>
 
 <!-- Schedule -->
@@ -23,7 +23,7 @@
     {% if days %}
         {% for day, day_matches in days.items() %}
             <div class="mb-8">
-                <h2 class="text-xl font-bold mb-4">{{ day.strftime('%A, %B %-d, %Y') }}</h2>
+                <h2 class="text-xl font-bold mb-4">{{ day.strftime('%A, %B %d, %Y') }}</h2>
                 
                 <div class="bg-white rounded-lg shadow-sm overflow-hidden">
                     <div class="overflow-x-auto">

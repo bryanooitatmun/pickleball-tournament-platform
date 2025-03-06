@@ -1,9 +1,4 @@
-{
-  `path`: `app/templates/tournament/live_match.html`,
-  `repo`: `pickleball-tournament-platform`,
-  `owner`: `bryanooitatmun`,
-  `branch`: `main`,
-  `content`: `{% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}{{ tournament.name }} - Live Match{% endblock %}
 
@@ -166,11 +161,11 @@
                             {% if scores %}
                                 {% for score in scores %}
                                     <div class="flex flex-col items-center">
-                                        <div class="score-box {% if score.player1_score > score.player2_score %}winning-score{% else %}losing-score{% endif %}">
+                                        <div class="p-1 text-center score-box {% if score.player1_score > score.player2_score %}winning-score{% else %}losing-score{% endif %}">
                                             {{ score.player1_score }}
                                         </div>
                                         <div class="mt-2 text-xs text-gray-500">Set {{ score.set_number }}</div>
-                                        <div class="score-box mt-2 {% if score.player2_score > score.player1_score %}winning-score{% else %}losing-score{% endif %}">
+                                        <div class="p-1 text-center score-box mt-2 {% if score.player2_score > score.player1_score %}winning-score{% else %}losing-score{% endif %}">
                                             {{ score.player2_score }}
                                         </div>
                                     </div>

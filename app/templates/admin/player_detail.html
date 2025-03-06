@@ -184,7 +184,7 @@
                                     <a href="{{ url_for('admin.tournament_detail', id=tournament_data.tournament.id) }}" class="font-medium text-lg hover:text-blue-600">
                                         {{ tournament_data.tournament.name }}
                                     </a>
-                                    <div class="text-sm text-gray-600 mb-2">{{ tournament_data.tournament.start_date.strftime('%B %-d') }}-{{ tournament_data.tournament.end_date.strftime('%-d, %Y') }}</div>
+                                    <div class="text-sm text-gray-600 mb-2">{{ tournament_data.tournament.start_date.strftime('%B %d') }}-{{ tournament_data.tournament.end_date.strftime('%d, %Y') }}</div>
                                     <div class="text-sm text-gray-600">{{ tournament_data.tournament.location }}</div>
                                     
                                     <div class="mt-2">
@@ -257,7 +257,7 @@
                 
                 <div>
                     <span class="text-gray-500 text-sm">Joined</span>
-                    <div class="font-medium">{{ user.created_at.strftime('%B %-d, %Y') }}</div>
+                    <div class="font-medium">{{ user.created_at.strftime('%B %d, %Y') }}</div>
                 </div>
             </div>
             

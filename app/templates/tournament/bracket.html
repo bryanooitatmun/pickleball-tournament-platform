@@ -15,7 +15,7 @@
     </div>
     
     <h1 class="text-3xl font-bold mb-2">{{ tournament.name }}</h1>
-    <div class="text-gray-600 mb-6">{{ tournament.start_date.strftime('%B %-d') }}-{{ tournament.end_date.strftime('%-d, %Y') }} • {{ tournament.location }}</div>
+    <div class="text-gray-600 mb-6">{{ tournament.start_date.strftime('%B %d') }}-{{ tournament.end_date.strftime('%d, %Y') }} • {{ tournament.location }}</div>
     
     <!-- Category Selection Tabs -->
     <div class="flex border-b border-gray-200 mb-6">
@@ -31,7 +31,7 @@
 <!-- Bracket View -->
 <div class="bg-white p-6 rounded-lg shadow-sm mb-8">
     {% if matches %}
-        <div class="bracket-container">
+        <div id="tournament-bracket" class="bracket-container">
             {% set rounds = {} %}
             {% for match in matches %}
                 {% set _ = rounds.update({match.round: (rounds.get(match.round, []) + [match])}) %}
@@ -63,20 +63,45 @@
                         <div id="match-{{ match.id }}" class="bracket-match mb-4">
                             <div class="bracket-team {% if match.winner_id == match.player1_id %}bracket-winner{% endif %}">
                                 <div class="flex items-center">
+                                {% if match.is_doubles %}
+                                    {% if match.team1 %}
+                                        <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                            {% if match.team1.player1.profile_image %}
+                                                <img src="{{ url_for('static', filename=match.team1.player1.profile_image) }}" 
+                                                    class="w-6 h-6 rounded-full object-cover" 
+                                                    alt="{{ match.player1.full_name }}">
+                                            {% else %}
+                                                <span class="text-blue-600 text-xs font-bold">{{ match.team1.player1.full_name[:1] }}</span>
+                                            {% endif %}
+                                        </div>
+                                        <a href="{{ url_for('main.player_detail', id=match.team1.player1_id) }}" class="hover:text-blue-600">
+                                            {{ match.team1.player1.full_name }}
+                                        </a>
+                                        / 
+                                        <a href="{{ url_for('main.player_detail', id=match.team1.player2_id) }}" class="hover:text-blue-600">
+                                            {{ match.team1.player2.full_name }}
+                                        </a>
+                                    {% else %}
+                                        <span class="text-sm text-gray-500">TBD</span>
+                                    {% endif %}                                
+                                {% else %}
                                     {% if match.player1 %}
                                         <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
                                             {% if match.player1.profile_image %}
                                                 <img src="{{ url_for('static', filename=match.player1.profile_image) }}" 
                                                     class="w-6 h-6 rounded-full object-cover" 
-                                                    alt="{{ match.player1.full_name }}">
+                                                    alt="{{ match.team1.player1.full_name }}">
                                             {% else %}
                                                 <span class="text-blue-600 text-xs font-bold">{{ match.player1.full_name[:1] }}</span>
                                             {% endif %}
                                         </div>
-                                        <span class="text-sm truncate">{{ match.player1.full_name }}</span>
+                                        <a href="{{ url_for('main.player_detail', id=match.player1.id) }}" class="hover:text-blue-600">
+                                            {{ match.player1.full_name }}
+                                        </a>
                                     {% else %}
                                         <span class="text-sm text-gray-500">TBD</span>
                                     {% endif %}
+                                {% endif %}
                                 </div>
                                 
                                 <div class="flex items-center">
@@ -95,19 +120,44 @@
                             
                             <div class="bracket-team {% if match.winner_id == match.player2_id %}bracket-winner{% endif %}">
                                 <div class="flex items-center">
-                                    {% if match.player2 %}
-                                        <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                                            {% if match.player2.profile_image %}
-                                                <img src="{{ url_for('static', filename=match.player2.profile_image) }}" 
-                                                    class="w-6 h-6 rounded-full object-cover" 
-                                                    alt="{{ match.player2.full_name }}">
-                                            {% else %}
-                                                <span class="text-blue-600 text-xs font-bold">{{ match.player2.full_name[:1] }}</span>
-                                            {% endif %}
-                                        </div>
-                                        <span class="text-sm truncate">{{ match.player2.full_name }}</span>
+                                    {% if match.is_doubles %}
+                                        {% if match.team2 %}
+                                            <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                                {% if match.team2.player2.profile_image %}
+                                                    <img src="{{ url_for('static', filename=match.team2.player2.profile_image) }}" 
+                                                        class="w-6 h-6 rounded-full object-cover" 
+                                                        alt="{{ match.team2.player2.full_name }}">
+                                                {% else %}
+                                                    <span class="text-blue-600 text-xs font-bold">{{ match.team2.player2.full_name[:1] }}</span>
+                                                {% endif %}
+                                            </div>
+                                            <a href="{{ url_for('main.player_detail', id=match.team2.player1_id) }}" class="hover:text-blue-600">
+                                                {{ match.team2.player1.full_name }}
+                                            </a>
+                                            / 
+                                            <a href="{{ url_for('main.player_detail', id=match.team2.player2_id) }}" class="hover:text-blue-600">
+                                                {{ match.team2.player2.full_name }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-sm text-gray-500">TBD</span>
+                                        {% endif %}                                    
                                     {% else %}
-                                        <span class="text-sm text-gray-500">TBD</span>
+                                        {% if match.player2 %}
+                                            <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                                {% if match.player2.profile_image %}
+                                                    <img src="{{ url_for('static', filename=match.player2.profile_image) }}" 
+                                                        class="w-6 h-6 rounded-full object-cover" 
+                                                        alt="{{ match.player2.full_name }}">
+                                                {% else %}
+                                                    <span class="text-blue-600 text-xs font-bold">{{ match.player2.full_name[:1] }}</span>
+                                                {% endif %}
+                                            </div>
+                                            <a href="{{ url_for('main.player_detail', id=match.player2.id) }}" class="hover:text-blue-600">
+                                                {{ match.player2.full_name }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-sm text-gray-500">TBD</span>
+                                        {% endif %}
                                     {% endif %}
                                 </div>
                                 
@@ -129,7 +179,7 @@
                                 <div class="text-xs text-green-600 px-2 py-1">Completed</div>
                             {% elif match.scheduled_time %}
                                 <div class="text-xs text-gray-500 px-2 py-1">
-                                    {{ match.scheduled_time.strftime('%b %-d, %I:%M %p') }}
+                                    {{ match.scheduled_time.strftime('%b %d, %I:%M %p') }}
                                     {% if match.court %}• Court {{ match.court }}{% endif %}
                                 </div>
                             {% endif %}
@@ -156,8 +206,8 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize bracket view
-        //initBracketView();
-        new BracketVisualization('tournament-bracket');
+        initBracketView();
+        //new BracketVisualization('tournament-bracket');
     });
     
     function initBracketView() {

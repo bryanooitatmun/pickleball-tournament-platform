@@ -46,4 +46,11 @@ def create_app(config_class=Config):
     from app.errors import register_error_handlers
     register_error_handlers(app)
     
+    # Add the nl2br filter
+    @app.template_filter('nl2br')
+    def nl2br_filter(text):
+        if not text:
+            return ""
+        return text.replace('\n', '<br>')
+    
     return app

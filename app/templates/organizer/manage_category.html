@@ -17,7 +17,7 @@
     <div class="flex justify-between items-start">
         <div>
             <h1 class="text-3xl font-bold mb-2">{{ category.category_type.value }}</h1>
-            <div class="text-gray-600">{{ tournament.name }} • {{ tournament.start_date.strftime('%B %-d') }}-{{ tournament.end_date.strftime('%-d, %Y') }}</div>
+            <div class="text-gray-600">{{ tournament.name }} • {{ tournament.start_date.strftime('%B %d') }}-{{ tournament.end_date.strftime('%d, %Y') }}</div>
         </div>
         
         <div class="flex space-x-3">
@@ -72,7 +72,7 @@
                 
                 <div>
                     <span class="text-gray-500 text-sm">Registration Deadline:</span>
-                    <span class="font-medium">{{ tournament.registration_deadline.strftime('%B %-d, %Y') }}</span>
+                    <span class="font-medium">{{ tournament.registration_deadline.strftime('%B %d, %Y') }}</span>
                 </div>
             </div>
         </div>
@@ -168,7 +168,7 @@
                                                 {% if match.court %}Court {{ match.court }}{% endif %}
                                                 {% if match.scheduled_time %}
                                                     {% if match.court %} • {% endif %}
-                                                    {{ match.scheduled_time.strftime('%b %-d, %I:%M %p') }}
+                                                    {{ match.scheduled_time.strftime('%b %d, %I:%M %p') }}
                                                 {% endif %}
                                             </div>
                                             

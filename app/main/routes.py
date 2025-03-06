@@ -4,6 +4,7 @@ from app import db
 from app.main import bp
 from app.models import Tournament, TournamentCategory, PlayerProfile, Match, CategoryType, TournamentStatus
 from datetime import datetime
+import os
 
 @bp.route('/')
 @bp.route('/index')
@@ -51,11 +52,12 @@ def events():
     
     past_by_month = {}
     for tournament in past_tournaments:
+        print(tournament.winners_by_category)
         month = tournament.end_date.strftime('%B').upper()
         if month not in past_by_month:
             past_by_month[month] = []
         past_by_month[month].append(tournament)
-    
+
     # Get tournament tiers for the legend
     tiers = current_app.config['TOURNAMENT_TIERS']
     
@@ -76,13 +78,14 @@ def tournament_detail(id):
     
     if tournament.status in [TournamentStatus.ONGOING, TournamentStatus.COMPLETED]:
         for category in categories:
-            matches[category.id] = category.matches.order_by(Match.round.desc(), Match.match_order).all()
+            # Fixed query: Use Match model directly instead of relationship
+            matches[category.id] = Match.query.filter_by(category_id=category.id).order_by(Match.round.desc(), Match.match_order).all()
             
             # For completed tournaments, get winners
             if tournament.status == TournamentStatus.COMPLETED:
-                # Get final match for each category
-                final_match = category.matches.filter_by(round=1).first()
-                if final_match and final_match.winner:
+                # Get final match for each category - Fixed query
+                final_match = Match.query.filter_by(category_id=category.id, round=1).first()
+                if final_match and hasattr(final_match, 'winner_id') and final_match.winner_id:
                     winners[category.id] = final_match.winner
     
     return render_template('main/tournament_detail.html',

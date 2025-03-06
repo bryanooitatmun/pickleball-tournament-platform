@@ -77,7 +77,7 @@
                         <span class="text-gray-500 text-sm">Scheduled Time</span>
                         <div class="font-medium">
                             {% if match.scheduled_time %}
-                                {{ match.scheduled_time.strftime('%b %-d, %Y at %I:%M %p') }}
+                                {{ match.scheduled_time.strftime('%b %d, %Y at %I:%M %p') }}
                             {% else %}
                                 Not scheduled
                             {% endif %}

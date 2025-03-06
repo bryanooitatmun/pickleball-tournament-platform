@@ -85,7 +85,7 @@
                 
                 <div>
                     <span class="text-gray-500 text-sm">Joined</span>
-                    <div class="font-medium">{{ user.created_at.strftime('%B %-d, %Y') }}</div>
+                    <div class="font-medium">{{ user.created_at.strftime('%B %d, %Y') }}</div>
                 </div>
             </div>
         </div>
@@ -240,7 +240,7 @@
                                     <a href="{{ url_for('admin.tournament_detail', id=tournament.id) }}" class="font-medium hover:text-blue-600">
                                         {{ tournament.name }}
                                     </a>
-                                    <div class="text-sm text-gray-500">{{ tournament.start_date.strftime('%b %-d') }}-{{ tournament.end_date.strftime('%-d, %Y') }}</div>
+                                    <div class="text-sm text-gray-500">{{ tournament.start_date.strftime('%b %d') }}-{{ tournament.end_date.strftime('%d, %Y') }}</div>
                                     <div class="text-sm text-gray-500">{{ tournament.location }}</div>
                                     
                                     <div class="mt-1">

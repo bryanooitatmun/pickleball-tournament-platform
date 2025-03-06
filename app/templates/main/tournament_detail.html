@@ -15,7 +15,7 @@
     <div class="absolute inset-0 bg-gradient-to-r from-blue-900/70 to-transparent flex items-center">
         <div class="px-8">
             <h1 class="text-4xl font-bold text-white">{{ tournament.name }}</h1>
-            <p class="text-xl text-white mt-2">{{ tournament.start_date.strftime('%B %-d') }}-{{ tournament.end_date.strftime('%-d, %Y') }}</p>
+            <p class="text-xl text-white mt-2">{{ tournament.start_date.strftime('%B %d') }}-{{ tournament.end_date.strftime('%d, %Y') }}</p>
         </div>
     </div>
     <div class="absolute top-4 right-4">
@@ -38,11 +38,11 @@
                 </div>
                 <div>
                     <h3 class="text-gray-600 font-medium">Dates</h3>
-                    <p class="text-gray-900">{{ tournament.start_date.strftime('%B %-d') }}-{{ tournament.end_date.strftime('%-d, %Y') }}</p>
+                    <p class="text-gray-900">{{ tournament.start_date.strftime('%B %d') }}-{{ tournament.end_date.strftime('%d, %Y') }}</p>
                 </div>
                 <div>
                     <h3 class="text-gray-600 font-medium">Registration Deadline</h3>
-                    <p class="text-gray-900">{{ tournament.registration_deadline.strftime('%B %-d, %Y') }}</p>
+                    <p class="text-gray-900">{{ tournament.registration_deadline.strftime('%B %d, %Y') }}</p>
                 </div>
                 <div>
                     <h3 class="text-gray-600 font-medium">Format</h3>
@@ -132,9 +132,9 @@
     <h2 class="text-2xl font-bold mb-6">Current Matches</h2>
     
     <!-- Category Selection Tabs -->
-    <div class="tabs mb-6 border-b border-gray-200">
+    <div class="flex gap-2 mb-6 border-b border-gray-200 pb-2">
         {% for category in categories %}
-            <button class="tab {% if loop.first %}tab-active{% else %}tab-inactive{% endif %}" 
+            <button class="tab py-2 px-4 rounded-t-lg font-medium {% if loop.first %}tab-active bg-blue-800 text-white{% else %}tab-inactive bg-white text-gray-700 border border-gray-200 hover:bg-gray-50{% endif %}" 
                 data-target="category-matches-{{ category.id }}">
                 {{ category.category_type.value }}
             </button>
@@ -154,7 +154,7 @@
                                     • Court {{ match.court }}
                                 {% endif %}
                                 {% if match.scheduled_time %}
-                                    • {{ match.scheduled_time.strftime('%b %-d, %I:%M %p') }}
+                                    • {{ match.scheduled_time.strftime('%b %d, %I:%M %p') }}
                                 {% endif %}
                             </div>
                             
@@ -312,8 +312,8 @@
                 
                 // Reset all tabs and contents
                 tabs.forEach(t => {
-                    t.classList.remove('tab-active');
-                    t.classList.add('tab-inactive');
+                    t.classList.remove('tab-active', 'bg-blue-800', 'text-white');
+                    t.classList.add('tab-inactive', 'bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50');
                 });
                 
                 tabContents.forEach(content => {
@@ -321,8 +321,8 @@
                 });
                 
                 // Activate clicked tab and content
-                this.classList.add('tab-active');
-                this.classList.remove('tab-inactive');
+                this.classList.add('tab-active', 'bg-blue-800', 'text-white');
+                this.classList.remove('tab-inactive', 'bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-50');
                 
                 const targetContent = document.getElementById(targetId);
                 if (targetContent) {

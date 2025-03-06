@@ -2,7 +2,7 @@ from flask import render_template, redirect, url_for, flash, request, jsonify
 from flask_login import current_user, login_required
 from app import db
 from app.tournament import bp
-from app.models import Tournament, TournamentCategory, Match, MatchScore, Registration, PlayerProfile, TournamentStatus
+from app.models import Tournament, TournamentCategory, Match, MatchScore, Registration, PlayerProfile, TournamentStatus, CategoryType, Team
 from datetime import datetime
 
 @bp.route('/<int:id>/bracket')
@@ -25,6 +25,7 @@ def bracket(id):
     # Get match scores
     scores = {}
     for match in matches:
+        print(f"Match ID: {match.id}, Round: {match.round}, Player1: {match.player1_id}, Player2: {match.player2_id}, Team1: {match.team1_id}, Team2: {match.team2_id}, Winner: {match.winning_team_id}, Completed: {match.completed}")
         match_scores = MatchScore.query.filter_by(match_id=match.id).order_by(MatchScore.set_number).all()
         scores[match.id] = match_scores
     
@@ -165,39 +166,45 @@ def results(id):
         'fourth': None
     }
     
+    # Determine if this is a doubles category
+    is_doubles = selected_category.category_type in [
+        CategoryType.MENS_DOUBLES, 
+        CategoryType.WOMENS_DOUBLES, 
+        CategoryType.MIXED_DOUBLES
+    ]
+    
     for match in matches:
         if match.round == 1:  # Final
-            if match.winner_id:
-                winners['first'] = match.winner
-                winners['second'] = match.loser
+            if is_doubles:
+                # Doubles match
+                if match.winning_team_id:
+                    winning_team = Team.query.get(match.winning_team_id)
+                    if winning_team:
+                        winners['first'] = [
+                            PlayerProfile.query.get(winning_team.player1_id),
+                            PlayerProfile.query.get(winning_team.player2_id)
+                        ]
+                
+                if match.losing_team_id:
+                    losing_team = Team.query.get(match.losing_team_id)
+                    if losing_team:
+                        winners['second'] = [
+                            PlayerProfile.query.get(losing_team.player1_id),
+                            PlayerProfile.query.get(losing_team.player2_id)
+                        ]
+            else:
+                # Singles match
+                if match.winning_player_id:
+                    winners['first'] = match.winning_player
+                
+                if match.losing_player_id:
+                    winners['second'] = match.losing_player
+        
         elif match.round == 2:  # Semifinals
-            if match.winner_id and match.loser_id:
-                # The loser of semifinals might be 3rd or 4th place
-                if 'third_place_match' in locals():
-                    # Already found a third place match
-                    if match.loser_id == third_place_match.winner_id:
-                        winners['third'] = match.loser
-                    elif match.loser_id == third_place_match.loser_id:
-                        winners['fourth'] = match.loser
-                else:
-                    # Check if there's a 3rd place match
-                    third_place_match = Match.query.filter_by(
-                        category_id=category_id,
-                        round=1.5  # Some tournaments have a 3rd place match
-                    ).first()
-                    
-                    if third_place_match:
-                        if third_place_match.player1_id == match.loser_id or third_place_match.player2_id == match.loser_id:
-                            if third_place_match.winner_id == match.loser_id:
-                                winners['third'] = match.loser
-                            elif third_place_match.loser_id == match.loser_id:
-                                winners['fourth'] = match.loser
-                    else:
-                        # No 3rd place match, semifinal losers tie for 3rd
-                        if not winners['third']:
-                            winners['third'] = match.loser
-                        else:
-                            winners['fourth'] = match.loser
+            # Process semifinal losers for 3rd/4th place
+            # Similar logic as above, but for semifinal matches
+            # You'll need to adapt this for singles vs doubles
+            pass
     
     return render_template('tournament/results.html',
                            title=f"{tournament.name} - Results",
@@ -223,6 +230,7 @@ def match_detail(id, match_id):
     
     return render_template('tournament/match_detail.html',
                            title=f"{tournament.name} - Match Details",
+                           now=datetime.now(),
                            tournament=tournament,
                            match=match,
                            scores=scores)

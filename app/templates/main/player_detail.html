@@ -11,7 +11,11 @@
         <div class="w-full h-full bg-gradient-to-r from-blue-600 to-indigo-700"></div>
     {% endif %}
     <div class="absolute inset-0 bg-gradient-to-r from-blue-900/80 to-transparent">
-        <img src="{{ url_for('static', filename=player.banner_image) }}" alt="Banner" class="w-full h-full object-cover mix-blend-overlay">
+        {% if player.banner_image %}
+            <img src="{{ url_for('static', filename=player.banner_image) }}" alt="Banner" class="w-full h-full object-cover mix-blend-overlay">
+        {% else %}
+            <img src="{{ url_for('static', filename='images/placeholders/banners/default_banner.jpg') }}" alt="Default Banner" class="w-full h-full object-cover mix-blend-overlay">
+        {% endif %}
     </div>
     <div class="absolute bottom-4 left-8 text-white">
         <h1 class="text-4xl font-bold">{{ player.full_name }}</h1>
@@ -163,7 +167,7 @@
                             </div>
                             <div class="flex-1">
                                 <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="font-medium hover:text-blue-600">{{ tournament.name }}</a>
-                                <div class="text-sm text-gray-500">{{ tournament.start_date.strftime('%b %-d') }} - {{ tournament.end_date.strftime('%b %-d, %Y') }}</div>
+                                <div class="text-sm text-gray-500">{{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}</div>
                                 <div class="text-xs mt-1">
                                     <span class="px-2 py-1 bg-{{ tournament.tier.value|lower }}-100 text-{{ tournament.tier.value|lower }}-800 rounded">
                                         {{ tournament.tier.value }}

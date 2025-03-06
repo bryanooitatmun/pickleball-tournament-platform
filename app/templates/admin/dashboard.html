@@ -103,7 +103,7 @@
                             </div>
                         </div>
                         <div class="text-xs text-gray-500">
-                            {{ user.created_at.strftime('%b %-d, %Y') }}
+                            {{ user.created_at.strftime('%b %d, %Y') }}
                         </div>
                     </div>
                 {% else %}
@@ -138,7 +138,7 @@
                                 <a href="{{ url_for('admin.tournament_detail', id=tournament.id) }}" class="font-medium hover:text-blue-600">
                                     {{ tournament.name }}
                                 </a>
-                                <div class="text-sm text-gray-600">{{ tournament.start_date.strftime('%b %-d') }}-{{ tournament.end_date.strftime('%-d, %Y') }}</div>
+                                <div class="text-sm text-gray-600">{{ tournament.start_date.strftime('%b %d') }}-{{ tournament.end_date.strftime('%d, %Y') }}</div>
                                 <div class="text-xs text-gray-500">{{ tournament.location }}</div>
                                 
                                 <div class="mt-2">

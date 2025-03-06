@@ -15,7 +15,7 @@
     </div>
     
     <h1 class="text-3xl font-bold mb-2">{{ tournament.name }}</h1>
-    <div class="text-gray-600 mb-6">{{ tournament.start_date.strftime('%B %-d') }}-{{ tournament.end_date.strftime('%-d, %Y') }} • {{ tournament.location }}</div>
+    <div class="text-gray-600 mb-6">{{ tournament.start_date.strftime('%B %d') }}-{{ tournament.end_date.strftime('%d, %Y') }} • {{ tournament.location }}</div>
     
     <!-- Category Selection Tabs -->
     <div class="flex border-b border-gray-200 mb-6">

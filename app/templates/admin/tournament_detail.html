@@ -46,12 +46,12 @@
                 
                 <div>
                     <span class="text-gray-500 text-sm">Dates</span>
-                    <div class="font-medium">{{ tournament.start_date.strftime('%B %-d') }}-{{ tournament.end_date.strftime('%-d, %Y') }}</div>
+                    <div class="font-medium">{{ tournament.start_date.strftime('%B %d') }}-{{ tournament.end_date.strftime('%d, %Y') }}</div>
                 </div>
                 
                 <div>
                     <span class="text-gray-500 text-sm">Registration Deadline</span>
-                    <div class="font-medium">{{ tournament.registration_deadline.strftime('%B %-d, %Y') }}</div>
+                    <div class="font-medium">{{ tournament.registration_deadline.strftime('%B %d, %Y') }}</div>
                 </div>
                 
                 <div>
@@ -91,7 +91,7 @@
                 
                 <div>
                     <span class="text-gray-500 text-sm">Created</span>
-                    <div class="font-medium">{{ tournament.created_at.strftime('%B %-d, %Y') }}</div>
+                    <div class="font-medium">{{ tournament.created_at.strftime('%B %d, %Y') }}</div>
                 </div>
             </div>
             

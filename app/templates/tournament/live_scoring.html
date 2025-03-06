@@ -15,7 +15,7 @@
     </div>
     
     <h1 class="text-3xl font-bold mb-2">{{ tournament.name }} - Live Scoring</h1>
-    <div class="text-gray-600 mb-2">{{ tournament.start_date.strftime('%B %-d') }}-{{ tournament.end_date.strftime('%-d, %Y') }} • {{ tournament.location }}</div>
+    <div class="text-gray-600 mb-2">{{ tournament.start_date.strftime('%B %d') }}-{{ tournament.end_date.strftime('%d, %Y') }} • {{ tournament.location }}</div>
     <div class="flex items-center text-sm text-green-600">
         <div class="w-2 h-2 bg-green-600 rounded-full mr-2 animate-pulse"></div>
         <span>Live updates every 30 seconds</span>

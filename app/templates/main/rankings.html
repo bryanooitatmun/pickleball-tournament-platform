@@ -162,7 +162,7 @@
                         <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="font-medium hover:text-blue-600">
                             {{ tournament.name }}
                         </a>
-                        <div class="text-sm text-gray-600">{{ tournament.start_date.strftime('%b %-d') }} - {{ tournament.end_date.strftime('%b %-d') }}</div>
+                        <div class="text-sm text-gray-600">{{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d') }}</div>
                         
                         <div class="mt-1">
                             <span class="inline-block px-2 py-1 text-xs rounded-full bg-{{ tournament.tier.value|lower }}-100 text-{{ tournament.tier.value|lower }}-800">

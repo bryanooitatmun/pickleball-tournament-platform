@@ -223,12 +223,12 @@
                                                 <div class="text-sm font-medium text-gray-900">Set {{ score.set_number }}</div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="score-box {% if score.player1_score > score.player2_score %}winning-score{% else %}losing-score{% endif %} inline-block">
+                                                <div class="p-1 text-center score-box {% if score.player1_score > score.player2_score %}winning-score{% else %}losing-score{% endif %} inline-block">
                                                     {{ score.player1_score }}
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="score-box {% if score.player2_score > score.player1_score %}winning-score{% else %}losing-score{% endif %} inline-block">
+                                                <div class="p-1 text-center score-box {% if score.player2_score > score.player1_score %}winning-score{% else %}losing-score{% endif %} inline-block">
                                                     {{ score.player2_score }}
                                                 </div>
                                             </td>

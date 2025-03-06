@@ -1,9 +1,4 @@
-{
-  `path`: `app/templates/tournament/results.html`,
-  `repo`: `pickleball-tournament-platform`,
-  `owner`: `bryanooitatmun`,
-  `branch`: `main`,
-  `content`: `{% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}{{ tournament.name }} - Results{% endblock %}
 
@@ -59,11 +54,16 @@
             </div>
             
             <!-- Category selector tabs -->
-            <div class="bg-white border-b px-6 pt-4">
-                <div class="flex overflow-x-auto">
+            <div class="bg-white border-b px-6 pt-4 pb-2">
+                <div class="flex gap-2 overflow-x-auto">
                     {% for category in categories %}
                         <a href="{{ url_for('tournament.results', id=tournament.id, category=category.id) }}" 
-                           class="tab whitespace-nowrap {% if category.id == selected_category.id %}tab-active{% else %}tab-inactive{% endif %}">
+                        class="tab py-2 px-4 rounded-t-lg font-medium whitespace-nowrap 
+                                {% if category.id == selected_category.id %}
+                                    tab-active bg-blue-800 text-white
+                                {% else %}
+                                    tab-inactive bg-white text-gray-700 border border-gray-200 hover:bg-gray-50
+                                {% endif %}">
                             {{ category.category_type.value }}
                         </a>
                     {% endfor %}
@@ -82,23 +82,65 @@
                             <div class="md:order-1 flex flex-col items-center justify-end">
                                 {% if winners.second %}
                                     <div class="relative">
-                                        {% if winners.second.profile_image %}
-                                            <img src="{{ url_for('static', filename=winners.second.profile_image) }}" alt="{{ winners.second.full_name }}" class="h-24 w-24 md:h-32 md:w-32 rounded-full object-cover border-4 border-gray-300">
+                                        {% if winners.second is iterable and winners.second is not string %}
+                                            <!-- Doubles team -->
+                                            <div class="relative h-24 w-24 md:h-32 md:w-32">
+                                                {% if winners.second[0].profile_image %}
+                                                    <img src="{{ url_for('static', filename=winners.second[0].profile_image) }}" 
+                                                         alt="{{ winners.second[0].full_name }}" 
+                                                         class="absolute top-0 left-0 h-16 w-16 md:h-24 md:w-24 rounded-full object-cover border-4 border-gray-300">
+                                                {% else %}
+                                                    <div class="absolute top-0 left-0 h-16 w-16 md:h-24 md:w-24 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-300">
+                                                        <span class="text-gray-500 text-lg font-bold">{{ winners.second[0].full_name[:1] }}</span>
+                                                    </div>
+                                                {% endif %}
+                                                
+                                                {% if winners.second[1].profile_image %}
+                                                    <img src="{{ url_for('static', filename=winners.second[1].profile_image) }}" 
+                                                         alt="{{ winners.second[1].full_name }}" 
+                                                         class="absolute bottom-0 right-0 h-16 w-16 md:h-24 md:w-24 rounded-full object-cover border-4 border-gray-300">
+                                                {% else %}
+                                                    <div class="absolute bottom-0 right-0 h-16 w-16 md:h-24 md:w-24 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-300">
+                                                        <span class="text-gray-500 text-lg font-bold">{{ winners.second[1].full_name[:1] }}</span>
+                                                    </div>
+                                                {% endif %}
+                                                <div class="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold shadow-md">2</div>
+                                            </div>
+                                            <div class="mt-4 text-center">
+                                                <div>
+                                                    <a href="{{ url_for('main.player_detail', id=winners.second[0].id) }}" class="font-medium text-gray-900 hover:text-blue-600">
+                                                        {{ winners.second[0].full_name }}
+                                                    </a>
+                                                </div>
+                                                <div>
+                                                    <a href="{{ url_for('main.player_detail', id=winners.second[1].id) }}" class="font-medium text-gray-900 hover:text-blue-600">
+                                                        {{ winners.second[1].full_name }}
+                                                    </a>
+                                                </div>
+                                                <p class="text-sm text-gray-500">{{ winners.second[0].country }}</p>
+                                            </div>
                                         {% else %}
-                                            <div class="h-24 w-24 md:h-32 md:w-32 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-300">
-                                                <span class="text-gray-500 text-xl font-bold">{{ winners.second.full_name[:2] }}</span>
+                                            <!-- Singles player -->
+                                            <div class="relative">
+                                                {% if winners.second.profile_image %}
+                                                    <img src="{{ url_for('static', filename=winners.second.profile_image) }}" alt="{{ winners.second.full_name }}" class="h-24 w-24 md:h-32 md:w-32 rounded-full object-cover border-4 border-gray-300">
+                                                {% else %}
+                                                    <div class="h-24 w-24 md:h-32 md:w-32 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-300">
+                                                        <span class="text-gray-500 text-xl font-bold">{{ winners.second.full_name[:2] }}</span>
+                                                    </div>
+                                                {% endif %}
+                                                <div class="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold shadow-md">2</div>
+                                            </div>
+                                            <div class="mt-4 text-center">
+                                                <a href="{{ url_for('main.player_detail', id=winners.second.id) }}" class="font-medium text-gray-900 hover:text-blue-600">
+                                                    {{ winners.second.full_name }}
+                                                </a>
+                                                <p class="text-sm text-gray-500">{{ winners.second.country }}</p>
                                             </div>
                                         {% endif %}
-                                        <div class="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold shadow-md">2</div>
-                                    </div>
-                                    <div class="mt-4 text-center">
-                                        <a href="{{ url_for('main.player_detail', id=winners.second.id) }}" class="font-medium text-gray-900 hover:text-blue-600">
-                                            {{ winners.second.full_name }}
-                                        </a>
-                                        <p class="text-sm text-gray-500">{{ winners.second.country }}</p>
-                                    </div>
-                                    <div class="h-16 md:h-24 w-full bg-gray-300 mt-4 flex items-center justify-center rounded-t-lg">
-                                        <span class="text-2xl font-bold text-gray-600">2nd</span>
+                                        <div class="h-16 md:h-24 w-full bg-gray-300 mt-4 flex items-center justify-center rounded-t-lg">
+                                            <span class="text-2xl font-bold text-gray-600">2nd</span>
+                                        </div>
                                     </div>
                                 {% else %}
                                     <div class="h-24 w-24 md:h-32 md:w-32 rounded-full bg-gray-100 flex items-center justify-center border-4 border-gray-200">
@@ -116,22 +158,64 @@
                             <!-- First place (middle) -->
                             <div class="md:order-2 flex flex-col items-center">
                                 {% if winners.first %}
-                                    <div class="relative mt-0 md:-mt-8">
-                                        {% if winners.first.profile_image %}
-                                            <img src="{{ url_for('static', filename=winners.first.profile_image) }}" alt="{{ winners.first.full_name }}" class="h-28 w-28 md:h-40 md:w-40 rounded-full object-cover border-4 border-yellow-400">
-                                        {% else %}
-                                            <div class="h-28 w-28 md:h-40 md:w-40 rounded-full bg-yellow-50 flex items-center justify-center border-4 border-yellow-400">
-                                                <span class="text-yellow-500 text-2xl font-bold">{{ winners.first.full_name[:2] }}</span>
+                                    {% if winners.first is iterable and winners.first is not string %}
+                                        <!-- Doubles team -->
+                                        <div class="relative mt-0 md:-mt-8">
+                                            <div class="relative h-28 w-28 md:h-40 md:w-40">
+                                                {% if winners.first[0].profile_image %}
+                                                    <img src="{{ url_for('static', filename=winners.first[0].profile_image) }}" 
+                                                         alt="{{ winners.first[0].full_name }}" 
+                                                         class="absolute top-0 left-0 h-20 w-20 md:h-28 md:w-28 rounded-full object-cover border-4 border-yellow-400">
+                                                {% else %}
+                                                    <div class="absolute top-0 left-0 h-20 w-20 md:h-28 md:w-28 rounded-full bg-yellow-50 flex items-center justify-center border-4 border-yellow-400">
+                                                        <span class="text-yellow-500 text-lg font-bold">{{ winners.first[0].full_name[:1] }}</span>
+                                                    </div>
+                                                {% endif %}
+                                                
+                                                {% if winners.first[1].profile_image %}
+                                                    <img src="{{ url_for('static', filename=winners.first[1].profile_image) }}" 
+                                                         alt="{{ winners.first[1].full_name }}" 
+                                                         class="absolute bottom-0 right-0 h-20 w-20 md:h-28 md:w-28 rounded-full object-cover border-4 border-yellow-400">
+                                                {% else %}
+                                                    <div class="absolute bottom-0 right-0 h-20 w-20 md:h-28 md:w-28 rounded-full bg-yellow-50 flex items-center justify-center border-4 border-yellow-400">
+                                                        <span class="text-yellow-500 text-lg font-bold">{{ winners.first[1].full_name[:1] }}</span>
+                                                    </div>
+                                                {% endif %}
+                                                <div class="absolute -bottom-2 -right-2 w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center text-white font-bold text-xl shadow-md">1</div>
                                             </div>
-                                        {% endif %}
-                                        <div class="absolute -bottom-2 -right-2 w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center text-white font-bold text-xl shadow-md">1</div>
-                                    </div>
-                                    <div class="mt-4 text-center">
-                                        <a href="{{ url_for('main.player_detail', id=winners.first.id) }}" class="font-medium text-gray-900 hover:text-blue-600 text-lg">
-                                            {{ winners.first.full_name }}
-                                        </a>
-                                        <p class="text-sm text-gray-500">{{ winners.first.country }}</p>
-                                    </div>
+                                        </div>
+                                        <div class="mt-4 text-center">
+                                            <div>
+                                                <a href="{{ url_for('main.player_detail', id=winners.first[0].id) }}" class="font-medium text-gray-900 hover:text-blue-600 text-lg">
+                                                    {{ winners.first[0].full_name }}
+                                                </a>
+                                            </div>
+                                            <div>
+                                                <a href="{{ url_for('main.player_detail', id=winners.first[1].id) }}" class="font-medium text-gray-900 hover:text-blue-600 text-lg">
+                                                    {{ winners.first[1].full_name }}
+                                                </a>
+                                            </div>
+                                            <p class="text-sm text-gray-500">{{ winners.first[0].country }}</p>
+                                        </div>
+                                    {% else %}
+                                        <!-- Singles player -->
+                                        <div class="relative mt-0 md:-mt-8">
+                                            {% if winners.first.profile_image %}
+                                                <img src="{{ url_for('static', filename=winners.first.profile_image) }}" alt="{{ winners.first.full_name }}" class="h-28 w-28 md:h-40 md:w-40 rounded-full object-cover border-4 border-yellow-400">
+                                            {% else %}
+                                                <div class="h-28 w-28 md:h-40 md:w-40 rounded-full bg-yellow-50 flex items-center justify-center border-4 border-yellow-400">
+                                                    <span class="text-yellow-500 text-2xl font-bold">{{ winners.first.full_name[:2] }}</span>
+                                                </div>
+                                            {% endif %}
+                                            <div class="absolute -bottom-2 -right-2 w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center text-white font-bold text-xl shadow-md">1</div>
+                                        </div>
+                                        <div class="mt-4 text-center">
+                                            <a href="{{ url_for('main.player_detail', id=winners.first.id) }}" class="font-medium text-gray-900 hover:text-blue-600 text-lg">
+                                                {{ winners.first.full_name }}
+                                            </a>
+                                            <p class="text-sm text-gray-500">{{ winners.first.country }}</p>
+                                        </div>
+                                    {% endif %}
                                     <div class="h-24 md:h-32 w-full bg-yellow-400 mt-4 flex items-center justify-center rounded-t-lg">
                                         <div class="flex flex-col items-center">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-700" viewBox="0 0 20 20" fill="currentColor">
@@ -156,22 +240,64 @@
                             <!-- Third place (right) -->
                             <div class="md:order-3 flex flex-col items-center justify-end">
                                 {% if winners.third %}
-                                    <div class="relative">
-                                        {% if winners.third.profile_image %}
-                                            <img src="{{ url_for('static', filename=winners.third.profile_image) }}" alt="{{ winners.third.full_name }}" class="h-24 w-24 md:h-32 md:w-32 rounded-full object-cover border-4 border-amber-700">
-                                        {% else %}
-                                            <div class="h-24 w-24 md:h-32 md:w-32 rounded-full bg-amber-50 flex items-center justify-center border-4 border-amber-700">
-                                                <span class="text-amber-700 text-xl font-bold">{{ winners.third.full_name[:2] }}</span>
+                                    {% if winners.third is iterable and winners.third is not string %}
+                                        <!-- Doubles team -->
+                                        <div class="relative">
+                                            <div class="relative h-24 w-24 md:h-32 md:w-32">
+                                                {% if winners.third[0].profile_image %}
+                                                    <img src="{{ url_for('static', filename=winners.third[0].profile_image) }}" 
+                                                         alt="{{ winners.third[0].full_name }}" 
+                                                         class="absolute top-0 left-0 h-16 w-16 md:h-24 md:w-24 rounded-full object-cover border-4 border-amber-700">
+                                                {% else %}
+                                                    <div class="absolute top-0 left-0 h-16 w-16 md:h-24 md:w-24 rounded-full bg-amber-50 flex items-center justify-center border-4 border-amber-700">
+                                                        <span class="text-amber-700 text-lg font-bold">{{ winners.third[0].full_name[:1] }}</span>
+                                                    </div>
+                                                {% endif %}
+                                                
+                                                {% if winners.third[1].profile_image %}
+                                                    <img src="{{ url_for('static', filename=winners.third[1].profile_image) }}" 
+                                                         alt="{{ winners.third[1].full_name }}" 
+                                                         class="absolute bottom-0 right-0 h-16 w-16 md:h-24 md:w-24 rounded-full object-cover border-4 border-amber-700">
+                                                {% else %}
+                                                    <div class="absolute bottom-0 right-0 h-16 w-16 md:h-24 md:w-24 rounded-full bg-amber-50 flex items-center justify-center border-4 border-amber-700">
+                                                        <span class="text-amber-700 text-lg font-bold">{{ winners.third[1].full_name[:1] }}</span>
+                                                    </div>
+                                                {% endif %}
+                                                <div class="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-amber-700 flex items-center justify-center text-white font-bold shadow-md">3</div>
                                             </div>
-                                        {% endif %}
-                                        <div class="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-amber-700 flex items-center justify-center text-white font-bold shadow-md">3</div>
-                                    </div>
-                                    <div class="mt-4 text-center">
-                                        <a href="{{ url_for('main.player_detail', id=winners.third.id) }}" class="font-medium text-gray-900 hover:text-blue-600">
-                                            {{ winners.third.full_name }}
-                                        </a>
-                                        <p class="text-sm text-gray-500">{{ winners.third.country }}</p>
-                                    </div>
+                                            <div class="mt-4 text-center">
+                                                <div>
+                                                    <a href="{{ url_for('main.player_detail', id=winners.third[0].id) }}" class="font-medium text-gray-900 hover:text-blue-600">
+                                                        {{ winners.third[0].full_name }}
+                                                    </a>
+                                                </div>
+                                                <div>
+                                                    <a href="{{ url_for('main.player_detail', id=winners.third[1].id) }}" class="font-medium text-gray-900 hover:text-blue-600">
+                                                        {{ winners.third[1].full_name }}
+                                                    </a>
+                                                </div>
+                                                <p class="text-sm text-gray-500">{{ winners.third[0].country }}</p>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <!-- Singles player -->
+                                        <div class="relative">
+                                            {% if winners.third.profile_image %}
+                                                <img src="{{ url_for('static', filename=winners.third.profile_image) }}" alt="{{ winners.third.full_name }}" class="h-24 w-24 md:h-32 md:w-32 rounded-full object-cover border-4 border-amber-700">
+                                            {% else %}
+                                                <div class="h-24 w-24 md:h-32 md:w-32 rounded-full bg-amber-50 flex items-center justify-center border-4 border-amber-700">
+                                                    <span class="text-amber-700 text-xl font-bold">{{ winners.third.full_name[:2] }}</span>
+                                                </div>
+                                            {% endif %}
+                                            <div class="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-amber-700 flex items-center justify-center text-white font-bold shadow-md">3</div>
+                                        </div>
+                                        <div class="mt-4 text-center">
+                                            <a href="{{ url_for('main.player_detail', id=winners.third.id) }}" class="font-medium text-gray-900 hover:text-blue-600">
+                                                {{ winners.third.full_name }}
+                                            </a>
+                                            <p class="text-sm text-gray-500">{{ winners.third.country }}</p>
+                                        </div>
+                                    {% endif %}
                                     <div class="h-12 md:h-16 w-full bg-amber-700 mt-4 flex items-center justify-center rounded-t-lg">
                                         <span class="text-xl font-bold text-white">3rd</span>
                                     </div>
@@ -227,34 +353,50 @@
                                             </td>
                                             <td class="px-6 py-4">
                                                 <div class="text-sm text-gray-900">
-                                                    {% if match.player1 %}
-                                                        <a href="{{ url_for('main.player_detail', id=match.player1.id) }}" class="hover:text-blue-600">
-                                                            {{ match.player1.full_name }}
-                                                        </a>
-                                                        {% if match.player1_partner %}
-                                                            / 
-                                                            <a href="{{ url_for('main.player_detail', id=match.player1_partner.id) }}" class="hover:text-blue-600">
-                                                                {{ match.player1_partner.full_name }}
+                                                    {% if match.is_doubles %}
+                                                        {% if match.team1 %}
+                                                            <a href="{{ url_for('main.player_detail', id=match.team1.player1_id) }}" class="hover:text-blue-600">
+                                                                {{ match.team1.player1.full_name }}
                                                             </a>
+                                                            / 
+                                                            <a href="{{ url_for('main.player_detail', id=match.team1.player2_id) }}" class="hover:text-blue-600">
+                                                                {{ match.team1.player2.full_name }}
+                                                            </a>
+                                                        {% else %}
+                                                            TBD
                                                         {% endif %}
                                                     {% else %}
-                                                        TBD
+                                                        {% if match.player1 %}
+                                                            <a href="{{ url_for('main.player_detail', id=match.player1.id) }}" class="hover:text-blue-600">
+                                                                {{ match.player1.full_name }}
+                                                            </a>
+                                                        {% else %}
+                                                            TBD
+                                                        {% endif %}
                                                     {% endif %}
                                                 </div>
                                                 <div class="text-sm text-gray-500 mt-1">vs</div>
                                                 <div class="text-sm text-gray-900">
-                                                    {% if match.player2 %}
-                                                        <a href="{{ url_for('main.player_detail', id=match.player2.id) }}" class="hover:text-blue-600">
-                                                            {{ match.player2.full_name }}
-                                                        </a>
-                                                        {% if match.player2_partner %}
-                                                            / 
-                                                            <a href="{{ url_for('main.player_detail', id=match.player2_partner.id) }}" class="hover:text-blue-600">
-                                                                {{ match.player2_partner.full_name }}
+                                                    {% if match.is_doubles %}
+                                                        {% if match.team2 %}
+                                                            <a href="{{ url_for('main.player_detail', id=match.team2.player1_id) }}" class="hover:text-blue-600">
+                                                                {{ match.team2.player1.full_name }}
                                                             </a>
+                                                            / 
+                                                            <a href="{{ url_for('main.player_detail', id=match.team2.player2_id) }}" class="hover:text-blue-600">
+                                                                {{ match.team2.player2.full_name }}
+                                                            </a>
+                                                        {% else %}
+                                                            TBD
                                                         {% endif %}
                                                     {% else %}
-                                                        TBD
+                                                        {% if match.player2 %}
+                                                            <a href="{{ url_for('main.player_detail', id=match.player2.id) }}" class="hover:text-blue-600">
+                                                                {{ match.player2.full_name }}
+                                                            </a>
+                                                        {% else %}
+                                                            TBD
+                                                        {% endif %}
                                                     {% endif %}
                                                 </div>
                                             </td>
@@ -267,12 +409,28 @@
                                                 {% endfor %}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                {% if match.winner %}
-                                                    <a href="{{ url_for('main.player_detail', id=match.winner.id) }}" class="text-sm font-medium text-green-600 hover:text-green-800">
-                                                        {{ match.winner.full_name }}
-                                                    </a>
+                                                {% if match.is_doubles %}
+                                                    {% if match.winning_team %}
+                                                        <div class="text-sm font-medium text-green-600">
+                                                            <a href="{{ url_for('main.player_detail', id=match.winning_team.player1_id) }}" class="hover:text-green-800">
+                                                                {{ match.winning_team.player1.full_name }}
+                                                            </a>
+                                                            /
+                                                            <a href="{{ url_for('main.player_detail', id=match.winning_team.player2_id) }}" class="hover:text-green-800">
+                                                                {{ match.winning_team.player2.full_name }}
+                                                            </a>
+                                                        </div>
+                                                    {% else %}
+                                                        <span class="text-sm text-gray-500">N/A</span>
+                                                    {% endif %}
                                                 {% else %}
-                                                    <span class="text-sm text-gray-500">N/A</span>
+                                                    {% if match.winning_player %}
+                                                        <a href="{{ url_for('main.player_detail', id=match.winning_player.id) }}" class="text-sm font-medium text-green-600 hover:text-green-800">
+                                                            {{ match.winning_player.full_name }}
+                                                        </a>
+                                                    {% else %}
+                                                        <span class="text-sm text-gray-500">N/A</span>
+                                                    {% endif %}
                                                 {% endif %}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

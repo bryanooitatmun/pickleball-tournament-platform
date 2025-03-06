@@ -41,7 +41,7 @@
         <h2 class="text-xl font-bold">Registration Status</h2>
         
         <div class="text-sm text-gray-600">
-            <span class="font-medium">Deadline:</span> {{ tournament.registration_deadline.strftime('%B %-d, %Y') }}
+            <span class="font-medium">Deadline:</span> {{ tournament.registration_deadline.strftime('%B %d, %Y') }}
             {% if tournament.is_registration_open() %}
                 <span class="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Registration Open</span>
             {% else %}
@@ -182,7 +182,7 @@
                             </td>
                         {% endif %}
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ registration.registration_date.strftime('%b %-d, %Y') }}
+                            {{ registration.registration_date.strftime('%b %d, %Y') }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <form method="POST" action="{{ url_for('organizer.update_seed', id=tournament.id, category_id=category.id, registration_id=registration.id) }}" class="flex items-center">

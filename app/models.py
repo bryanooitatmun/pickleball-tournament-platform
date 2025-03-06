@@ -53,7 +53,7 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
-    player_profile = db.relationship('PlayerProfile', backref='user', uselist=False, lazy='dynamic')
+    player_profile = db.relationship('PlayerProfile', backref='user', uselist=False)
     tournaments_organized = db.relationship('Tournament', backref='organizer', lazy='dynamic')
     
     def __repr__(self):
@@ -105,7 +105,15 @@ class PlayerProfile(db.Model):
     mixed_doubles_points = db.Column(db.Integer, default=0)
     
     # Relationships
-    registrations = db.relationship('Registration', backref='player', lazy='dynamic')
+    registrations = db.relationship('Registration', 
+                                    backref='player', 
+                                    lazy='dynamic',
+                                    foreign_keys='Registration.player_id')
+
+    partner_registrations = db.relationship('Registration',
+                                            backref='partner',
+                                            lazy='dynamic',
+                                            foreign_keys='Registration.partner_id')
     
     def __repr__(self):
         return f'<PlayerProfile {self.full_name}>'
@@ -143,6 +151,64 @@ class Tournament(db.Model):
     
     # Relationships
     categories = db.relationship('TournamentCategory', backref='tournament', lazy='dynamic')
+
+    def is_completed(self):
+        return self.status == TournamentStatus.COMPLETED
+
+    @property
+    def winners_by_category(self):
+        """Return a dictionary of winners for each category in this tournament."""
+        if self.status != TournamentStatus.COMPLETED:
+            return {}
+        
+        result = {}
+        for category in self.categories:
+            category_results = {}
+            
+            # Find the final match (round 1) for this category
+            final_match = Match.query.filter_by(
+                category_id=category.id, 
+                round=1
+            ).first()
+            
+            if final_match:
+                is_doubles = category.category_type in [
+                    CategoryType.MENS_DOUBLES, 
+                    CategoryType.WOMENS_DOUBLES, 
+                    CategoryType.MIXED_DOUBLES
+                ]
+                
+                # Get winners (1st place)
+                if is_doubles:
+                    if final_match.winning_team:
+                        # For doubles, we return a list of two players
+                        category_results[1] = [
+                            final_match.winning_team.player1,
+                            final_match.winning_team.player2
+                        ]
+                else:
+                    if final_match.winning_player:
+                        category_results[1] = final_match.winning_player
+                
+                # Get runners-up (2nd place)
+                if is_doubles:
+                    if final_match.losing_team:
+                        category_results[2] = [
+                            final_match.losing_team.player1,
+                            final_match.losing_team.player2
+                        ]
+                else:
+                    if final_match.losing_player:
+                        category_results[2] = final_match.losing_player
+                
+                # Handle semifinalists (3rd/4th place)
+                # ... similar logic as above, adapted for doubles teams
+            
+            # Only add categories that have winners
+            if category_results:
+                result[category.category_type.value] = category_results
+        
+        return result
     
     def __repr__(self):
         return f'<Tournament {self.name}>'
@@ -159,7 +225,7 @@ class TournamentCategory(db.Model):
     
     # Relationships
     registrations = db.relationship('Registration', backref='category', lazy='dynamic')
-    matches = db.relationship('Match', backref='category', lazy='dynamic')
+    #matches = db.relationship('Match', backref='category', lazy='dynamic')
     
     def __repr__(self):
         return f'<TournamentCategory {self.category_type.value} for Tournament {self.tournament_id}>'
@@ -182,8 +248,35 @@ class Registration(db.Model):
     payment_date = db.Column(db.DateTime, nullable=True)
     payment_reference = db.Column(db.String(100), nullable=True)
 
+    def create_team(self, partner_registration):
+        """Create a team from this registration and a partner registration"""
+        if not partner_registration:
+            return None
+            
+        team = Team(
+            player1_id=self.player_id,
+            player2_id=partner_registration.player_id,
+            category_id=self.category_id
+        )
+        db.session.add(team)
+        return team
+        
     def __repr__(self):
         return f'<Registration {self.player_id} for Category {self.category_id}>'
+
+class Team(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    player1_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=False)
+    player2_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('tournament_category.id'))
+    
+    # Relationships
+    player1 = db.relationship('PlayerProfile', foreign_keys=[player1_id])
+    player2 = db.relationship('PlayerProfile', foreign_keys=[player2_id])
+    category = db.relationship('TournamentCategory', backref='teams')
+    
+    def __repr__(self):
+        return f'<Team {self.player1_id}/{self.player2_id}>'
 
 class Match(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -191,28 +284,114 @@ class Match(db.Model):
     round = db.Column(db.Integer)  # Round number in the tournament
     court = db.Column(db.String(50), nullable=True)
     scheduled_time = db.Column(db.DateTime, nullable=True)
+    
+    # For singles matches
     player1_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=True)
     player2_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=True)
-    player1_partner_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=True)  # For doubles
-    player2_partner_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=True)  # For doubles
-    winner_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=True)
-    loser_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=True)
+    
+    # For doubles matches
+    team1_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=True)
+    team2_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=True)
+    
+    # Winners can be either individual players (singles) or teams (doubles)
+    winning_player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=True)
+    winning_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=True)
+    
+    # Losers can be either individual players (singles) or teams (doubles)
+    losing_player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=True)
+    losing_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=True)
+    
     completed = db.Column(db.Boolean, default=False)
     match_order = db.Column(db.Integer)  # Order within the round (for bracket placement)
     next_match_id = db.Column(db.Integer, db.ForeignKey('match.id'), nullable=True)
     
     # Relationships
-    scores = db.relationship('MatchScore', backref='match', lazy='dynamic')
+    category = db.relationship('TournamentCategory', backref='matches')
     player1 = db.relationship('PlayerProfile', foreign_keys=[player1_id])
     player2 = db.relationship('PlayerProfile', foreign_keys=[player2_id])
-    player1_partner = db.relationship('PlayerProfile', foreign_keys=[player1_partner_id])
-    player2_partner = db.relationship('PlayerProfile', foreign_keys=[player2_partner_id])
-    winner = db.relationship('PlayerProfile', foreign_keys=[winner_id])
-    loser = db.relationship('PlayerProfile', foreign_keys=[loser_id])
+    team1 = db.relationship('Team', foreign_keys=[team1_id])
+    team2 = db.relationship('Team', foreign_keys=[team2_id])
+    winning_player = db.relationship('PlayerProfile', foreign_keys=[winning_player_id])
+    winning_team = db.relationship('Team', foreign_keys=[winning_team_id])
+    losing_player = db.relationship('PlayerProfile', foreign_keys=[losing_player_id])
+    losing_team = db.relationship('Team', foreign_keys=[losing_team_id])
     next_match = db.relationship('Match', remote_side=[id], backref='previous_matches')
+    scores = db.relationship('MatchScore', backref='match', lazy='dynamic')
     
     def __repr__(self):
         return f'<Match {self.id} in Round {self.round}>'
+    
+    @property
+    def is_doubles(self):
+        """Check if this is a doubles match based on category type"""
+        if not self.category:
+            return False
+        return self.category.category_type in [
+            CategoryType.MENS_DOUBLES, 
+            CategoryType.WOMENS_DOUBLES, 
+            CategoryType.MIXED_DOUBLES
+        ]
+    
+    @property
+    def winner_players(self):
+        """Get list of winning players (1 for singles, 2 for doubles)"""
+        if self.is_doubles and self.winning_team:
+            return [self.winning_team.player1, self.winning_team.player2]
+        elif self.winning_player:
+            return [self.winning_player]
+        return []
+    
+    @property
+    def loser_players(self):
+        """Get list of losing players (1 for singles, 2 for doubles)"""
+        if self.is_doubles and self.losing_team:
+            return [self.losing_team.player1, self.losing_team.player2]
+        elif self.losing_player:
+            return [self.losing_player]
+        return []
+        
+    def set_winner(self, is_player1_winner):
+        """Set the winner of this match (simplifies logic for controllers)"""
+        if self.is_doubles:
+            if is_player1_winner and self.team1:
+                self.winning_team_id = self.team1_id
+                self.losing_team_id = self.team2_id
+            elif not is_player1_winner and self.team2:
+                self.winning_team_id = self.team2_id
+                self.losing_team_id = self.team1_id
+        else:
+            if is_player1_winner and self.player1_id:
+                self.winning_player_id = self.player1_id
+                self.losing_player_id = self.player2_id
+            elif not is_player1_winner and self.player2_id:
+                self.winning_player_id = self.player2_id
+                self.losing_player_id = self.player1_id
+    
+    def advance_winner_to_next_match(self):
+        """Advance winner to the next match in the bracket"""
+        if not self.completed or not self.next_match_id:
+            return
+            
+        next_match = Match.query.get(self.next_match_id)
+        if not next_match:
+            return
+            
+        # Determine if winner goes to player1/team1 or player2/team2 position
+        is_player1_position = (self.match_order % 2 == 0)
+        
+        if self.is_doubles:
+            if self.winning_team_id:
+                if is_player1_position:
+                    next_match.team1_id = self.winning_team_id
+                else:
+                    next_match.team2_id = self.winning_team_id
+        else:
+            if self.winning_player_id:
+                if is_player1_position:
+                    next_match.player1_id = self.winning_player_id
+                else:
+                    next_match.player2_id = self.winning_player_id
+
 
 class MatchScore(db.Model):
     id = db.Column(db.Integer, primary_key=True)

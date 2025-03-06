@@ -5,8 +5,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'hard-to-guess-string'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'app.db')
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Upload configurations
@@ -36,11 +35,11 @@ class Config:
     ]
     
     TOURNAMENT_CATEGORIES = [
-        "Men's Singles",
-        "Women's Singles",
-        "Men's Doubles",
-        "Women's Doubles",
-        "Mixed Doubles"
+        {'id': 'mens_singles', 'name': "Men's Singles"},
+        {'id': 'womens_singles', 'name': "Women's Singles"},
+        {'id': 'mens_doubles', 'name': "Men's Doubles"},
+        {'id': 'womens_doubles', 'name': "Women's Doubles"},
+        {'id': 'mixed_doubles', 'name': "Mixed Doubles"}
     ]
     
     # Points distribution by placement (% of total points)

@@ -57,12 +57,12 @@
                                             {% endif %}
                                             <div>
                                                 <div class="font-medium">{{ tournament.name }}</div>
-                                                <div class="text-xs text-gray-500">Created {{ tournament.created_at.strftime('%b %-d, %Y') }}</div>
+                                                <div class="text-xs text-gray-500">Created {{ tournament.created_at.strftime('%b %d, %Y') }}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        {{ tournament.start_date.strftime('%b %-d') }} - {{ tournament.end_date.strftime('%b %-d, %Y') }}
+                                        {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
                                     </td>
                                     <td class="px-6 py-4">
                                         {{ tournament.location }}
@@ -140,12 +140,12 @@
                                             {% endif %}
                                             <div>
                                                 <div class="font-medium">{{ tournament.name }}</div>
-                                                <div class="text-xs text-gray-500">Started {{ tournament.start_date.strftime('%b %-d, %Y') }}</div>
+                                                <div class="text-xs text-gray-500">Started {{ tournament.start_date.strftime('%b %d, %Y') }}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        {{ tournament.start_date.strftime('%b %-d') }} - {{ tournament.end_date.strftime('%b %-d, %Y') }}
+                                        {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
                                     </td>
                                     <td class="px-6 py-4">
                                         {{ tournament.location }}
@@ -223,12 +223,12 @@
                                             {% endif %}
                                             <div>
                                                 <div class="font-medium">{{ tournament.name }}</div>
-                                                <div class="text-xs text-gray-500">Ended {{ tournament.end_date.strftime('%b %-d, %Y') }}</div>
+                                                <div class="text-xs text-gray-500">Ended {{ tournament.end_date.strftime('%b %d, %Y') }}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        {{ tournament.start_date.strftime('%b %-d') }} - {{ tournament.end_date.strftime('%b %-d, %Y') }}
+                                        {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
                                     </td>
                                     <td class="px-6 py-4">
                                         {{ tournament.location }}
