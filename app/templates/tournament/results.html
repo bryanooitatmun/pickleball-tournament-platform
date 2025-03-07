@@ -51,6 +51,18 @@
                         </span>
                     </div>
                 </div>
+                
+                <!-- Prize pool info -->
+                {% if tournament.prize_pool %}
+                <div class="mt-4 p-2 bg-blue-700 rounded-lg inline-block">
+                    <div class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm4.707 3.707a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L8.414 9H10a3 3 0 013 3v1a1 1 0 102 0v-1a5 5 0 00-5-5H8.414l1.293-1.293z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-yellow-400 font-bold">Total Prize Pool: ${{ "{:,.2f}".format(tournament.prize_pool) }}</span>
+                    </div>
+                </div>
+                {% endif %}
             </div>
             
             <!-- Category selector tabs -->
@@ -82,42 +94,42 @@
                             <div class="md:order-1 flex flex-col items-center justify-end">
                                 {% if winners.second %}
                                     <div class="relative">
-                                        {% if winners.second is iterable and winners.second is not string %}
+                                        {% if selected_category.is_doubles() %}
                                             <!-- Doubles team -->
                                             <div class="relative h-24 w-24 md:h-32 md:w-32">
-                                                {% if winners.second[0].profile_image %}
-                                                    <img src="{{ url_for('static', filename=winners.second[0].profile_image) }}" 
-                                                         alt="{{ winners.second[0].full_name }}" 
+                                                {% if winners.second.player1.profile_image %}
+                                                    <img src="{{ url_for('static', filename=winners.second.player1.profile_image) }}" 
+                                                         alt="{{ winners.second.player1.full_name }}" 
                                                          class="absolute top-0 left-0 h-16 w-16 md:h-24 md:w-24 rounded-full object-cover border-4 border-gray-300">
                                                 {% else %}
                                                     <div class="absolute top-0 left-0 h-16 w-16 md:h-24 md:w-24 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-300">
-                                                        <span class="text-gray-500 text-lg font-bold">{{ winners.second[0].full_name[:1] }}</span>
+                                                        <span class="text-gray-500 text-lg font-bold">{{ winners.second.player1.full_name[:1] }}</span>
                                                     </div>
                                                 {% endif %}
                                                 
-                                                {% if winners.second[1].profile_image %}
-                                                    <img src="{{ url_for('static', filename=winners.second[1].profile_image) }}" 
-                                                         alt="{{ winners.second[1].full_name }}" 
+                                                {% if winners.second.player2.profile_image %}
+                                                    <img src="{{ url_for('static', filename=winners.second.player2.profile_image) }}" 
+                                                         alt="{{ winners.second.player2.full_name }}" 
                                                          class="absolute bottom-0 right-0 h-16 w-16 md:h-24 md:w-24 rounded-full object-cover border-4 border-gray-300">
                                                 {% else %}
                                                     <div class="absolute bottom-0 right-0 h-16 w-16 md:h-24 md:w-24 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-300">
-                                                        <span class="text-gray-500 text-lg font-bold">{{ winners.second[1].full_name[:1] }}</span>
+                                                        <span class="text-gray-500 text-lg font-bold">{{ winners.second.player2.full_name[:1] }}</span>
                                                     </div>
                                                 {% endif %}
                                                 <div class="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold shadow-md">2</div>
                                             </div>
                                             <div class="mt-4 text-center">
                                                 <div>
-                                                    <a href="{{ url_for('main.player_detail', id=winners.second[0].id) }}" class="font-medium text-gray-900 hover:text-blue-600">
-                                                        {{ winners.second[0].full_name }}
+                                                    <a href="{{ url_for('main.player_detail', id=winners.second.player1.id) }}" class="font-medium text-gray-900 hover:text-blue-600">
+                                                        {{ winners.second.player1.full_name }}
                                                     </a>
                                                 </div>
                                                 <div>
-                                                    <a href="{{ url_for('main.player_detail', id=winners.second[1].id) }}" class="font-medium text-gray-900 hover:text-blue-600">
-                                                        {{ winners.second[1].full_name }}
+                                                    <a href="{{ url_for('main.player_detail', id=winners.second.player2.id) }}" class="font-medium text-gray-900 hover:text-blue-600">
+                                                        {{ winners.second.player2.full_name }}
                                                     </a>
                                                 </div>
-                                                <p class="text-sm text-gray-500">{{ winners.second[0].country }}</p>
+                                                <p class="text-sm text-gray-500">{{ winners.second.player1.country }}</p>
                                             </div>
                                         {% else %}
                                             <!-- Singles player -->
@@ -138,8 +150,26 @@
                                                 <p class="text-sm text-gray-500">{{ winners.second.country }}</p>
                                             </div>
                                         {% endif %}
-                                        <div class="h-16 md:h-24 w-full bg-gray-300 mt-4 flex items-center justify-center rounded-t-lg">
+                                        
+                                        <!-- Prize and points info -->
+                                        <div class="h-16 md:h-24 w-full bg-gray-300 mt-4 flex flex-col items-center justify-center rounded-t-lg">
                                             <span class="text-2xl font-bold text-gray-600">2nd</span>
+                                            {% set prize = 0 %}
+                                            {% set points = 0 %}
+                                            {% for p in placings %}
+                                                {% if p.place == 2 %}
+                                                    {% set prize = p.prize %}
+                                                    {% set points = p.points %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            <div class="flex text-sm text-gray-600 mt-1">
+                                                {% if prize > 0 %}
+                                                    <span class="mr-2">${{ "{:,.2f}".format(prize) }}</span>
+                                                {% endif %}
+                                                {% if points > 0 %}
+                                                    <span>{{ points }} pts</span>
+                                                {% endif %}
+                                            </div>
                                         </div>
                                     </div>
                                 {% else %}
@@ -158,27 +188,27 @@
                             <!-- First place (middle) -->
                             <div class="md:order-2 flex flex-col items-center">
                                 {% if winners.first %}
-                                    {% if winners.first is iterable and winners.first is not string %}
+                                    {% if selected_category.is_doubles() %}
                                         <!-- Doubles team -->
                                         <div class="relative mt-0 md:-mt-8">
                                             <div class="relative h-28 w-28 md:h-40 md:w-40">
-                                                {% if winners.first[0].profile_image %}
-                                                    <img src="{{ url_for('static', filename=winners.first[0].profile_image) }}" 
-                                                         alt="{{ winners.first[0].full_name }}" 
+                                                {% if winners.first.player1.profile_image %}
+                                                    <img src="{{ url_for('static', filename=winners.first.player1.profile_image) }}" 
+                                                         alt="{{ winners.first.player1.full_name }}" 
                                                          class="absolute top-0 left-0 h-20 w-20 md:h-28 md:w-28 rounded-full object-cover border-4 border-yellow-400">
                                                 {% else %}
                                                     <div class="absolute top-0 left-0 h-20 w-20 md:h-28 md:w-28 rounded-full bg-yellow-50 flex items-center justify-center border-4 border-yellow-400">
-                                                        <span class="text-yellow-500 text-lg font-bold">{{ winners.first[0].full_name[:1] }}</span>
+                                                        <span class="text-yellow-500 text-lg font-bold">{{ winners.first.player1.full_name[:1] }}</span>
                                                     </div>
                                                 {% endif %}
                                                 
-                                                {% if winners.first[1].profile_image %}
-                                                    <img src="{{ url_for('static', filename=winners.first[1].profile_image) }}" 
-                                                         alt="{{ winners.first[1].full_name }}" 
+                                                {% if winners.first.player2.profile_image %}
+                                                    <img src="{{ url_for('static', filename=winners.first.player2.profile_image) }}" 
+                                                         alt="{{ winners.first.player2.full_name }}" 
                                                          class="absolute bottom-0 right-0 h-20 w-20 md:h-28 md:w-28 rounded-full object-cover border-4 border-yellow-400">
                                                 {% else %}
                                                     <div class="absolute bottom-0 right-0 h-20 w-20 md:h-28 md:w-28 rounded-full bg-yellow-50 flex items-center justify-center border-4 border-yellow-400">
-                                                        <span class="text-yellow-500 text-lg font-bold">{{ winners.first[1].full_name[:1] }}</span>
+                                                        <span class="text-yellow-500 text-lg font-bold">{{ winners.first.player2.full_name[:1] }}</span>
                                                     </div>
                                                 {% endif %}
                                                 <div class="absolute -bottom-2 -right-2 w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center text-white font-bold text-xl shadow-md">1</div>
@@ -186,16 +216,16 @@
                                         </div>
                                         <div class="mt-4 text-center">
                                             <div>
-                                                <a href="{{ url_for('main.player_detail', id=winners.first[0].id) }}" class="font-medium text-gray-900 hover:text-blue-600 text-lg">
-                                                    {{ winners.first[0].full_name }}
+                                                <a href="{{ url_for('main.player_detail', id=winners.first.player1.id) }}" class="font-medium text-gray-900 hover:text-blue-600 text-lg">
+                                                    {{ winners.first.player1.full_name }}
                                                 </a>
                                             </div>
                                             <div>
-                                                <a href="{{ url_for('main.player_detail', id=winners.first[1].id) }}" class="font-medium text-gray-900 hover:text-blue-600 text-lg">
-                                                    {{ winners.first[1].full_name }}
+                                                <a href="{{ url_for('main.player_detail', id=winners.first.player2.id) }}" class="font-medium text-gray-900 hover:text-blue-600 text-lg">
+                                                    {{ winners.first.player2.full_name }}
                                                 </a>
                                             </div>
-                                            <p class="text-sm text-gray-500">{{ winners.first[0].country }}</p>
+                                            <p class="text-sm text-gray-500">{{ winners.first.player1.country }}</p>
                                         </div>
                                     {% else %}
                                         <!-- Singles player -->
@@ -216,12 +246,31 @@
                                             <p class="text-sm text-gray-500">{{ winners.first.country }}</p>
                                         </div>
                                     {% endif %}
-                                    <div class="h-24 md:h-32 w-full bg-yellow-400 mt-4 flex items-center justify-center rounded-t-lg">
+                                    
+                                    <!-- Prize and points info -->
+                                    <div class="h-24 md:h-32 w-full bg-yellow-400 mt-4 flex flex-col items-center justify-center rounded-t-lg">
                                         <div class="flex flex-col items-center">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-700" viewBox="0 0 20 20" fill="currentColor">
                                                 <path fill-rule="evenodd" d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" clip-rule="evenodd" />
                                             </svg>
                                             <span class="text-2xl font-bold text-yellow-700">1st</span>
+                                            
+                                            {% set prize = 0 %}
+                                            {% set points = 0 %}
+                                            {% for p in placings %}
+                                                {% if p.place == 1 %}
+                                                    {% set prize = p.prize %}
+                                                    {% set points = p.points %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            <div class="flex text-sm text-yellow-700 mt-1">
+                                                {% if prize > 0 %}
+                                                    <span class="mr-2">${{ "{:,.2f}".format(prize) }}</span>
+                                                {% endif %}
+                                                {% if points > 0 %}
+                                                    <span>{{ points }} pts</span>
+                                                {% endif %}
+                                            </div>
                                         </div>
                                     </div>
                                 {% else %}
@@ -240,43 +289,43 @@
                             <!-- Third place (right) -->
                             <div class="md:order-3 flex flex-col items-center justify-end">
                                 {% if winners.third %}
-                                    {% if winners.third is iterable and winners.third is not string %}
+                                    {% if selected_category.is_doubles() %}
                                         <!-- Doubles team -->
                                         <div class="relative">
                                             <div class="relative h-24 w-24 md:h-32 md:w-32">
-                                                {% if winners.third[0].profile_image %}
-                                                    <img src="{{ url_for('static', filename=winners.third[0].profile_image) }}" 
-                                                         alt="{{ winners.third[0].full_name }}" 
+                                                {% if winners.third.player1.profile_image %}
+                                                    <img src="{{ url_for('static', filename=winners.third.player1.profile_image) }}" 
+                                                         alt="{{ winners.third.player1.full_name }}" 
                                                          class="absolute top-0 left-0 h-16 w-16 md:h-24 md:w-24 rounded-full object-cover border-4 border-amber-700">
                                                 {% else %}
                                                     <div class="absolute top-0 left-0 h-16 w-16 md:h-24 md:w-24 rounded-full bg-amber-50 flex items-center justify-center border-4 border-amber-700">
-                                                        <span class="text-amber-700 text-lg font-bold">{{ winners.third[0].full_name[:1] }}</span>
+                                                        <span class="text-amber-700 text-lg font-bold">{{ winners.third.player1.full_name[:1] }}</span>
                                                     </div>
                                                 {% endif %}
                                                 
-                                                {% if winners.third[1].profile_image %}
-                                                    <img src="{{ url_for('static', filename=winners.third[1].profile_image) }}" 
-                                                         alt="{{ winners.third[1].full_name }}" 
+                                                {% if winners.third.player2.profile_image %}
+                                                    <img src="{{ url_for('static', filename=winners.third.player2.profile_image) }}" 
+                                                         alt="{{ winners.third.player2.full_name }}" 
                                                          class="absolute bottom-0 right-0 h-16 w-16 md:h-24 md:w-24 rounded-full object-cover border-4 border-amber-700">
                                                 {% else %}
                                                     <div class="absolute bottom-0 right-0 h-16 w-16 md:h-24 md:w-24 rounded-full bg-amber-50 flex items-center justify-center border-4 border-amber-700">
-                                                        <span class="text-amber-700 text-lg font-bold">{{ winners.third[1].full_name[:1] }}</span>
+                                                        <span class="text-amber-700 text-lg font-bold">{{ winners.third.player2.full_name[:1] }}</span>
                                                     </div>
                                                 {% endif %}
                                                 <div class="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-amber-700 flex items-center justify-center text-white font-bold shadow-md">3</div>
                                             </div>
                                             <div class="mt-4 text-center">
                                                 <div>
-                                                    <a href="{{ url_for('main.player_detail', id=winners.third[0].id) }}" class="font-medium text-gray-900 hover:text-blue-600">
-                                                        {{ winners.third[0].full_name }}
+                                                    <a href="{{ url_for('main.player_detail', id=winners.third.player1.id) }}" class="font-medium text-gray-900 hover:text-blue-600">
+                                                        {{ winners.third.player1.full_name }}
                                                     </a>
                                                 </div>
                                                 <div>
-                                                    <a href="{{ url_for('main.player_detail', id=winners.third[1].id) }}" class="font-medium text-gray-900 hover:text-blue-600">
-                                                        {{ winners.third[1].full_name }}
+                                                    <a href="{{ url_for('main.player_detail', id=winners.third.player2.id) }}" class="font-medium text-gray-900 hover:text-blue-600">
+                                                        {{ winners.third.player2.full_name }}
                                                     </a>
                                                 </div>
-                                                <p class="text-sm text-gray-500">{{ winners.third[0].country }}</p>
+                                                <p class="text-sm text-gray-500">{{ winners.third.player1.country }}</p>
                                             </div>
                                         </div>
                                     {% else %}
@@ -298,8 +347,26 @@
                                             <p class="text-sm text-gray-500">{{ winners.third.country }}</p>
                                         </div>
                                     {% endif %}
-                                    <div class="h-12 md:h-16 w-full bg-amber-700 mt-4 flex items-center justify-center rounded-t-lg">
+                                    
+                                    <!-- Prize and points info -->
+                                    <div class="h-12 md:h-16 w-full bg-amber-700 mt-4 flex flex-col items-center justify-center rounded-t-lg">
                                         <span class="text-xl font-bold text-white">3rd</span>
+                                        {% set prize = 0 %}
+                                        {% set points = 0 %}
+                                        {% for p in placings %}
+                                            {% if p.place == 3 %}
+                                                {% set prize = p.prize %}
+                                                {% set points = p.points %}
+                                            {% endif %}
+                                        {% endfor %}
+                                        <div class="flex text-sm text-white">
+                                            {% if prize > 0 %}
+                                                <span class="mr-2">${{ "{:,.2f}".format(prize) }}</span>
+                                            {% endif %}
+                                            {% if points > 0 %}
+                                                <span>{{ points }} pts</span>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 {% else %}
                                     <div class="h-24 w-24 md:h-32 md:w-32 rounded-full bg-gray-100 flex items-center justify-center border-4 border-gray-200">
@@ -317,6 +384,187 @@
                     </div>
                 </div>
                 
+                <!-- Full tournament placings with prize money and points -->
+                <div class="mt-12">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">Complete Results</h2>
+                    
+                    <div class="overflow-hidden border border-gray-200 rounded-lg">
+                        {% if placings %}
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Participant</th>
+                                        {% if tournament.prize_pool > 0 %}
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prize</th>
+                                        {% endif %}
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for place, place_placings in grouped_placings.items() %}
+                                        {% for placing in place_placings %}
+                                            <tr>
+                                                <td class="px-4 py-4 whitespace-nowrap">
+                                                    <div class="text-sm font-medium text-gray-900">
+                                                        {% if place_placings|length > 1 %}
+                                                            {{ place }}th (tie)
+                                                        {% else %}
+                                                            {{ place }}{% if place == 1 %}st{% elif place == 2 %}nd{% elif place == 3 %}rd{% else %}th{% endif %}
+                                                        {% endif %}
+                                                    </div>
+                                                </td>
+                                                <td class="px-4 py-4 whitespace-nowrap">
+                                                    {% if selected_category.is_doubles() %}
+                                                        <div class="text-sm font-medium text-gray-900">
+                                                            <a href="{{ url_for('main.player_detail', id=placing.participant.player1.id) }}" class="hover:text-blue-600">
+                                                                {{ placing.participant.player1.full_name }}
+                                                            </a>
+                                                            /
+                                                            <a href="{{ url_for('main.player_detail', id=placing.participant.player2.id) }}" class="hover:text-blue-600">
+                                                                {{ placing.participant.player2.full_name }}
+                                                            </a>
+                                                        </div>
+                                                        <div class="text-sm text-gray-500">
+                                                            {{ placing.participant.player1.country }}
+                                                        </div>
+                                                    {% else %}
+                                                        <div class="text-sm font-medium text-gray-900">
+                                                            <a href="{{ url_for('main.player_detail', id=placing.participant.id) }}" class="hover:text-blue-600">
+                                                                {{ placing.participant.full_name }}
+                                                            </a>
+                                                        </div>
+                                                        <div class="text-sm text-gray-500">
+                                                            {{ placing.participant.country }}
+                                                        </div>
+                                                    {% endif %}
+                                                </td>
+                                                {% if tournament.prize_pool > 0 %}
+                                                    <td class="px-4 py-4 whitespace-nowrap">
+                                                        <div class="text-sm font-medium text-gray-900">
+                                                            {% if placing.prize > 0 %}
+                                                                ${{ "{:,.2f}".format(placing.prize) }}
+                                                            {% else %}
+                                                                -
+                                                            {% endif %}
+                                                        </div>
+                                                    </td>
+                                                {% endif %}
+                                                <td class="px-4 py-4 whitespace-nowrap">
+                                                    <div class="text-sm font-medium text-gray-900">
+                                                        {{ placing.points }}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <div class="py-8 text-center text-gray-500">
+                                No tournament placings available for this category.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Prize and Points Distribution Info -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
+                    <!-- Prize Distribution -->
+                    {% if tournament.prize_pool > 0 %}
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2 text-yellow-500" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" />
+                                </svg>
+                                Prize Distribution
+                            </h3>
+                            
+                            <p class="text-sm text-gray-600 mb-4">
+                                Category Prize Pool: <span class="font-semibold">${{ "{:,.2f}".format(prize_info.category_prize) }}</span>
+                                ({{ prize_info.category_percentage }}% of tournament total)
+                            </p>
+                            
+                            <div class="overflow-hidden border border-gray-200 rounded-lg bg-white">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
+                                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prize Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        {% for place_range, percentage in prize_info.distribution.items() %}
+                                            <tr>
+                                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                    {% if '-' in place_range %}
+                                                        {{ place_range }} place
+                                                    {% else %}
+                                                        {{ place_range }}{% if place_range == '1' %}st{% elif place_range == '2' %}nd{% elif place_range == '3' %}rd{% else %}th{% endif %} place
+                                                    {% endif %}
+                                                </td>
+                                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                                    {{ percentage }}%
+                                                </td>
+                                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                                    ${{ "{:,.2f}".format(prize_info.category_prize * (percentage / 100)) }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Points Distribution -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            Points Distribution
+                        </h3>
+                        
+                        <p class="text-sm text-gray-600 mb-4">
+                            Total Category Points: <span class="font-semibold">{{ points_info.total_category_points }}</span>
+                        </p>
+                        
+                        <div class="overflow-hidden border border-gray-200 rounded-lg bg-white">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for place_range, percentage in points_info.distribution.items() %}
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                {% if '-' in place_range %}
+                                                    {{ place_range }} place
+                                                {% else %}
+                                                    {{ place_range }}{% if place_range == '1' %}st{% elif place_range == '2' %}nd{% elif place_range == '3' %}rd{% else %}th{% endif %} place
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                                {{ percentage }}%
+                                            </td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                                {{ (points_info.total_category_points * (percentage / 100))|int }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Match results -->
                 <div class="mt-12">
                     <h2 class="text-xl font-bold text-gray-800 mb-6">Match Results</h2>
@@ -326,17 +574,17 @@
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Round</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Players</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Winner</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Round</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Players</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Winner</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
                                     {% for match in matches %}
                                         <tr>
-                                            <td class="px-6 py-4 whitespace-nowrap">
+                                            <td class="px-4 py-4 whitespace-nowrap">
                                                 <div class="text-sm font-medium text-gray-900">
                                                     {% if match.round == 1 %}
                                                         Final
@@ -351,9 +599,9 @@
                                                     {% endif %}
                                                 </div>
                                             </td>
-                                            <td class="px-6 py-4">
+                                            <td class="px-4 py-4">
                                                 <div class="text-sm text-gray-900">
-                                                    {% if match.is_doubles %}
+                                                    {% if selected_category.is_doubles() %}
                                                         {% if match.team1 %}
                                                             <a href="{{ url_for('main.player_detail', id=match.team1.player1_id) }}" class="hover:text-blue-600">
                                                                 {{ match.team1.player1.full_name }}
@@ -377,7 +625,7 @@
                                                 </div>
                                                 <div class="text-sm text-gray-500 mt-1">vs</div>
                                                 <div class="text-sm text-gray-900">
-                                                    {% if match.is_doubles %}
+                                                    {% if selected_category.is_doubles() %}
                                                         {% if match.team2 %}
                                                             <a href="{{ url_for('main.player_detail', id=match.team2.player1_id) }}" class="hover:text-blue-600">
                                                                 {{ match.team2.player1.full_name }}
@@ -400,7 +648,7 @@
                                                     {% endif %}
                                                 </div>
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
+                                            <td class="px-4 py-4 whitespace-nowrap">
                                                 {% for score in match.scores %}
                                                     <span class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
                                                         {{ score.player1_score }}-{{ score.player2_score }}
@@ -408,8 +656,8 @@
                                                     {% if not loop.last %} {% endif %}
                                                 {% endfor %}
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                {% if match.is_doubles %}
+                                            <td class="px-4 py-4 whitespace-nowrap">
+                                                {% if selected_category.is_doubles() %}
                                                     {% if match.winning_team %}
                                                         <div class="text-sm font-medium text-green-600">
                                                             <a href="{{ url_for('main.player_detail', id=match.winning_team.player1_id) }}" class="hover:text-green-800">
@@ -433,7 +681,7 @@
                                                     {% endif %}
                                                 {% endif %}
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <a href="{{ url_for('tournament.match_detail', id=tournament.id, match_id=match.id) }}" class="text-blue-600 hover:text-blue-900">
                                                     View
                                                 </a>
@@ -447,57 +695,6 @@
                                 No match results available for this category.
                             </div>
                         {% endif %}
-                    </div>
-                </div>
-                
-                <!-- Point Distribution -->
-                <div class="mt-12">
-                    <h2 class="text-xl font-bold text-gray-800 mb-6">Point Distribution</h2>
-                    
-                    <div class="bg-gray-50 rounded-lg p-6">
-                        <p class="text-sm text-gray-600 mb-4">
-                            Points awarded to players based on their final placement in the tournament.
-                            Total points for {{ selected_category.category_type.value }}: <span class="font-medium">{{ selected_category.points_awarded }}</span>
-                        </p>
-                        
-                        <div class="overflow-hidden border border-gray-200 rounded-lg bg-white">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Placement</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Champion (1st)</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">100%</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ selected_category.points_awarded }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Runner-Up (2nd)</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">70%</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ (selected_category.points_awarded * 0.7) | int }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Semi-Finalist (3rd-4th)</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">50%</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ (selected_category.points_awarded * 0.5) | int }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Quarter-Finalist (5th-8th)</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">25%</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ (selected_category.points_awarded * 0.25) | int }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Round of 16 (9th-16th)</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">15%</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ (selected_category.points_awarded * 0.15) | int }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
                 </div>
                 

@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ tournament.name }} - Prize Distribution{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Breadcrumb navigation -->
+        <div class="mb-6 flex items-center text-sm">
+            <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-800">
+                {{ tournament.name }}
+            </a>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mx-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            <span class="text-gray-600">Prize Distribution</span>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <!-- Tournament header -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-6 text-white">
+                <div class="flex items-center">
+                    {% if tournament.logo %}
+                        <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="h-16 w-16 rounded-full bg-white p-1 mr-4">
+                    {% else %}
+                        <div class="h-16 w-16 rounded-full bg-white flex items-center justify-center mr-4">
+                            <span class="text-blue-600 text-xl font-bold">{{ tournament.name[:2] }}</span>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold">{{ tournament.name }}</h1>
+                        <div class="flex items-center mt-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-blue-200" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                            </svg>
+                            <span class="text-blue-200">{{ tournament.location }}</span>
+                            
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-4 mr-1 text-blue-200" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                            </svg>
+                            <span class="text-blue-200">
+                                {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Tournament tier badge -->
+                    <div class="ml-auto">
+                        <span class="px-3 py-1 rounded-full text-sm font-semibold bg-white text-blue-800">
+                            {{ tournament.tier.value }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <!-- Prize pool summary -->
+                <div class="mb-12">
+                    <div class="flex items-center mb-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" />
+                        </svg>
+                        <h2 class="text-2xl font-bold text-gray-800">Tournament Prize Pool: ${{ "{:,.2f}".format(prize_info.total_prize_pool) }}</h2>
+                    </div>
+                    
+                    <!-- Category distribution visualization -->
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-bold text-gray-700 mb-4">Prize Pool Distribution by Category</h3>
+                        
+                        <div class="relative h-12 bg-gray-200 rounded-lg overflow-hidden mb-6">
+                            {% set current_position = 0 %}
+                            {% for category in prize_info.categories %}
+                                {% set width = (category.percentage / 100) * 100 %}
+                                {% set hue = 200 + (loop.index0 * 40) % 160 %}
+                                <div class="absolute h-full" 
+                                     style="left: {{ current_position }}%; width: {{ width }}%; background-color: hsl({{ hue }}, 70%, 60%);">
+                                </div>
+                                {% set current_position = current_position + width %}
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {% for category in prize_info.categories %}
+                                {% set hue = 200 + (loop.index0 * 40) % 160 %}
+                                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <h4 class="font-semibold text-gray-900">{{ category.name }}</h4>
+                                        <span class="inline-block w-4 h-4 rounded-full" style="background-color: hsl({{ hue }}, 70%, 60%);"></span>
+                                    </div>
+                                    <div class="text-xl font-bold text-gray-900">${{ "{:,.2f}".format(category.prize_money) }}</div>
+                                    <div class="text-sm text-gray-500">{{ category.percentage }}% of total prize pool</div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Detailed prize breakdown by category -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold text-gray-800 mb-6">Detailed Prize Breakdown by Category</h3>
+                    
+                    <div class="space-y-8">
+                        {% for category in prize_info.categories %}
+                            <div class="bg-white p-6 rounded-lg border border-gray-200">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-4">{{ category.name }}</h4>
+                                
+                                <div class="overflow-hidden border border-gray-200 rounded-lg">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
+                                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prize Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            {% for place_range, percentage in category.distribution.items() %}
+                                                <tr>
+                                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                        {% if '-' in place_range %}
+                                                            {{ place_range }} place
+                                                        {% else %}
+                                                            {{ place_range }}{% if place_range == '1' %}st{% elif place_range == '2' %}nd{% elif place_range == '3' %}rd{% else %}th{% endif %} place
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                                        {{ percentage }}%
+                                                    </td>
+                                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                                        ${{ "{:,.2f}".format(category.prize_amounts[place_range]) }}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="mt-8 flex justify-between">
+                    <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        Back to Tournament
+                    </a>
+                    
+                    {% if tournament.status == 'COMPLETED' %}
+                        <a href="{{ url_for('tournament.results', id=tournament.id) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
+                            View Results
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

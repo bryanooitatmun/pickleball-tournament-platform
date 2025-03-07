@@ -3,6 +3,7 @@ from flask_login import current_user, login_required
 from app import db
 from app.main import bp
 from app.models import Tournament, TournamentCategory, PlayerProfile, Match, CategoryType, TournamentStatus
+from app.services import BracketService, PlacingService, PrizeService, RegistrationService
 from datetime import datetime
 import os
 

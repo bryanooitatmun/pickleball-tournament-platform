@@ -5,6 +5,7 @@ from app import db, login
 import enum
 from sqlalchemy import Enum, Table, Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.types import JSON
 
 class UserRole(enum.Enum):
     ADMIN = "admin"
@@ -34,6 +35,14 @@ class CategoryType(enum.Enum):
     MENS_DOUBLES = "Men's Doubles"
     WOMENS_DOUBLES = "Women's Doubles"
     MIXED_DOUBLES = "Mixed Doubles"
+    # For custom categories
+    CUSTOM = "Custom Category"
+
+class MatchStage(enum.Enum):
+    GROUP = "group"
+    KNOCKOUT = "knockout"
+    PLAYOFF = "playoff"  # For 3rd place matches, etc.
+
 
 # Association table for player partnerships (for doubles)
 partnerships = db.Table('partnerships',
@@ -55,9 +64,6 @@ class User(UserMixin, db.Model):
     # Relationships
     player_profile = db.relationship('PlayerProfile', backref='user', uselist=False)
     tournaments_organized = db.relationship('Tournament', backref='organizer', lazy='dynamic')
-    
-    def __repr__(self):
-        return f'<User {self.username}>'
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -114,9 +120,6 @@ class PlayerProfile(db.Model):
                                             backref='partner',
                                             lazy='dynamic',
                                             foreign_keys='Registration.partner_id')
-    
-    def __repr__(self):
-        return f'<PlayerProfile {self.full_name}>'
     
     def get_points(self, category_type):
         if category_type == CategoryType.MENS_SINGLES:
@@ -210,25 +213,119 @@ class Tournament(db.Model):
         
         return result
     
-    def __repr__(self):
-        return f'<Tournament {self.name}>'
-    
     def is_registration_open(self):
         return datetime.utcnow() < self.registration_deadline
 
+# Enhancement for TournamentCategory to support restrictions
 class TournamentCategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tournament_id = db.Column(db.Integer, db.ForeignKey('tournament.id'))
     category_type = db.Column(Enum(CategoryType))
     max_participants = db.Column(db.Integer)
     points_awarded = db.Column(db.Integer)
+    format = db.Column(Enum(TournamentFormat), default=TournamentFormat.SINGLE_ELIMINATION)
+    
+    # Prize money details
+    prize_percentage = db.Column(db.Float, default=0)  # Percentage of total prize pool
+    prize_money = db.Column(db.Float, default=0)  # Calculated amount
+    
+    # New category restrictions
+    min_dupr_rating = db.Column(db.Float, nullable=True)
+    max_dupr_rating = db.Column(db.Float, nullable=True)
+    min_age = db.Column(db.Integer, nullable=True)
+    max_age = db.Column(db.Integer, nullable=True)
+    gender_restriction = db.Column(db.String(20), nullable=True)  # 'male', 'female', 'mixed', or None
+    
+    # Format-specific settings
+    group_count = db.Column(db.Integer, default=0)  # Number of groups in group stage
+    teams_per_group = db.Column(db.Integer, default=0)  # Teams per group
+    teams_advancing_per_group = db.Column(db.Integer, default=0)  # Teams advancing to knockout
+    
+    # Custom point distribution as JSON
+    # Structure: {"1": 100, "2": 70, "3-4": 50, "5-8": 25, etc.}
+    points_distribution = db.Column(JSON, default={})
+    
+    # Custom prize distribution as JSON
+    # Structure: {"1": 50, "2": 25, "3-4": 12.5, "5-8": 6.25, etc.}
+    prize_distribution = db.Column(JSON, default={})
     
     # Relationships
     registrations = db.relationship('Registration', backref='category', lazy='dynamic')
-    #matches = db.relationship('Match', backref='category', lazy='dynamic')
+    matches = db.relationship('Match', backref='category', lazy='dynamic')
+    groups = db.relationship('Group', backref='category', lazy='dynamic')
+
+    def is_doubles(self):
+        return self.category_type in [
+            CategoryType.MENS_DOUBLES, 
+            CategoryType.WOMENS_DOUBLES, 
+            CategoryType.MIXED_DOUBLES
+        ]
     
-    def __repr__(self):
-        return f'<TournamentCategory {self.category_type.value} for Tournament {self.tournament_id}>'
+    def calculate_prize_money(self, total_prize_pool):
+        """Calculate actual prize money based on percentage of total pool"""
+        self.prize_money = total_prize_pool * (self.prize_percentage / 100)
+        return self.prize_money
+    
+    def get_points_for_place(self, place):
+        """Get points for a specific place based on distribution"""
+        if not self.points_distribution:
+            # Default distribution if none set
+            return self._default_points_for_place(place)
+        
+        # Find the matching place in the distribution
+        for place_range, percentage in self.points_distribution.items():
+            if self._is_in_place_range(place, place_range):
+                return int(self.points_awarded * (percentage / 100))
+        
+        return 0
+    
+    def get_prize_for_place(self, place):
+        """Get prize money for a specific place based on distribution"""
+        if not self.prize_distribution:
+            # Default distribution if none set
+            return self._default_prize_for_place(place)
+        
+        # Find the matching place in the distribution
+        for place_range, percentage in self.prize_distribution.items():
+            if self._is_in_place_range(place, place_range):
+                return self.prize_money * (percentage / 100)
+        
+        return 0
+    
+    def _is_in_place_range(self, place, place_range):
+        """Check if a place is within a range like '1', '2', '3-4', '5-8', etc."""
+        if '-' in place_range:
+            start, end = map(int, place_range.split('-'))
+            return start <= place <= end
+        else:
+            return place == int(place_range)
+    
+    def _default_points_for_place(self, place):
+        """Default points distribution if none specified"""
+        if place == 1:
+            return self.points_awarded
+        elif place == 2:
+            return int(self.points_awarded * 0.7)
+        elif place <= 4:
+            return int(self.points_awarded * 0.5)
+        elif place <= 8:
+            return int(self.points_awarded * 0.25)
+        elif place <= 16:
+            return int(self.points_awarded * 0.15)
+        return 0
+    
+    def _default_prize_for_place(self, place):
+        """Default prize distribution if none specified"""
+        if place == 1:
+            return self.prize_money * 0.5
+        elif place == 2:
+            return self.prize_money * 0.25
+        elif place <= 4:
+            return self.prize_money * 0.125
+        elif place <= 8:
+            return self.prize_money * 0.0625
+        return 0
+
 
 class Registration(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -260,9 +357,7 @@ class Registration(db.Model):
         )
         db.session.add(team)
         return team
-        
-    def __repr__(self):
-        return f'<Registration {self.player_id} for Category {self.category_id}>'
+
 
 class Team(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -275,13 +370,52 @@ class Team(db.Model):
     player2 = db.relationship('PlayerProfile', foreign_keys=[player2_id])
     category = db.relationship('TournamentCategory', backref='teams')
     
-    def __repr__(self):
-        return f'<Team {self.player1_id}/{self.player2_id}>'
+# New model for group stage
+class Group(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('tournament_category.id'))
+    name = db.Column(db.String(50))  # e.g., "Group A"
+    
+    # Relationships
+    standings = db.relationship('GroupStanding', backref='group', lazy='dynamic')
+    matches = db.relationship('Match', backref='group', lazy='dynamic')
+
+# New model for group stage standings
+class GroupStanding(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
+    
+    # Can link to either player or team
+    player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=True)
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=True)
+    
+    # Stats
+    matches_played = db.Column(db.Integer, default=0)
+    matches_won = db.Column(db.Integer, default=0)
+    matches_lost = db.Column(db.Integer, default=0)
+    sets_won = db.Column(db.Integer, default=0)
+    sets_lost = db.Column(db.Integer, default=0)
+    points_won = db.Column(db.Integer, default=0)
+    points_lost = db.Column(db.Integer, default=0)
+    
+    # Calculated position in group
+    position = db.Column(db.Integer, nullable=True)
+    
+    # Relationships
+    player = db.relationship('PlayerProfile', backref='group_standings')
+    team = db.relationship('Team', backref='group_standings')
 
 class Match(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     category_id = db.Column(db.Integer, db.ForeignKey('tournament_category.id'))
-    round = db.Column(db.Integer)  # Round number in the tournament
+    group_id = db.Column(db.Integer, db.ForeignKey('group.id'), nullable=True)
+    
+    # Dynamic properties for tracking match stage and round
+    stage = db.Column(Enum(MatchStage), default=MatchStage.KNOCKOUT)
+    round = db.Column(db.Integer)  # 1=final, 2=semifinal, etc. or group stage round number
+    match_order = db.Column(db.Integer)  # Order within the round/group
+    
+    # Scheduling info
     court = db.Column(db.String(50), nullable=True)
     scheduled_time = db.Column(db.DateTime, nullable=True)
     
@@ -302,11 +436,10 @@ class Match(db.Model):
     losing_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=True)
     
     completed = db.Column(db.Boolean, default=False)
-    match_order = db.Column(db.Integer)  # Order within the round (for bracket placement)
     next_match_id = db.Column(db.Integer, db.ForeignKey('match.id'), nullable=True)
     
-    # Relationships
-    category = db.relationship('TournamentCategory', backref='matches')
+    # Existing relationships
+    scores = db.relationship('MatchScore', backref='match', lazy='dynamic')
     player1 = db.relationship('PlayerProfile', foreign_keys=[player1_id])
     player2 = db.relationship('PlayerProfile', foreign_keys=[player2_id])
     team1 = db.relationship('Team', foreign_keys=[team1_id])
@@ -316,81 +449,62 @@ class Match(db.Model):
     losing_player = db.relationship('PlayerProfile', foreign_keys=[losing_player_id])
     losing_team = db.relationship('Team', foreign_keys=[losing_team_id])
     next_match = db.relationship('Match', remote_side=[id], backref='previous_matches')
-    scores = db.relationship('MatchScore', backref='match', lazy='dynamic')
-    
-    def __repr__(self):
-        return f'<Match {self.id} in Round {self.round}>'
-    
+
     @property
     def is_doubles(self):
         """Check if this is a doubles match based on category type"""
         if not self.category:
             return False
-        return self.category.category_type in [
-            CategoryType.MENS_DOUBLES, 
-            CategoryType.WOMENS_DOUBLES, 
-            CategoryType.MIXED_DOUBLES
-        ]
+        return self.category.is_doubles()
     
     @property
-    def winner_players(self):
-        """Get list of winning players (1 for singles, 2 for doubles)"""
-        if self.is_doubles and self.winning_team:
-            return [self.winning_team.player1, self.winning_team.player2]
-        elif self.winning_player:
-            return [self.winning_player]
-        return []
+    def round_name(self):
+        """Get human-readable round name based on round number"""
+        if self.stage == MatchStage.GROUP:
+            return f"Group {self.group.name if self.group else ''} Round"
+            
+        if self.round == 1:
+            return "Final"
+        elif self.round == 2:
+            return "Semifinal"
+        elif self.round == 3:
+            return "Quarterfinal"
+        elif self.round == 4:
+            return "Round of 16"
+        elif self.round == 5:
+            return "Round of 32"
+        elif self.round == 6:
+            return "Round of 64"
+        else:
+            return f"Round {self.round}"
     
     @property
-    def loser_players(self):
-        """Get list of losing players (1 for singles, 2 for doubles)"""
-        if self.is_doubles and self.losing_team:
-            return [self.losing_team.player1, self.losing_team.player2]
-        elif self.losing_player:
-            return [self.losing_player]
-        return []
-        
-    def set_winner(self, is_player1_winner):
-        """Set the winner of this match (simplifies logic for controllers)"""
+    def winner_id(self):
+        """Get the ID of the winner (player or team)"""
         if self.is_doubles:
-            if is_player1_winner and self.team1:
-                self.winning_team_id = self.team1_id
-                self.losing_team_id = self.team2_id
-            elif not is_player1_winner and self.team2:
-                self.winning_team_id = self.team2_id
-                self.losing_team_id = self.team1_id
-        else:
-            if is_player1_winner and self.player1_id:
-                self.winning_player_id = self.player1_id
-                self.losing_player_id = self.player2_id
-            elif not is_player1_winner and self.player2_id:
-                self.winning_player_id = self.player2_id
-                self.losing_player_id = self.player1_id
+            return self.winning_team_id
+        return self.winning_player_id
     
-    def advance_winner_to_next_match(self):
-        """Advance winner to the next match in the bracket"""
-        if not self.completed or not self.next_match_id:
-            return
-            
-        next_match = Match.query.get(self.next_match_id)
-        if not next_match:
-            return
-            
-        # Determine if winner goes to player1/team1 or player2/team2 position
-        is_player1_position = (self.match_order % 2 == 0)
-        
+    @property
+    def loser_id(self):
+        """Get the ID of the loser (player or team)"""
         if self.is_doubles:
-            if self.winning_team_id:
-                if is_player1_position:
-                    next_match.team1_id = self.winning_team_id
-                else:
-                    next_match.team2_id = self.winning_team_id
-        else:
-            if self.winning_player_id:
-                if is_player1_position:
-                    next_match.player1_id = self.winning_player_id
-                else:
-                    next_match.player2_id = self.winning_player_id
+            return self.losing_team_id
+        return self.losing_player_id
+    
+    @property 
+    def winner(self):
+        """Get the winner (player or team)"""
+        if self.is_doubles:
+            return self.winning_team
+        return self.winning_player
+    
+    @property
+    def loser(self):
+        """Get the loser (player or team)"""
+        if self.is_doubles:
+            return self.losing_team
+        return self.losing_player
 
 
 class MatchScore(db.Model):
@@ -400,8 +514,6 @@ class MatchScore(db.Model):
     player1_score = db.Column(db.Integer, default=0)
     player2_score = db.Column(db.Integer, default=0)
     
-    def __repr__(self):
-        return f'<MatchScore for Match {self.match_id}, Set {self.set_number}>'
 
 class Equipment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -413,8 +525,6 @@ class Equipment(db.Model):
     
     player = db.relationship('PlayerProfile', backref=db.backref('equipment', lazy='dynamic'))
     
-    def __repr__(self):
-        return f'<Equipment {self.name} for Player {self.player_id}>'
 
 class Sponsor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -425,5 +535,3 @@ class Sponsor(db.Model):
     
     player = db.relationship('PlayerProfile', backref=db.backref('sponsors', lazy='dynamic'))
     
-    def __repr__(self):
-        return f'<Sponsor {self.name} for Player {self.player_id}>'
