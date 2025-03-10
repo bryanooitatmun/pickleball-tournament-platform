@@ -2,7 +2,7 @@ from flask import render_template, redirect, url_for, flash, request, current_ap
 from flask_login import current_user, login_required
 from app import db
 from app.main import bp
-from app.models import Tournament, TournamentCategory, PlayerProfile, Match, CategoryType, TournamentStatus
+from app.models import Tournament, TournamentCategory, PlayerProfile, Match, CategoryType, TournamentStatus, PlatformSponsor, Venue, Advertisement
 from app.services import BracketService, PlacingService, PrizeService, RegistrationService
 from datetime import datetime
 import os
@@ -10,14 +10,14 @@ import os
 @bp.route('/')
 @bp.route('/index')
 def index():
+    # Featured tournament (current or upcoming)
+    featured_tournament = Tournament.query.filter_by(is_featured=True).first()
+    if not featured_tournament:
+        # If no featured tournament, get the nearest upcoming one
+        featured_tournament = Tournament.query.filter_by(status=TournamentStatus.UPCOMING).order_by(Tournament.start_date).first()
+    
     # Get upcoming tournaments
     upcoming_tournaments = Tournament.query.filter_by(status=TournamentStatus.UPCOMING).order_by(Tournament.start_date).limit(3).all()
-    
-    # Get ongoing tournaments
-    ongoing_tournaments = Tournament.query.filter_by(status=TournamentStatus.ONGOING).all()
-    
-    # Get latest completed tournaments
-    completed_tournaments = Tournament.query.filter_by(status=TournamentStatus.COMPLETED).order_by(Tournament.end_date.desc()).limit(3).all()
     
     # Get top players for each category
     top_mens_singles = PlayerProfile.query.order_by(PlayerProfile.mens_singles_points.desc()).limit(5).all()
@@ -26,16 +26,49 @@ def index():
     top_womens_doubles = PlayerProfile.query.order_by(PlayerProfile.womens_doubles_points.desc()).limit(5).all()
     top_mixed_doubles = PlayerProfile.query.order_by(PlayerProfile.mixed_doubles_points.desc()).limit(5).all()
     
+    # Get featured sponsors
+    featured_platform_sponsors = PlatformSponsor.query.filter_by(is_featured=True).all()
+    
+    # Get featured venues
+    featured_venues = Venue.query.filter_by(is_featured=True).limit(3).all()
+    
+    # Get active advertisements
+    hero_ads = Advertisement.query.filter_by(
+        position='hero', 
+        is_active=True
+    ).filter(
+        Advertisement.start_date <= datetime.utcnow(),
+        Advertisement.end_date >= datetime.utcnow()
+    ).all()
+    
+    sidebar_ads = Advertisement.query.filter_by(
+        position='sidebar', 
+        is_active=True
+    ).filter(
+        Advertisement.start_date <= datetime.utcnow(),
+        Advertisement.end_date >= datetime.utcnow()
+    ).all()
+    
     return render_template('main/index.html', 
-                           title='Home',
-                           upcoming_tournaments=upcoming_tournaments,
-                           ongoing_tournaments=ongoing_tournaments,
-                           completed_tournaments=completed_tournaments,
-                           top_mens_singles=top_mens_singles,
-                           top_womens_singles=top_womens_singles,
-                           top_mens_doubles=top_mens_doubles,
-                           top_womens_doubles=top_womens_doubles,
-                           top_mixed_doubles=top_mixed_doubles)
+                          title='Home',
+                          featured_tournament=featured_tournament,
+                          upcoming_tournaments=upcoming_tournaments,
+                          top_mens_singles=top_mens_singles,
+                          top_womens_singles=top_womens_singles,
+                          top_mens_doubles=top_mens_doubles,
+                          top_womens_doubles=top_womens_doubles,
+                          top_mixed_doubles=top_mixed_doubles,
+                          featured_platform_sponsors=featured_platform_sponsors,
+                          featured_venues=featured_venues,
+                          hero_ads=hero_ads,
+                          sidebar_ads=sidebar_ads,
+                          now=datetime.now())
+
+@bp.route('/sponsors')
+def sponsors():
+    sponsors = PlatformSponsor.query.all()
+    return render_template('main/platform_sponsors.html', title='Our Sponsors', sponsors=sponsors)
+
 
 @bp.route('/events')
 def events():
@@ -113,7 +146,7 @@ def player_detail(id):
     
     # Get equipment and sponsors
     equipment = player.equipment.all()
-    sponsors = player.sponsors.all()
+    sponsors = player.player_sponsors.all()
     
     return render_template('main/player_detail.html',
                            title=player.full_name,

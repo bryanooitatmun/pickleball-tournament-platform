@@ -280,6 +280,81 @@
     </div>
 </main>
 
+<!-- Footer with branding opportunities -->
+<footer class="bg-white border-t border-gray-200 pt-12 pb-6">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8 mb-8">
+            <div class="col-span-1 md:col-span-1 lg:col-span-1">
+                <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Pickleball Pro Tour" class="h-16 mb-6">
+                
+                <div class="flex flex-col space-y-4">
+                    <a href="{{ url_for('main.sponsors') }}" class="inline-flex items-center bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700">
+                        Contact Us <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                    
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-700 hover:text-blue-600">
+                            <i class="fab fa-instagram text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-700 hover:text-blue-400">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-700 hover:text-red-600">
+                            <i class="fab fa-youtube text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-700 hover:text-blue-800">
+                            <i class="fab fa-facebook text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-span-1">
+                <h4 class="font-bold text-lg mb-4">Pro Tour</h4>
+                <nav class="space-y-2">
+                    <a href="{{ url_for('main.events') }}" class="block text-gray-600 hover:text-blue-600">Schedule</a>
+                    <a href="{{ url_for('main.rankings') }}" class="block text-gray-600 hover:text-blue-600">Leaderboard</a>
+                    <a href="#" class="block text-gray-600 hover:text-blue-600">Tickets</a>
+                    <a href="#" class="block text-gray-600 hover:text-blue-600">Athletes</a>
+                    <a href="#" class="block text-gray-600 hover:text-blue-600">How it Works</a>
+                    <a href="#" class="block text-gray-600 hover:text-blue-600">Watch</a>
+                </nav>
+            </div>
+            
+            <div class="col-span-1">
+                <h4 class="font-bold text-lg mb-4">PPA</h4>
+                <nav class="space-y-2">
+                    <a href="#" class="block text-gray-600 hover:text-blue-600">Contact Us</a>
+                    <a href="#" class="block text-gray-600 hover:text-blue-600">Careers</a>
+                    <a href="#" class="block text-gray-600 hover:text-blue-600">Host a Tournament</a>
+                    <a href="{{ url_for('main.sponsors') }}" class="block text-gray-600 hover:text-blue-600">Become a Sponsor</a>
+                    <a href="#" class="block text-gray-600 hover:text-blue-600">Ambassador Program</a>
+                    <a href="#" class="block text-gray-600 hover:text-blue-600">Privacy Policy</a>
+                    <a href="#" class="block text-gray-600 hover:text-blue-600">Terms of Use</a>
+                </nav>
+            </div>
+            
+            <div class="col-span-1 md:col-span-3 lg:col-span-1">
+                <h4 class="font-bold text-lg mb-4">Stay in the know...</h4>
+                <p class="text-gray-600 mb-4">Sign up to be among the first to know about upcoming events, promotions, and more.</p>
+                <form class="flex">
+                    <input type="email" placeholder="Email Address" class="flex-grow px-4 py-2 rounded-l-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-r-md hover:bg-blue-700">Sign Up</button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="border-t border-gray-200 pt-6 text-sm text-gray-600 flex flex-wrap justify-between">
+            <div class="mb-4 md:mb-0">© {{ now.year }} Pickleball Pro Tour. All Rights Reserved.</div>
+            <nav class="flex space-x-4">
+                <a href="#" class="hover:text-blue-600">Privacy Policy</a>
+                <a href="#" class="hover:text-blue-600">Terms of Use</a>
+                <a href="#" class="hover:text-blue-600">Cookie Policy</a>
+            </nav>
+        </div>
+    </div>
+</footer>
+
 <!-- Additional JavaScript to make the tabs work -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {

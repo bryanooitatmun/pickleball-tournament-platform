@@ -1,5 +1,6 @@
 from app import create_app, db
-from app.models import User, PlayerProfile, Tournament, TournamentCategory, Match, MatchScore, Registration, Equipment, Sponsor
+from app.models import (User, PlayerProfile, Tournament, TournamentCategory, Match, 
+MatchScore, Registration, Equipment, PlayerSponsor, PlatformSponsor, Venue, Advertisement)
 
 app = create_app()
 
@@ -15,7 +16,10 @@ def make_shell_context():
         'MatchScore': MatchScore,
         'Registration': Registration,
         'Equipment': Equipment,
-        'Sponsor': Sponsor
+        'PlayerSponsor': PlayerSponsor,
+        'PlatformSponsor': PlatformSponsor,
+        'Venue': Venue,
+        'Advertisement': Advertisement
     }
 
 if __name__ == '__main__':

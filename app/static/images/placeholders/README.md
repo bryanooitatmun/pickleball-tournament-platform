@@ -22,5 +22,5 @@ placeholders/
 - Action shots: `action_{id}.jpg`
 - Banners: `banner_{id}.jpg`
 - Tournament logos: `tournament_{id}.png`
-- Sponsor logos: `sponsor_{name}.png`
+- Player Sponsor logos: `player_sponsor_{name}.png`
 - Equipment: `equipment_{id}.jpg`

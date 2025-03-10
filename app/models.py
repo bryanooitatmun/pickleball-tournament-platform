@@ -151,6 +151,9 @@ class Tournament(db.Model):
     banner = db.Column(db.String(255))
     registration_fee = db.Column(db.Float, default=0.0)
     created_at = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=True)
+    is_featured = db.Column(db.Boolean, default=False)
+    featured_image = db.Column(db.String(255))
     
     # Relationships
     categories = db.relationship('TournamentCategory', backref='tournament', lazy='dynamic')
@@ -525,13 +528,58 @@ class Equipment(db.Model):
     
     player = db.relationship('PlayerProfile', backref=db.backref('equipment', lazy='dynamic'))
     
-
-class Sponsor(db.Model):
+class PlayerSponsor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'))
     name = db.Column(db.String(100))
     logo = db.Column(db.String(255))
     link = db.Column(db.String(255))
     
-    player = db.relationship('PlayerProfile', backref=db.backref('sponsors', lazy='dynamic'))
+    player = db.relationship('PlayerProfile', backref=db.backref('player_sponsors', lazy='dynamic'))
+    
+class PlatformSponsor(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    logo = db.Column(db.String(255))
+    website = db.Column(db.String(255))
+    is_featured = db.Column(db.Boolean, default=False)
+    tier = db.Column(db.String(50))  # 'Premier', 'Official', 'Featured', etc.
+    description = db.Column(db.Text)
+    
+    # Relationships
+    tournaments = db.relationship('Tournament', secondary='tournament_sponsors', backref='platform_sponsors')
+
+# Association table for tournament sponsors
+tournament_sponsors = db.Table('tournament_sponsors',
+    db.Column('tournament_id', db.Integer, db.ForeignKey('tournament.id'), primary_key=True),
+    db.Column('sponsor_id', db.Integer, db.ForeignKey('platform_sponsor.id'), primary_key=True)
+)
+
+class Venue(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    address = db.Column(db.String(255))
+    city = db.Column(db.String(100))
+    state = db.Column(db.String(100))
+    country = db.Column(db.String(100))
+    description = db.Column(db.Text)
+    image = db.Column(db.String(255))
+    website = db.Column(db.String(255))
+    is_featured = db.Column(db.Boolean, default=False)
+    court_count = db.Column(db.Integer, default=0)
+    
+    # Relationship with tournaments
+    tournaments = db.relationship('Tournament', backref='venue', lazy='dynamic')
+
+class Advertisement(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    image = db.Column(db.String(255), nullable=False)
+    link = db.Column(db.String(255))
+    start_date = db.Column(db.DateTime, default=datetime.utcnow)
+    end_date = db.Column(db.DateTime)
+    position = db.Column(db.String(50))  # 'hero', 'sidebar', 'footer', etc.
+    is_active = db.Column(db.Boolean, default=True)
+    views = db.Column(db.Integer, default=0)
+    clicks = db.Column(db.Integer, default=0)
     
