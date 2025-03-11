@@ -98,7 +98,7 @@
                                             <!-- Doubles team -->
                                             <div class="relative h-24 w-24 md:h-32 md:w-32">
                                                 {% if winners.second.player1.profile_image %}
-                                                    <img src="{{ url_for('static', filename=winners.second.player1.profile_image) }}" 
+                                                    <img src="{{ winners.second.player1.profile_image }}" 
                                                          alt="{{ winners.second.player1.full_name }}" 
                                                          class="absolute top-0 left-0 h-16 w-16 md:h-24 md:w-24 rounded-full object-cover border-4 border-gray-300">
                                                 {% else %}
@@ -108,7 +108,7 @@
                                                 {% endif %}
                                                 
                                                 {% if winners.second.player2.profile_image %}
-                                                    <img src="{{ url_for('static', filename=winners.second.player2.profile_image) }}" 
+                                                    <img src="{{ winners.second.player2.profile_image }}" 
                                                          alt="{{ winners.second.player2.full_name }}" 
                                                          class="absolute bottom-0 right-0 h-16 w-16 md:h-24 md:w-24 rounded-full object-cover border-4 border-gray-300">
                                                 {% else %}
@@ -135,7 +135,7 @@
                                             <!-- Singles player -->
                                             <div class="relative">
                                                 {% if winners.second.profile_image %}
-                                                    <img src="{{ url_for('static', filename=winners.second.profile_image) }}" alt="{{ winners.second.full_name }}" class="h-24 w-24 md:h-32 md:w-32 rounded-full object-cover border-4 border-gray-300">
+                                                    <img src="{{ winners.second.profile_image }}" alt="{{ winners.second.full_name }}" class="h-24 w-24 md:h-32 md:w-32 rounded-full object-cover border-4 border-gray-300">
                                                 {% else %}
                                                     <div class="h-24 w-24 md:h-32 md:w-32 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-300">
                                                         <span class="text-gray-500 text-xl font-bold">{{ winners.second.full_name[:2] }}</span>
@@ -193,7 +193,7 @@
                                         <div class="relative mt-0 md:-mt-8">
                                             <div class="relative h-28 w-28 md:h-40 md:w-40">
                                                 {% if winners.first.player1.profile_image %}
-                                                    <img src="{{ url_for('static', filename=winners.first.player1.profile_image) }}" 
+                                                    <img src="{{ winners.first.player1.profile_image }}" 
                                                          alt="{{ winners.first.player1.full_name }}" 
                                                          class="absolute top-0 left-0 h-20 w-20 md:h-28 md:w-28 rounded-full object-cover border-4 border-yellow-400">
                                                 {% else %}
@@ -203,7 +203,7 @@
                                                 {% endif %}
                                                 
                                                 {% if winners.first.player2.profile_image %}
-                                                    <img src="{{ url_for('static', filename=winners.first.player2.profile_image) }}" 
+                                                    <img src="{{ winners.first.player2.profile_image }}" 
                                                          alt="{{ winners.first.player2.full_name }}" 
                                                          class="absolute bottom-0 right-0 h-20 w-20 md:h-28 md:w-28 rounded-full object-cover border-4 border-yellow-400">
                                                 {% else %}
@@ -231,7 +231,7 @@
                                         <!-- Singles player -->
                                         <div class="relative mt-0 md:-mt-8">
                                             {% if winners.first.profile_image %}
-                                                <img src="{{ url_for('static', filename=winners.first.profile_image) }}" alt="{{ winners.first.full_name }}" class="h-28 w-28 md:h-40 md:w-40 rounded-full object-cover border-4 border-yellow-400">
+                                                <img src="{{ winners.first.profile_image }}" alt="{{ winners.first.full_name }}" class="h-28 w-28 md:h-40 md:w-40 rounded-full object-cover border-4 border-yellow-400">
                                             {% else %}
                                                 <div class="h-28 w-28 md:h-40 md:w-40 rounded-full bg-yellow-50 flex items-center justify-center border-4 border-yellow-400">
                                                     <span class="text-yellow-500 text-2xl font-bold">{{ winners.first.full_name[:2] }}</span>
@@ -294,7 +294,7 @@
                                         <div class="relative">
                                             <div class="relative h-24 w-24 md:h-32 md:w-32">
                                                 {% if winners.third.player1.profile_image %}
-                                                    <img src="{{ url_for('static', filename=winners.third.player1.profile_image) }}" 
+                                                    <img src="{{ winners.third.player1.profile_image }}" 
                                                          alt="{{ winners.third.player1.full_name }}" 
                                                          class="absolute top-0 left-0 h-16 w-16 md:h-24 md:w-24 rounded-full object-cover border-4 border-amber-700">
                                                 {% else %}
@@ -304,7 +304,7 @@
                                                 {% endif %}
                                                 
                                                 {% if winners.third.player2.profile_image %}
-                                                    <img src="{{ url_for('static', filename=winners.third.player2.profile_image) }}" 
+                                                    <img src="{{ winners.third.player2.profile_image }}" 
                                                          alt="{{ winners.third.player2.full_name }}" 
                                                          class="absolute bottom-0 right-0 h-16 w-16 md:h-24 md:w-24 rounded-full object-cover border-4 border-amber-700">
                                                 {% else %}
@@ -332,7 +332,7 @@
                                         <!-- Singles player -->
                                         <div class="relative">
                                             {% if winners.third.profile_image %}
-                                                <img src="{{ url_for('static', filename=winners.third.profile_image) }}" alt="{{ winners.third.full_name }}" class="h-24 w-24 md:h-32 md:w-32 rounded-full object-cover border-4 border-amber-700">
+                                                <img src="{{ winners.third.profile_image }}" alt="{{ winners.third.full_name }}" class="h-24 w-24 md:h-32 md:w-32 rounded-full object-cover border-4 border-amber-700">
                                             {% else %}
                                                 <div class="h-24 w-24 md:h-32 md:w-32 rounded-full bg-amber-50 flex items-center justify-center border-4 border-amber-700">
                                                     <span class="text-amber-700 text-xl font-bold">{{ winners.third.full_name[:2] }}</span>
