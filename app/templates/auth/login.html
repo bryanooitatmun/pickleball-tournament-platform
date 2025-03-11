@@ -13,7 +13,7 @@
             <div>
                 <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
                 <div class="mt-1">
-                    {{ form.email(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                    {{ form.email(class="p-2 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
                     {% for error in form.email.errors %}
                         <span class="text-red-600 text-xs">{{ error }}</span>
                     {% endfor %}
@@ -23,7 +23,7 @@
             <div>
                 <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
                 <div class="mt-1">
-                    {{ form.password(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                    {{ form.password(class="p-2 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
                     {% for error in form.password.errors %}
                         <span class="text-red-600 text-xs">{{ error }}</span>
                     {% endfor %}

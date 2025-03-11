@@ -6,7 +6,7 @@
 <!-- Tournament Banner -->
 <div class="relative w-full h-64 rounded-lg overflow-hidden mb-8">
     {% if tournament.banner %}
-        <img src="{{ url_for('static', filename=tournament.banner) }}" alt="{{ tournament.name }}" class="w-full h-full object-cover">
+        <img src="{{ tournament.banner }}" alt="{{ tournament.name }}" class="w-full h-full object-cover">
     {% else %}
         <div class="w-full h-full bg-gradient-to-r from-blue-600 to-indigo-700 flex items-center justify-center">
             <span class="text-white text-3xl font-bold">{{ tournament.name }}</span>

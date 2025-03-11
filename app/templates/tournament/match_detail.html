@@ -118,7 +118,7 @@
                             <div class="flex items-center">
                                 {% if match.player1 %}
                                     {% if match.player1.profile_image %}
-                                        <img src="{{ url_for('static', filename=match.player1.profile_image) }}" alt="{{ match.player1.full_name }}" class="h-12 w-12 rounded-full mr-3">
+                                        <img src="{{ match.player1.profile_image }}" alt="{{ match.player1.full_name }}" class="h-12 w-12 rounded-full mr-3">
                                     {% else %}
                                         <div class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                                             <span class="text-blue-600 font-bold">{{ match.player1.full_name[:2] }}</span>
@@ -171,7 +171,7 @@
                                         <p class="text-sm text-gray-500">{{ match.player2.country }}</p>
                                     </div>
                                     {% if match.player2.profile_image %}
-                                        <img src="{{ url_for('static', filename=match.player2.profile_image) }}" alt="{{ match.player2.full_name }}" class="h-12 w-12 rounded-full">
+                                        <img src="{{ match.player2.profile_image }}" alt="{{ match.player2.full_name }}" class="h-12 w-12 rounded-full">
                                     {% else %}
                                         <div class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
                                             <span class="text-blue-600 font-bold">{{ match.player2.full_name[:2] }}</span>

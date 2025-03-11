@@ -14,7 +14,7 @@
                 {% if featured_tournament %}
                 <section class="home-hero mb-8">
                     <div class="bg-white rounded-lg overflow-hidden">
-                        <div class="relative h-96" style="background-image: url('{{ url_for('static', filename=featured_tournament.featured_image or 'images/default-banner.jpg') }}'); background-size: cover; background-position: center;">
+                        <div class="relative h-96" style="background-image: url('{{ featured_tournament.banner or 'images/default-banner.jpg' }}'); background-size: cover; background-position: center;">
                             <div class="absolute inset-0 bg-gradient-to-r from-blue-900/80 to-transparent"></div>
                             <a href="{{ url_for('main.tournament_detail', id=featured_tournament.id) }}" class="absolute inset-0 z-10"></a>
                             
@@ -22,7 +22,7 @@
                                 <div class="text-white p-8 max-w-2xl">
                                     <div class="inline-block bg-red-600 text-white text-xs font-bold px-2 py-1 rounded mb-3">NOW LIVE</div>
                                     <h2 class="text-3xl md:text-4xl font-bold mb-2">{{ featured_tournament.name }}</h2>
-                                    <p class="mb-6">{{ featured_tournament.start_date.strftime('%B %d-%d, %Y') }} | {{ featured_tournament.location }}</p>
+                                    <p class="mb-6">{{ featured_tournament.start_date.strftime('%B %d') }}-{{ featured_tournament.end_date.strftime('%d, %Y') }} | {{ featured_tournament.location }}</p>
                                     
                                     <div class="flex flex-wrap gap-3">
                                         <a href="#" class="inline-flex items-center bg-white text-blue-900 px-4 py-2 rounded-md font-bold hover:bg-gray-100">
@@ -46,37 +46,37 @@
                             
                             <div class="absolute bottom-0 right-0 p-4 lg:p-8">
                                 {% if featured_tournament.logo %}
-                                <img src="{{ url_for('static', filename=featured_tournament.logo) }}" alt="{{ featured_tournament.name }}" class="h-32 lg:h-40">
+                                <img src="{{ featured_tournament.logo }}" alt="{{ featured_tournament.name }}" class="h-32 lg:h-40">
                                 {% endif %}
                             </div>
                         </div>
                         
                         <div class="grid grid-cols-3 gap-px bg-gray-200">
-                            <a href="{{ url_for('main.tournament_detail', id=featured_tournament.id) }}#scores" class="relative overflow-hidden h-24 bg-gray-800 group">
+                            <a href="{{ url_for('main.tournament_detail', id=featured_tournament.id) }}#scores" class="relative overflow-hidden h-80 bg-gray-800 group">
                                 <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/50"></div>
                                 <div class="relative z-10 flex items-center justify-center h-full">
                                     <h3 class="text-white text-xl font-bold">Scores</h3>
                                 </div>
                                 <div class="absolute inset-0 opacity-60 group-hover:opacity-80 transition-opacity">
-                                    <img src="{{ url_for('static', filename='images/scores-bg.jpg') }}" alt="Scores" class="w-full h-full object-cover">
+                                    <img src="https://www.ppatour.com/wp-content/uploads/2024/10/home-live-score.webp" alt="Scores" class="w-full h-full object-cover">
                                 </div>
                             </a>
-                            <a href="{{ url_for('main.tournament_detail', id=featured_tournament.id) }}#brackets" class="relative overflow-hidden h-24 bg-gray-800 group">
+                            <a href="{{ url_for('main.tournament_detail', id=featured_tournament.id) }}#brackets" class="relative overflow-hidden h-80 bg-gray-800 group">
                                 <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/50"></div>
                                 <div class="relative z-10 flex items-center justify-center h-full">
                                     <h3 class="text-white text-xl font-bold">Brackets</h3>
                                 </div>
                                 <div class="absolute inset-0 opacity-60 group-hover:opacity-80 transition-opacity">
-                                    <img src="{{ url_for('static', filename='images/brackets-bg.jpg') }}" alt="Brackets" class="w-full h-full object-cover">
+                                    <img src="https://www.ppatour.com/wp-content/uploads/2024/10/home-live-brackets.webp" alt="Brackets" class="w-full h-full object-cover">
                                 </div>
                             </a>
-                            <a href="{{ url_for('main.tournament_detail', id=featured_tournament.id) }}#schedule" class="relative overflow-hidden h-24 bg-gray-800 group">
+                            <a href="{{ url_for('main.tournament_detail', id=featured_tournament.id) }}#schedule" class="relative overflow-hidden h-80 bg-gray-800 group">
                                 <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/50"></div>
                                 <div class="relative z-10 flex items-center justify-center h-full">
                                     <h3 class="text-white text-xl font-bold">Schedule</h3>
                                 </div>
                                 <div class="absolute inset-0 opacity-60 group-hover:opacity-80 transition-opacity">
-                                    <img src="{{ url_for('static', filename='images/schedule-bg.jpg') }}" alt="Schedule" class="w-full h-full object-cover">
+                                    <img src="https://www.ppatour.com/wp-content/uploads/2024/10/home-live-schedule-oop.webp" alt="Schedule" class="w-full h-full object-cover">
                                 </div>
                             </a>
                         </div>
@@ -114,7 +114,9 @@
                                 <div class="player-card flex-shrink-0 w-72 bg-white rounded-lg overflow-hidden shadow-md">
                                     <div class="relative h-72 overflow-hidden bg-gray-200">
                                         {% if player.profile_image %}
-                                        <img src="{{ url_for('static', filename=player.profile_image) }}" alt="{{ player.full_name }}" class="w-full h-full object-cover">
+                                        {# <img src="{{ url_for('static', filename=player.profile_image) }}" alt="{{ player.full_name }}" class="w-full h-full object-cover"> #}
+                                        <img src="{{ player.profile_image }}" alt="{{ player.full_name }}" class="w-full h-full object-cover">
+
                                         {% else %}
                                         <div class="w-full h-full flex items-center justify-center bg-gray-700 text-white text-xl">
                                             <i class="fas fa-user-circle text-6xl"></i>
@@ -136,7 +138,10 @@
                                                 <div class="text-blue-600 font-bold">{{ player.mens_doubles_points }}</div>
                                             </div>
                                         </div>
-                                        <div class="font-bold text-lg">{{ player.full_name }}</div>
+                                        <a href="{{ url_for('main.player_detail', id=player.id) }}" class="font-bold hover:text-blue-800 text-lg">
+                                            {{ player.full_name }}
+                                        </a>
+                                        {# <div class="font-bold text-lg">{{ player.full_name }}</div> #}
                                     </div>
                                 </div>
                                 {% endfor %}
@@ -160,7 +165,7 @@
                             <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="block">
                                 <div class="relative h-48 bg-gray-200">
                                     {% if tournament.banner %}
-                                    <img src="{{ url_for('static', filename=tournament.banner) }}" alt="{{ tournament.name }}" class="w-full h-full object-cover">
+                                    <img src="{{ tournament.banner }}" alt="{{ tournament.name }}" class="w-full h-full object-cover">
                                     {% else %}
                                     <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-700 text-white">
                                         <span class="text-xl font-bold">{{ tournament.name }}</span>
@@ -169,7 +174,7 @@
                                     
                                     {% if tournament.logo %}
                                     <div class="absolute bottom-0 right-0 p-2">
-                                        <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="h-20">
+                                        <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="h-20">
                                     </div>
                                     {% endif %}
                                 </div>
@@ -199,7 +204,7 @@
                             {% for sponsor in featured_platform_sponsors %}
                             <div class="flex items-center justify-center p-4 bg-white rounded-lg">
                                 {% if sponsor.logo %}
-                                <img src="{{ url_for('static', filename=sponsor.logo) }}" alt="{{ sponsor.name }}" class="max-h-12 max-w-full">
+                                <img src="{{ sponsor.logo }}" alt="{{ sponsor.name }}" class="max-h-12 max-w-full">
                                 {% else %}
                                 <div class="text-lg font-bold text-gray-800">{{ sponsor.name }}</div>
                                 {% endif %}
@@ -213,7 +218,7 @@
             
             <!-- Sidebar -->
             <div class="w-full lg:w-1/4">
-                <aside class="sticky top-24">
+                <aside class="top-24">
                     <!-- Tournament Sidebar -->
                     {% if featured_tournament %}
                     <div class="bg-white rounded-lg shadow-sm mb-6">

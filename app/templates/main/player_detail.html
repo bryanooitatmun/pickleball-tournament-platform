@@ -5,14 +5,10 @@
 {% block content %}
 <!-- Hero Banner -->
 <div id="heroBanner" class="relative h-64 overflow-hidden mb-5 rounded-lg">
-    {% if player.banner_image %}
-        <img src="{{ url_for('static', filename=player.banner_image) }}" alt="Banner" class="w-full h-full object-cover">
-    {% else %}
-        <div class="w-full h-full bg-gradient-to-r from-blue-600 to-indigo-700"></div>
-    {% endif %}
+
     <div class="absolute inset-0 bg-gradient-to-r from-blue-900/80 to-transparent">
         {% if player.banner_image %}
-            <img src="{{ url_for('static', filename=player.banner_image) }}" alt="Banner" class="w-full h-full object-cover mix-blend-overlay">
+            <img src="{{ player.banner_image }}" alt="Banner" class="object-top w-full h-full object-cover mix-blend-overlay">
         {% else %}
             <img src="{{ url_for('static', filename='images/placeholders/banners/default_banner.jpg') }}" alt="Default Banner" class="w-full h-full object-cover mix-blend-overlay">
         {% endif %}
@@ -22,7 +18,7 @@
     </div>
     <div class="absolute right-8 bottom-0 translate-y-1/3">
         {% if player.profile_image %}
-            <img src="{{ url_for('static', filename=player.profile_image) }}" alt="Player Portrait" class="h-80 object-cover rounded-lg shadow-lg">
+            <img src="{{ player.profile_image }}" alt="Player Portrait" class="h-80 object-cover rounded-lg shadow-lg">
         {% else %}
             <div class="h-80 w-64 bg-gray-300 flex items-center justify-center rounded-lg shadow-lg">
                 <span class="text-gray-600 text-5xl font-bold">{{ player.full_name[:1] }}</span>
@@ -35,7 +31,7 @@
     <!-- Action Shot - Left Column -->
     <div id="actionShot" class="md:col-span-4">
         {% if player.action_image %}
-            <img src="{{ url_for('static', filename=player.action_image) }}" alt="Action Shot" class="w-full rounded-lg shadow-lg">
+            <img src="{{ player.action_image }}" alt="Action Shot" class="w-full rounded-lg shadow-lg">
         {% else %}
             <div class="w-full aspect-[3/4] bg-gray-200 flex items-center justify-center rounded-lg shadow-lg">
                 <span class="text-gray-500">No action shot available</span>
@@ -158,7 +154,7 @@
                         <div class="flex border-b border-gray-100 pb-3">
                             <div class="w-16 flex-shrink-0">
                                 {% if tournament.logo %}
-                                    <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="w-12 h-12 object-contain">
+                                    <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="w-12 h-12 object-contain">
                                 {% else %}
                                     <div class="w-12 h-12 bg-gray-200 flex items-center justify-center rounded">
                                         <span class="text-xs text-gray-500">No Logo</span>
@@ -186,13 +182,13 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div id="equipment" class="h-full">
                 <div class="bg-white rounded-lg shadow p-6 h-full">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6">{{ player.full_name }}'S EQUIPMENT</h2>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">{{ player.full_name | upper }}'S EQUIPMENT</h2>
                     {% if equipment %}
                         {% for item in equipment %}
                             <div class="flex items-center space-x-4 {% if not loop.last %}mb-4 pb-4 border-b border-gray-100{% endif %}">
                                 <div class="w-16">
                                     {% if item.image %}
-                                        <img src="{{ url_for('static', filename=item.image) }}" alt="{{ item.name }}" class="w-full">
+                                        <img src="{{ item.image }}" alt="{{ item.name }}" class="w-full">
                                     {% else %}
                                         <div class="w-16 h-16 bg-gray-200 flex items-center justify-center rounded">
                                             <span class="text-xs text-gray-500">No Image</span>
@@ -215,14 +211,14 @@
             </div>
             <div id="sponsors" class="h-full flex flex-col justify-end">
                 <div class="bg-white rounded-lg shadow p-6 h-full">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6">MEET {{ player.full_name }}'S SPONSORS</h2>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">MEET {{ player.full_name | upper }}'S SPONSORS</h2>
                     {% if sponsors %}
                         <div class="grid grid-cols-2 gap-6">
                             {% for sponsor in sponsors %}
                                 <div class="flex items-center justify-center p-4">
                                     {% if sponsor.logo %}
                                         <a href="{{ sponsor.link }}" target="_blank">
-                                            <img src="{{ url_for('static', filename=sponsor.logo) }}" alt="{{ sponsor.name }} Logo" class="max-w-[200px] max-h-[65px]">
+                                            <img src="{{ sponsor.logo }}" alt="{{ sponsor.name }} Logo" class="max-w-[200px] max-h-[65px]">
                                         </a>
                                     {% else %}
                                         <div class="w-32 h-16 bg-gray-200 flex items-center justify-center rounded">

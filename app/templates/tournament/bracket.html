@@ -456,7 +456,7 @@
                                         {% elif match.scheduled_time %}
                                             <span class="text-gray-500">
                                                 {{ match.scheduled_time.strftime('%b %d, %I:%M %p') }}
-                                                {% if match.court %}• Court {{ match.court }}{% endif %}
+                                                {% if match.court %}• {{ match.court }}{% endif %}
                                             </span>
                                         {% endif %}
                                     </div>
@@ -614,7 +614,7 @@
                                 {% elif match.scheduled_time %}
                                     <span class="text-gray-500">
                                         {{ match.scheduled_time.strftime('%b %d, %I:%M %p') }}
-                                        {% if match.court %}• Court {{ match.court }}{% endif %}
+                                        {% if match.court %}• {{ match.court }}{% endif %}
                                     </span>
                                 {% endif %}
                             </div>

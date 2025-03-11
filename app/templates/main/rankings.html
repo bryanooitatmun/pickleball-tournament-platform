@@ -91,7 +91,7 @@
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden">
                                     {% if player.profile_image %}
-                                        <img src="{{ url_for('static', filename=player.profile_image) }}" alt="{{ player.full_name }}" class="w-full h-full object-cover">
+                                        <img src="{{ player.profile_image }}" alt="{{ player.full_name }}" class="w-full h-full object-cover">
                                     {% else %}
                                         <div class="w-full h-full bg-blue-100 flex items-center justify-center">
                                             <span class="text-blue-600 font-bold">{{ player.full_name[:1] }}</span>

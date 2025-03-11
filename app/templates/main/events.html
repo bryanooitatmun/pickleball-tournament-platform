@@ -45,7 +45,7 @@
                                 <div class="bg-white border border-gray-200 p-4 rounded-b-lg {% if not loop.last %}mb-px{% endif %} flex justify-between items-center">
                                     <div class="flex gap-4">
                                         {% if tournament.logo %}
-                                            <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }} logo" class="w-16 h-16 object-contain">
+                                            <img src="{{ tournament.logo }}" alt="{{ tournament.name }} logo" class="w-16 h-16 object-contain">
                                         {% else %}
                                             <div class="w-16 h-16 bg-gray-200 flex items-center justify-center rounded">
                                                 <span class="text-gray-500 text-xs">No Logo</span>

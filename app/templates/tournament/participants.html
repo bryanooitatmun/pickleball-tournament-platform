@@ -87,7 +87,7 @@
                                     <div class="flex items-center mb-2 sm:mb-0 sm:mr-6">
                                         <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                                             {% if team.player1.profile_image %}
-                                                <img src="{{ url_for('static', filename=team.player1.profile_image) }}" 
+                                                <img src="{{ team.player1.profile_image }}" 
                                                     class="w-10 h-10 rounded-full object-cover" 
                                                     alt="{{ team.player1.full_name }}">
                                             {% else %}
@@ -109,7 +109,7 @@
                                     <div class="flex items-center">
                                         <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                                             {% if team.player2.profile_image %}
-                                                <img src="{{ url_for('static', filename=team.player2.profile_image) }}" 
+                                                <img src="{{ team.player2.profile_image }}" 
                                                     class="w-10 h-10 rounded-full object-cover" 
                                                     alt="{{ team.player2.full_name }}">
                                             {% else %}
@@ -151,7 +151,7 @@
                             <div class="flex items-center">
                                 <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                                     {% if entry.player.profile_image %}
-                                        <img src="{{ url_for('static', filename=entry.player.profile_image) }}" 
+                                        <img src="{{ entry.player.profile_image }}" 
                                             class="w-10 h-10 rounded-full object-cover" 
                                             alt="{{ entry.player.full_name }}">
                                     {% else %}

@@ -58,7 +58,7 @@
                             <div class="flex items-center">
                                 <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                                     {% if match.player1 and match.player1.profile_image %}
-                                        <img src="{{ url_for('static', filename=match.player1.profile_image) }}" 
+                                        <img src="{{ match.player1.profile_image }}" 
                                             class="w-10 h-10 rounded-full object-cover" 
                                             alt="{{ match.player1.full_name }}">
                                     {% elif match.player1 %}
@@ -97,7 +97,7 @@
                             <div class="flex items-center">
                                 <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                                     {% if match.player2 and match.player2.profile_image %}
-                                        <img src="{{ url_for('static', filename=match.player2.profile_image) }}" 
+                                        <img src="{{ match.player2.profile_image }}" 
                                             class="w-10 h-10 rounded-full object-cover" 
                                             alt="{{ match.player2.full_name }}">
                                     {% elif match.player2 %}
