@@ -14,7 +14,9 @@
         <div class="container mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-8">
-                    <a href="{{ url_for('main.index') }}" class="text-2xl font-bold text-blue-900">SportsSync</a>
+                    <a href="{{ url_for('main.index') }}" class="text-2xl font-bold text-blue-900">
+                        <img src="{{ url_for('static', filename='images/logo.jpeg') }}" alt="Pickleball Pro Tour" class="h-12">
+                    </a>
                     <nav class="hidden md:flex space-x-6">
                         <a href="{{ url_for('main.index') }}" class="font-bold hover:text-blue-600 px-2 py-4 flex items-center">HOME</a>
                         <a href="{{ url_for('main.events') }}" class="font-bold hover:text-blue-600 px-2 py-4 flex items-center">EVENTS</a>
