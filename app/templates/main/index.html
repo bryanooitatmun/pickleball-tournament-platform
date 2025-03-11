@@ -102,49 +102,206 @@
                     
                     <div class="bg-white rounded-lg p-4 mb-4">
                         <div class="flex flex-wrap border-b border-gray-200">
-                            <button class="tab-button px-4 py-2 font-bold text-blue-600 border-b-2 border-blue-600">Men's Doubles</button>
-                            <button class="tab-button px-4 py-2 font-bold text-gray-500 hover:text-blue-600">Men's Singles</button>
-                            <button class="tab-button px-4 py-2 font-bold text-gray-500 hover:text-blue-600">Women's Doubles</button>
-                            <button class="tab-button px-4 py-2 font-bold text-gray-500 hover:text-blue-600">Women's Singles</button>
+                            <button class="tab-button px-4 py-2 font-bold text-blue-600 border-b-2 border-blue-600" data-category="mens_doubles">Men's Doubles</button>
+                            <button class="tab-button px-4 py-2 font-bold text-gray-500 hover:text-blue-600" data-category="mens_singles">Men's Singles</button>
+                            <button class="tab-button px-4 py-2 font-bold text-gray-500 hover:text-blue-600" data-category="womens_doubles">Women's Doubles</button>
+                            <button class="tab-button px-4 py-2 font-bold text-gray-500 hover:text-blue-600" data-category="womens_singles">Women's Singles</button>
+                            <button class="tab-button px-4 py-2 font-bold text-gray-500 hover:text-blue-600" data-category="mixed_doubles">Mixed Doubles</button>
                         </div>
                         
-                        <div class="overflow-x-auto">
-                            <div class="flex py-6 gap-4">
-                                {% for player in top_mens_doubles[:5] %}
-                                <div class="player-card flex-shrink-0 w-72 bg-white rounded-lg overflow-hidden shadow-md">
-                                    <div class="relative h-72 overflow-hidden bg-gray-200">
-                                        {% if player.profile_image %}
-                                        {# <img src="{{ url_for('static', filename=player.profile_image) }}" alt="{{ player.full_name }}" class="w-full h-full object-cover"> #}
-                                        <img src="{{ player.profile_image }}" alt="{{ player.full_name }}" class="w-full h-full object-cover">
-
-                                        {% else %}
-                                        <div class="w-full h-full flex items-center justify-center bg-gray-700 text-white text-xl">
-                                            <i class="fas fa-user-circle text-6xl"></i>
+                        <!-- Players content containers -->
+                        <div id="mens_doubles" class="player-tab-content">
+                            <div class="overflow-x-auto">
+                                <div class="flex py-6 gap-4">
+                                    {% for player in top_mens_doubles[:5] %}
+                                    <div class="player-card flex-shrink-0 w-72 bg-white rounded-lg overflow-hidden shadow-md">
+                                        <div class="relative h-72 overflow-hidden bg-gray-200">
+                                            {% if player.profile_image %}
+                                            <img src="{{ player.profile_image }}" alt="{{ player.full_name }}" class="w-full h-full object-cover">
+                                            {% else %}
+                                            <div class="w-full h-full flex items-center justify-center bg-gray-700 text-white text-xl">
+                                                <i class="fas fa-user-circle text-6xl"></i>
+                                            </div>
+                                            {% endif %}
                                         </div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="p-4">
-                                        <div class="flex justify-between items-start mb-3">
-                                            <div class="flex items-center">
-                                                <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
-                                                    {{ loop.index }}
+                                        <div class="p-4">
+                                            <div class="flex justify-between items-start mb-3">
+                                                <div class="flex items-center">
+                                                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                                                        {{ loop.index }}
+                                                    </div>
+                                                    {% if player.country %}
+                                                    <img src="{{ url_for('static', filename='images/flags/' ~ player.country|lower ~ '.svg') }}" alt="{{ player.country }}" class="w-6 h-6 ml-2">
+                                                    {% endif %}
                                                 </div>
-                                                {% if player.country %}
-                                                <img src="{{ url_for('static', filename='images/flags/' ~ player.country|lower ~ '.svg') }}" alt="{{ player.country }}" class="w-6 h-6 ml-2">
-                                                {% endif %}
+                                                <div class="flex flex-col">
+                                                    <div class="text-xs font-semibold text-gray-500">52 Week</div>
+                                                    <div class="text-blue-600 font-bold">{{ player.mens_doubles_points }}</div>
+                                                </div>
                                             </div>
-                                            <div class="flex flex-col">
-                                                <div class="text-xs font-semibold text-gray-500">52 Week</div>
-                                                <div class="text-blue-600 font-bold">{{ player.mens_doubles_points }}</div>
-                                            </div>
+                                            <a href="{{ url_for('main.player_detail', id=player.id) }}" class="font-bold hover:text-blue-800 text-lg">
+                                                {{ player.full_name }}
+                                            </a>
                                         </div>
-                                        <a href="{{ url_for('main.player_detail', id=player.id) }}" class="font-bold hover:text-blue-800 text-lg">
-                                            {{ player.full_name }}
-                                        </a>
-                                        {# <div class="font-bold text-lg">{{ player.full_name }}</div> #}
                                     </div>
+                                    {% endfor %}
                                 </div>
-                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div id="mens_singles" class="player-tab-content hidden">
+                            <div class="overflow-x-auto">
+                                <div class="flex py-6 gap-4">
+                                    {% for player in top_mens_singles[:5] %}
+                                    <div class="player-card flex-shrink-0 w-72 bg-white rounded-lg overflow-hidden shadow-md">
+                                        <div class="relative h-72 overflow-hidden bg-gray-200">
+                                            {% if player.profile_image %}
+                                            <img src="{{ player.profile_image }}" alt="{{ player.full_name }}" class="w-full h-full object-cover">
+                                            {% else %}
+                                            <div class="w-full h-full flex items-center justify-center bg-gray-700 text-white text-xl">
+                                                <i class="fas fa-user-circle text-6xl"></i>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="p-4">
+                                            <div class="flex justify-between items-start mb-3">
+                                                <div class="flex items-center">
+                                                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                                                        {{ loop.index }}
+                                                    </div>
+                                                    {% if player.country %}
+                                                    <img src="{{ url_for('static', filename='images/flags/' ~ player.country|lower ~ '.svg') }}" alt="{{ player.country }}" class="w-6 h-6 ml-2">
+                                                    {% endif %}
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <div class="text-xs font-semibold text-gray-500">52 Week</div>
+                                                    <div class="text-blue-600 font-bold">{{ player.mens_singles_points }}</div>
+                                                </div>
+                                            </div>
+                                            <a href="{{ url_for('main.player_detail', id=player.id) }}" class="font-bold hover:text-blue-800 text-lg">
+                                                {{ player.full_name }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="womens_doubles" class="player-tab-content hidden">
+                            <div class="overflow-x-auto">
+                                <div class="flex py-6 gap-4">
+                                    {% for player in top_womens_doubles[:5] %}
+                                    <div class="player-card flex-shrink-0 w-72 bg-white rounded-lg overflow-hidden shadow-md">
+                                        <div class="relative h-72 overflow-hidden bg-gray-200">
+                                            {% if player.profile_image %}
+                                            <img src="{{ player.profile_image }}" alt="{{ player.full_name }}" class="w-full h-full object-cover">
+                                            {% else %}
+                                            <div class="w-full h-full flex items-center justify-center bg-gray-700 text-white text-xl">
+                                                <i class="fas fa-user-circle text-6xl"></i>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="p-4">
+                                            <div class="flex justify-between items-start mb-3">
+                                                <div class="flex items-center">
+                                                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                                                        {{ loop.index }}
+                                                    </div>
+                                                    {% if player.country %}
+                                                    <img src="{{ url_for('static', filename='images/flags/' ~ player.country|lower ~ '.svg') }}" alt="{{ player.country }}" class="w-6 h-6 ml-2">
+                                                    {% endif %}
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <div class="text-xs font-semibold text-gray-500">52 Week</div>
+                                                    <div class="text-blue-600 font-bold">{{ player.womens_doubles_points }}</div>
+                                                </div>
+                                            </div>
+                                            <a href="{{ url_for('main.player_detail', id=player.id) }}" class="font-bold hover:text-blue-800 text-lg">
+                                                {{ player.full_name }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="womens_singles" class="player-tab-content hidden">
+                            <div class="overflow-x-auto">
+                                <div class="flex py-6 gap-4">
+                                    {% for player in top_womens_singles[:5] %}
+                                    <div class="player-card flex-shrink-0 w-72 bg-white rounded-lg overflow-hidden shadow-md">
+                                        <div class="relative h-72 overflow-hidden bg-gray-200">
+                                            {% if player.profile_image %}
+                                            <img src="{{ player.profile_image }}" alt="{{ player.full_name }}" class="w-full h-full object-cover">
+                                            {% else %}
+                                            <div class="w-full h-full flex items-center justify-center bg-gray-700 text-white text-xl">
+                                                <i class="fas fa-user-circle text-6xl"></i>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="p-4">
+                                            <div class="flex justify-between items-start mb-3">
+                                                <div class="flex items-center">
+                                                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                                                        {{ loop.index }}
+                                                    </div>
+                                                    {% if player.country %}
+                                                    <img src="{{ url_for('static', filename='images/flags/' ~ player.country|lower ~ '.svg') }}" alt="{{ player.country }}" class="w-6 h-6 ml-2">
+                                                    {% endif %}
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <div class="text-xs font-semibold text-gray-500">52 Week</div>
+                                                    <div class="text-blue-600 font-bold">{{ player.womens_singles_points }}</div>
+                                                </div>
+                                            </div>
+                                            <a href="{{ url_for('main.player_detail', id=player.id) }}" class="font-bold hover:text-blue-800 text-lg">
+                                                {{ player.full_name }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="mixed_doubles" class="player-tab-content hidden">
+                            <div class="overflow-x-auto">
+                                <div class="flex py-6 gap-4">
+                                    {% for player in top_mixed_doubles[:5] %}
+                                    <div class="player-card flex-shrink-0 w-72 bg-white rounded-lg overflow-hidden shadow-md">
+                                        <div class="relative h-72 overflow-hidden bg-gray-200">
+                                            {% if player.profile_image %}
+                                            <img src="{{ player.profile_image }}" alt="{{ player.full_name }}" class="w-full h-full object-cover">
+                                            {% else %}
+                                            <div class="w-full h-full flex items-center justify-center bg-gray-700 text-white text-xl">
+                                                <i class="fas fa-user-circle text-6xl"></i>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="p-4">
+                                            <div class="flex justify-between items-start mb-3">
+                                                <div class="flex items-center">
+                                                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                                                        {{ loop.index }}
+                                                    </div>
+                                                    {% if player.country %}
+                                                    <img src="{{ url_for('static', filename='images/flags/' ~ player.country|lower ~ '.svg') }}" alt="{{ player.country }}" class="w-6 h-6 ml-2">
+                                                    {% endif %}
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <div class="text-xs font-semibold text-gray-500">52 Week</div>
+                                                    <div class="text-blue-600 font-bold">{{ player.mixed_doubles_points }}</div>
+                                                </div>
+                                            </div>
+                                            <a href="{{ url_for('main.player_detail', id=player.id) }}" class="font-bold hover:text-blue-800 text-lg">
+                                                {{ player.full_name }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -289,9 +446,12 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.player-tab-content');
     
     tabButtons.forEach(button => {
         button.addEventListener('click', function() {
+            const category = this.getAttribute('data-category');
+            
             // Remove active class from all buttons
             tabButtons.forEach(btn => {
                 btn.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
@@ -302,9 +462,13 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.remove('text-gray-500');
             this.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
             
-            // Here you would normally update the content based on the selected tab
-            // For now, we'll just simulate it by showing an alert
-            console.log('Tab selected: ' + this.textContent.trim());
+            // Hide all tab contents
+            tabContents.forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Show the selected tab content
+            document.getElementById(category).classList.remove('hidden');
         });
     });
 });
