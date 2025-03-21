@@ -66,10 +66,10 @@ import os
 
 @bp.route('/')
 @bp.route('/index')
-def tournament_detail(id):
+def index():
     id = 1
     tournament = Tournament.query.get_or_404(id)
-    categories = tournament.categories.all()
+    categories = tournament.categories.order_by(TournamentCategory.display_order).all()
     
     # For ongoing or completed tournaments, get matches
     matches = {}

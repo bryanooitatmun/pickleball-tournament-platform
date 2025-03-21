@@ -2,339 +2,331 @@
 
 {% block title %}Registration - {{ tournament.name }}{% endblock %}
 
-{% block content %}
-<div class="container mx-auto px-4 py-6">
-    <!-- Tournament Header -->
-    <div class="mb-6 flex items-center">
-        {% if tournament.logo %}
-        <div class="mr-4 flex-shrink-0">
-            <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="h-20 w-auto object-contain">
-        </div>
-        {% endif %}
-        <div>
-            <h1 class="text-3xl font-bold">{{ tournament.name }}</h1>
-            <div class="text-gray-600">{{ tournament.start_date.strftime('%B %d') }}-{{ tournament.end_date.strftime('%d, %Y') }} | {{ tournament.location }}</div>
-            <div class="mt-1">
-                <span class="badge-{{ tournament.tier.value }} px-2 py-1 rounded-full text-xs font-medium inline-flex items-center">
-                    {{ tournament.tier.value }}
-                </span>
-            </div>
-        </div>
-    </div>
+{% block styles %}
+<style>
+    .badge-OPEN {
+        background-color: #10B981;
+        color: white;
+    }
+    .badge-CUP {
+        background-color: #3B82F6;
+        color: white;
+    }
+    .badge-CHALLENGE {
+        background-color: #8B5CF6;
+        color: white;
+    }
+    .badge-SLATE {
+        background-color: #6B7280;
+        color: white;
+    }
+    .section-title {
+        position: relative;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.5rem;
+        font-weight: 700;
+    }
+    .section-title::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 3rem;
+        height: 3px;
+        background-color: #3B82F6;
+    }
+    .required-field:after {
+        content: "*";
+        color: #EF4444;
+        margin-left: 0.25rem;
+    }
 
-    <!-- Registration Form -->
-    <div class="bg-white rounded-lg shadow-sm p-6">
-        <h2 class="text-2xl font-bold mb-4">Tournament Registration</h2>
-        
-        {% if not is_authenticated %}
-        <div class="bg-blue-50 p-4 mb-6 rounded-lg">
-            <h3 class="font-medium text-blue-700">Create an Account</h3>
-            <p class="text-blue-600 text-sm">You'll need to create an account or login to register for this tournament.</p>
-            <div class="mt-2">
-                <a href="{{ url_for('auth.login', next=request.url) }}" class="text-blue-700 underline font-medium">Already have an account? Login</a>
+    .form-input {
+        padding:5px
+    }
+
+    .form-select {
+        padding:5px
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Tournament Header -->
+        <div class="mb-8 bg-white p-6 rounded-xl shadow-md flex items-center">
+            {% if tournament.logo %}
+            <div class="mr-6 flex-shrink-0">
+                <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="h-24 w-auto object-contain">
             </div>
-        </div>
-        {% endif %}
-        
-        <form method="POST" class="space-y-6">
-            {{ form.hidden_tag() }}
-            {{ form.tournament_id() }}
-            
-            <div class="mb-6 border-b border-gray-200 pb-6">
-                <h3 class="text-lg font-medium mb-4">Tournament Details</h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-group">
-                        <label for="{{ form.category_id.id }}" class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
-                        {{ form.category_id(class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
-                        {% if form.category_id.errors %}
-                            <div class="text-red-500 text-sm mt-1">
-                                {% for error in form.category_id.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="{{ form.partner_id.id }}" class="block text-sm font-medium text-gray-700 mb-1">Partner (for doubles)</label>
-                        {{ form.partner_id(class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
-                        {% if form.partner_id.errors %}
-                            <div class="text-red-500 text-sm mt-1">
-                                {% for error in form.partner_id.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            
-            {% if not is_authenticated %}
-            <div class="mb-6 border-b border-gray-200 pb-6">
-                <h3 class="text-lg font-medium mb-4">Account Information</h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-group">
-                        <label for="{{ form.email.id }}" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                        {{ form.email(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", required=true) }}
-                        {% if form.email.errors %}
-                            <div class="text-red-500 text-sm mt-1">
-                                {% for error in form.email.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="{{ form.full_name.id }}" class="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                        {{ form.full_name(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", required=true) }}
-                        {% if form.full_name.errors %}
-                            <div class="text-red-500 text-sm mt-1">
-                                {% for error in form.full_name.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="{{ form.password.id }}" class="block text-sm font-medium text-gray-700 mb-1">Password *</label>
-                        {{ form.password(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", required=true) }}
-                        {% if form.password.errors %}
-                            <div class="text-red-500 text-sm mt-1">
-                                {% for error in form.password.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                        <p class="text-xs text-gray-500 mt-1">Password must be at least 8 characters</p>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="{{ form.confirm_password.id }}" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label>
-                        {{ form.confirm_password(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", required=true) }}
-                        {% if form.confirm_password.errors %}
-                            <div class="text-red-500 text-sm mt-1">
-                                {% for error in form.confirm_password.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
+            {% else %}
+            <div class="mr-6 flex-shrink-0 w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center">
+                <span class="text-white text-3xl font-bold">{{ tournament.name[0] }}</span>
             </div>
             {% endif %}
-            
-            <div class="mb-6 border-b border-gray-200 pb-6">
-                <h3 class="text-lg font-medium mb-4">Player Information</h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {% if not is_authenticated %}
-                    <div class="form-group">
-                        <label for="{{ form.phone.id }}" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                        {{ form.phone(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
-                        {% if form.phone.errors %}
-                            <div class="text-red-500 text-sm mt-1">
-                                {% for error in form.phone.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="{{ form.country.id }}" class="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                        {{ form.country(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
-                        {% if form.country.errors %}
-                            <div class="text-red-500 text-sm mt-1">
-                                {% for error in form.country.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="{{ form.city.id }}" class="block text-sm font-medium text-gray-700 mb-1">City</label>
-                        {{ form.city(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
-                        {% if form.city.errors %}
-                            <div class="text-red-500 text-sm mt-1">
-                                {% for error in form.city.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-                    
-                    <div class="form-group">
-                        <label for="{{ form.dupr_rating.id }}" class="block text-sm font-medium text-gray-700 mb-1">DUPR Rating</label>
-                        {{ form.dupr_rating(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
-                        {% if form.dupr_rating.errors %}
-                            <div class="text-red-500 text-sm mt-1">
-                                {% for error in form.dupr_rating.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="{{ form.shirt_size.id }}" class="block text-sm font-medium text-gray-700 mb-1">Shirt Size</label>
-                        {{ form.shirt_size(class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
-                        {% if form.shirt_size.errors %}
-                            <div class="text-red-500 text-sm mt-1">
-                                {% for error in form.shirt_size.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    {% if not is_authenticated %}
-                    <div class="form-group">
-                        <label for="{{ form.date_of_birth.id }}" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-                        {{ form.date_of_birth(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", placeholder="YYYY-MM-DD") }}
-                        {% if form.date_of_birth.errors %}
-                            <div class="text-red-500 text-sm mt-1">
-                                {% for error in form.date_of_birth.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="{{ form.gender.id }}" class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                        {{ form.gender(class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
-                        {% if form.gender.errors %}
-                            <div class="text-red-500 text-sm mt-1">
-                                {% for error in form.gender.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    {% endif %}
+            <div>
+                <div class="flex items-center mb-2">
+                    <h1 class="text-3xl font-bold mr-3">{{ tournament.name }}</h1>
+                    <span class="badge-{{ tournament.tier.value }} px-2 py-1 rounded-full text-xs font-medium inline-flex items-center">
+                        {{ tournament.tier.value }}
+                    </span>
+                </div>
+                <div class="text-gray-600 flex items-center mb-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {{ tournament.start_date.strftime('%B %d') }}-{{ tournament.end_date.strftime('%d, %Y') }}
+                </div>
+                <div class="text-gray-600 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {{ tournament.location }}
                 </div>
             </div>
-            
-            <div class="mb-6 border-b border-gray-200 pb-6">
-                <h3 class="text-lg font-medium mb-4">Emergency Contact</h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-group">
-                        <label for="{{ form.emergency_contact.id }}" class="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Name</label>
-                        {{ form.emergency_contact(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
-                        {% if form.emergency_contact.errors %}
-                            <div class="text-red-500 text-sm mt-1">
-                                {% for error in form.emergency_contact.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
+        </div>
+
+        <!-- Registration Form -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2">
+                <div class="bg-white p-8 rounded-xl shadow-md mb-8">
+                    <h2 class="section-title text-2xl">Team Registration</h2>
                     
-                    <div class="form-group">
-                        <label for="{{ form.emergency_phone.id }}" class="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Phone</label>
-                        {{ form.emergency_phone(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
-                        {% if form.emergency_phone.errors %}
-                            <div class="text-red-500 text-sm mt-1">
-                                {% for error in form.emergency_phone.errors %}
-                                    {{ error }}
-                                {% endfor %}
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        {{ form.tournament_id() }}
+                        
+                        <div class="mb-8">
+                            <h3 class="text-lg font-semibold mb-4 text-blue-700">Category Details</h3>
+                            
+                            <div class="form-group mb-6">
+                                <label for="{{ form.category_id.id }}" class="block text-sm font-medium text-gray-700 mb-1 required-field">Category</label>
+                                {{ form.category_id(class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
+                                {% if form.category_id.errors %}
+                                    <div class="text-red-500 text-sm mt-1">
+                                        {% for error in form.category_id.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <p class="text-xs text-gray-500 mt-1" id="category-description"></p>
                             </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="mb-6 border-b border-gray-200 pb-6">
-                <h3 class="text-lg font-medium mb-4">Additional Information</h3>
-                
-                <div class="form-group">
-                    <label for="{{ form.special_requests.id }}" class="block text-sm font-medium text-gray-700 mb-1">Special Requests</label>
-                    {{ form.special_requests(class="form-textarea block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", rows=3) }}
-                    {% if form.special_requests.errors %}
-                        <div class="text-red-500 text-sm mt-1">
-                            {% for error in form.special_requests.errors %}
-                                {{ error }}
-                            {% endfor %}
                         </div>
-                    {% endif %}
-                    <p class="text-xs text-gray-500 mt-1">Please let us know if you have any special requirements or requests</p>
-                </div>
-            </div>
-            
-            <div class="mb-6">
-                <h3 class="text-lg font-medium mb-4">Terms and Agreements</h3>
-                
-                <div class="space-y-4">
-                    <div class="flex items-start">
-                        <div class="flex items-center h-5">
-                            {{ form.terms_agreement(class="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500") }}
-                        </div>
-                        <div class="ml-3 text-sm">
-                            <label for="{{ form.terms_agreement.id }}" class="font-medium text-gray-700">Terms and Conditions *</label>
-                            <p class="text-gray-500">I agree to the tournament rules and regulations</p>
-                            {% if form.terms_agreement.errors %}
-                                <div class="text-red-500 text-sm mt-1">
-                                    {% for error in form.terms_agreement.errors %}
-                                        {{ error }}
-                                    {% endfor %}
+                        
+                        <!-- Player 1 Information -->
+                        <div class="mb-8 border-t border-gray-200 pt-6">
+                            <h3 class="text-lg font-semibold mb-4 text-blue-700">Player 1 Details</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="form-group">
+                                    <label for="player1_name" class="block text-sm font-medium text-gray-700 mb-1 required-field">Full Name</label>
+                                    <input type="text" id="player1_name" name="player1_name" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
                                 </div>
-                            {% endif %}
+                                
+                                <div class="form-group">
+                                    <label for="player1_email" class="block text-sm font-medium text-gray-700 mb-1 required-field">Email</label>
+                                    <input type="email" id="player1_email" name="player1_email" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="player1_phone" class="block text-sm font-medium text-gray-700 mb-1 required-field">Phone Number</label>
+                                    <input type="tel" id="player1_phone" name="player1_phone" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="player1_email_confirm" class="block text-sm font-medium text-gray-700 mb-1 required-field">Confirm Email</label>
+                                    <input type="email" id="player1_email_confirm" name="player1_email_confirm" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                                    <p class="text-xs text-red-500 mt-1">Please confirm your email carefully. Registration confirmation and temporary password will be sent to this email.</p>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="player1_dupr_id" class="block text-sm font-medium text-gray-700 mb-1 required-field">DUPR ID</label>
+                                    <input type="text" id="player1_dupr_id" name="player1_dupr_id" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Enter your DUPR ID" required>
+                                    <p class="text-xs text-gray-500 mt-1">Your DUPR ID can be found in your profile at <a href="https://mydupr.com" target="_blank" class="text-blue-600 hover:underline">mydupr.com</a></p>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="player1_date_of_birth" class="block text-sm font-medium text-gray-700 mb-1 required-field">Date of Birth</label>
+                                    <input type="date" id="player1_date_of_birth" name="player1_date_of_birth" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="player1_nationality" class="block text-sm font-medium text-gray-700 mb-1 required-field">Nationality</label>
+                                    <input type="text" id="player1_nationality" name="player1_nationality" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Player 2 Information -->
+                        <div class="mb-8 border-t border-gray-200 pt-6">
+                            <h3 class="text-lg font-semibold mb-4 text-blue-700">Player 2 Details</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="form-group">
+                                    <label for="player2_name" class="block text-sm font-medium text-gray-700 mb-1 required-field">Full Name</label>
+                                    <input type="text" id="player2_name" name="player2_name" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="player2_email" class="block text-sm font-medium text-gray-700 mb-1 required-field">Email</label>
+                                    <input type="email" id="player2_email" name="player2_email" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="player2_phone" class="block text-sm font-medium text-gray-700 mb-1 required-field">Phone Number</label>
+                                    <input type="tel" id="player2_phone" name="player2_phone" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="player2_email_confirm" class="block text-sm font-medium text-gray-700 mb-1 required-field">Confirm Email</label>
+                                    <input type="email" id="player2_email_confirm" name="player2_email_confirm" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                                    <p class="text-xs text-red-500 mt-1">Please confirm your email carefully. Registration confirmation and temporary password will be sent to this email.</p>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="player2_dupr_id" class="block text-sm font-medium text-gray-700 mb-1 required-field">DUPR ID</label>
+                                    <input type="text" id="player2_dupr_id" name="player2_dupr_id" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Enter your DUPR ID" required>
+                                    <p class="text-xs text-gray-500 mt-1">Your DUPR ID can be found in your profile at <a href="https://mydupr.com" target="_blank" class="text-blue-600 hover:underline">mydupr.com</a></p>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="player2_date_of_birth" class="block text-sm font-medium text-gray-700 mb-1 required-field">Date of Birth</label>
+                                    <input type="date" id="player2_date_of_birth" name="player2_date_of_birth" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="player2_nationality" class="block text-sm font-medium text-gray-700 mb-1 required-field">Nationality</label>
+                                    <input type="text" id="player2_nationality" name="player2_nationality" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Statement of Risk & Regulation -->
+                        <div class="mb-8 border-t border-gray-200 pt-6">
+                            <h3 class="text-lg font-semibold mb-4 text-blue-700">Statement of Risk & Regulations</h3>
+                            
+                            <div class="mb-4 bg-gray-50 p-4 rounded-lg text-sm text-gray-700 max-h-64 overflow-y-auto">
+                                <h4 class="font-bold mb-2">Intermediate Category Eligibility Rules:</h4>
+                                <ol class="list-decimal pl-5 space-y-2">
+                                    <li>We will conduct thorough due diligence on every player.</li>
+                                    <li>DUPR serves as an initial guideline but does not solely determine eligibility for the Intermediate category.</li>
+                                    <li>We reserve the right to move players to the Open category if their skill level exceeds their current DUPR rating.</li>
+                                    <li>Participants may report players they believe should be in the Open category. We will conduct due diligence, and the final decision will be made by management.</li>
+                                    <li>Players who win any tournament, whether on Reclub or elsewhere, will be reviewed to determine their eligibility to compete in the Intermediate category.</li>
+                                    <li>No refunds will be given if a player is moved from the Intermediate to the Open category.</li>
+                                    <li>Players without a DUPR rating are welcome to participate in the Intermediate tournament, but due diligence will be conducted to assess their eligibility.</li>
+                                    <li>If one player is deemed eligible for the Open category while their partner remains in the Intermediate category, the Intermediate player must find a replacement. Otherwise, the entire team will be moved to the Open category.</li>
+                                    <li>If, during the tournament, we identify a team that was mistakenly placed in the Intermediate category but should be in the Open category, they may continue playing. However, if they finish in first place, their points will not be counted in the ranking system. They will still receive the prize and medals.</li>
+                                </ol>
+                                
+                                <h4 class="font-bold mt-4 mb-2">Terms & Conditions:</h4>
+                                <ol class="list-decimal pl-5 space-y-2">
+                                    <li>Each participant carefully verifies the supplied information, ensures its correctness, and agrees to its use.</li>
+                                    <li>Registering for an event indicates acceptance of the event's rules and agreement to participate in accordance with the regulations.</li>
+                                    <li>The organizers have the right to alter, amend, or modify regulations as determined by event management.</li>
+                                    <li>The organizers reserve the right to use photographs, videos, and other media from the event for non-commercial purposes.</li>
+                                    <li>Participants must be present at the venue at least 1 hour before their match starts.</li>
+                                    <li>No refunds will be provided in case of cancellation by the participant.</li>
+                                    <li>Participants are responsible for their health, well-being, and personal belongings.</li>
+                                    <li>All participants agree to follow code of conduct as set by the event hosts.</li>
+                                    <li>In the event of a dispute, the Tournament Director's decision will be final.</li>
+                                </ol>
+                            </div>
+                            
+                            <div class="space-y-4 mt-6">
+                                <div class="flex items-start">
+                                    <div class="flex items-center h-5 mt-1">
+                                        <input type="checkbox" id="terms_agreement" name="terms_agreement" class="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" required>
+                                    </div>
+                                    <div class="ml-3">
+                                        <label for="terms_agreement" class="text-sm font-medium text-gray-700 required-field">Terms and Conditions Acceptance</label>
+                                        <p class="text-xs text-gray-500">I have read, understood, and agree to the tournament rules, regulations, and terms & conditions.</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start">
+                                    <div class="flex items-center h-5 mt-1">
+                                        <input type="checkbox" id="liability_waiver" name="liability_waiver" class="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" required>
+                                    </div>
+                                    <div class="ml-3">
+                                        <label for="liability_waiver" class="text-sm font-medium text-gray-700 required-field">Liability Waiver & Informed Consent</label>
+                                        <p class="text-xs text-gray-500">I acknowledge that pickleball involves risks of serious bodily injury, including permanent disability, paralysis, and death. I voluntarily accept these risks and waive liability against the organizers, sponsors, and venue. I certify that I am physically fit to participate in this event.</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start">
+                                    <div class="flex items-center h-5 mt-1">
+                                        <input type="checkbox" id="media_release" name="media_release" class="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" required>
+                                    </div>
+                                    <div class="ml-3">
+                                        <label for="media_release" class="text-sm font-medium text-gray-700 required-field">Media Release</label>
+                                        <p class="text-xs text-gray-500">I grant permission to the event organizers to use photographs, videos, and recordings of me taken during the event for promotional purposes, without compensation.</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start">
+                                    <div class="flex items-center h-5 mt-1">
+                                        <input type="checkbox" id="pdpa_consent" name="pdpa_consent" class="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" required>
+                                    </div>
+                                    <div class="ml-3">
+                                        <label for="pdpa_consent" class="text-sm font-medium text-gray-700 required-field">Personal Data Protection Act (PDPA) Consent</label>
+                                        <p class="text-xs text-gray-500">I consent to the collection, use, and processing of my personal data for this event and future communications related to pickleball tournaments. The tournament organizers will collect and process my personal details such as full name, contact details, DUPR rating, and emergency contacts in accordance with the Personal Data Protection Act 2010.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center pt-6 border-t border-gray-200">
+                            <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                                Back to Tournament
+                            </a>
+                            
+                            <button type="submit" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-md">
+                                Continue to Payment
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Registration Summary Card -->
+            <div>
+                <div class="bg-white p-6 rounded-xl shadow-md sticky top-6">
+                    <h3 class="text-lg font-bold mb-4">Registration Summary</h3>
+                    
+                    <div class="mb-4 pb-4 border-b border-gray-100">
+                        <div class="text-sm text-gray-500 mb-1">Category</div>
+                        <div class="font-medium" id="summary-category">Please select a category</div>
+                    </div>
+                    
+                    {# <div class="mb-4 pb-4 border-b border-gray-100">
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Event Schedule</h4>
+                        <div class="text-sm mb-1" id="summary-schedule">Available after selecting a category</div>
+                    </div> #}
+                    
+                    <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                        <h4 class="text-sm font-medium text-blue-800 mb-2">Registration Fee</h4>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Team Fee:</span>
+                            <span class="font-bold text-blue-800 text-xl" id="summary-fee">RM0.00</span>
                         </div>
                     </div>
                     
-                    <div class="flex items-start">
-                        <div class="flex items-center h-5">
-                            {{ form.liability_waiver(class="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500") }}
-                        </div>
-                        <div class="ml-3 text-sm">
-                            <label for="{{ form.liability_waiver.id }}" class="font-medium text-gray-700">Liability Waiver *</label>
-                            <p class="text-gray-500">I acknowledge that pickleball involves risks and waive liability</p>
-                            {% if form.liability_waiver.errors %}
-                                <div class="text-red-500 text-sm mt-1">
-                                    {% for error in form.liability_waiver.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
+                    <div class="text-xs text-gray-500">
+                        <p class="mb-2">* Registration is only confirmed after payment.</p>
+                        <p>* No refunds will be provided in case of cancellation by the participant.</p>
                     </div>
                 </div>
             </div>
-            
-            <!-- Registration Fee Display -->
-            <div class="bg-gray-50 p-4 mb-6 rounded-lg">
-                <h3 class="font-medium text-gray-800 mb-2">Registration Fee</h3>
-                <div id="fee-display">
-                    <div class="flex justify-between">
-                        <span>Category Fee:</span>
-                        <span class="font-medium" id="display-fee">
-                            {% if selected_category %}
-                                ${{ selected_category.registration_fee }}
-                            {% else %}
-                                Please select a category
-                            {% endif %}
-                        </span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="flex justify-between items-center pt-6">
-                <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="text-gray-600 font-medium">
-                    Back to Tournament
-                </a>
-                
-                <button type="submit" class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    Continue to Payment
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -343,30 +335,49 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const categorySelect = document.getElementById('{{ form.category_id.id }}');
-        const feeDisplay = document.getElementById('display-fee');
+        const feeDisplay = document.getElementById('summary-fee');
+        const categoryDisplay = document.getElementById('summary-category');
+        const scheduleDisplay = document.getElementById('summary-schedule');
+        const categoryDescription = document.getElementById('category-description');
         
-        // Category fees mapping
-        const categoryFees = {
+        // Category information mapping
+        const categoryInfo = {
             {% for category in tournament.categories %}
-                {{ category.id }}: {{ category.registration_fee }},
+                {{ category.id }}: {
+                    name: "{{ category.name |safe }}",
+                    fee: {{ category.registration_fee }},
+                    schedule: "{{ category.name |safe }} - Day {{ loop.index }}",
+                    description: "{% if category.max_dupr_rating %}Max DUPR Rating: {{ category.max_dupr_rating }}{% endif %}"
+                },
             {% endfor %}
         };
         
-        // Update fee display when category changes
+        // Update displays when category changes
         categorySelect.addEventListener('change', function() {
             const categoryId = parseInt(this.value);
-            if (categoryId && categoryFees[categoryId] !== undefined) {
-                feeDisplay.textContent = '$' + categoryFees[categoryId];
+            if (categoryId && categoryInfo[categoryId]) {
+                const info = categoryInfo[categoryId];
+                feeDisplay.textContent = "RM" + info.fee.toFixed(2);
+                categoryDisplay.textContent = info.name;
+                scheduleDisplay.textContent = info.schedule;
+                categoryDescription.textContent = info.description;
             } else {
-                feeDisplay.textContent = 'Please select a category';
+                feeDisplay.textContent = "RM0.00";
+                categoryDisplay.textContent = "Please select a category";
+                scheduleDisplay.textContent = "Available after selecting a category";
+                categoryDescription.textContent = "";
             }
         });
         
-        // Initialize fee display
+        // Initialize displays
         if (categorySelect.value) {
             const categoryId = parseInt(categorySelect.value);
-            if (categoryId && categoryFees[categoryId] !== undefined) {
-                feeDisplay.textContent = '$' + categoryFees[categoryId];
+            if (categoryId && categoryInfo[categoryId]) {
+                const info = categoryInfo[categoryId];
+                feeDisplay.textContent = "RM" + info.fee.toFixed(2);
+                categoryDisplay.textContent = info.name;
+                scheduleDisplay.textContent = info.schedule;
+                categoryDescription.textContent = info.description;
             }
         }
     });

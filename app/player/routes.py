@@ -5,7 +5,8 @@ import os
 from app import db
 from app.player import bp
 from app.models import Tournament, TournamentCategory, Registration, PlayerProfile, User, UserRole
-from app.player.forms import TournamentRegistrationForm, PaymentProofForm
+from app.player.forms import TournamentRegistrationForm, PaymentProofForm, RegistrationForm
+from app.helpers.registration import generate_payment_reference, generate_temp_password
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -227,190 +228,182 @@ def edit_profile():
                            profile=profile)
 
 
+# @bp.route('/register_tournament/<int:tournament_id>', methods=['GET', 'POST'])
+# def register_tournament(tournament_id):
+#     # Get tournament
+#     tournament = Tournament.query.get_or_404(tournament_id)
+    
+#     # Check if tournament registration is open
+#     if not tournament.is_registration_open():
+#         flash('Registration for this tournament is closed.', 'danger')
+#         return redirect(url_for('main.tournament_detail', id=tournament_id))
+    
+#     form = TournamentRegistrationForm()
+#     form.tournament_id.data = tournament_id
+    
+#     # Get categories for this tournament
+#     categories = tournament.categories.all()
+    
+#     # Populate category choices
+#     category_choices = [(c.id, c.category_type.value) for c in categories]
+#     form.category_id.choices = category_choices
+    
+#     # Get potential partners (other players)
+#     other_players = PlayerProfile.query.filter(PlayerProfile.id != 0).all()
+    
+#     # Populate partner choices (for doubles)
+#     partner_choices = [(0, 'No Partner')] + [(p.id, p.full_name) for p in other_players]
+#     form.partner_id.choices = partner_choices
+    
+#     # Check if user is authenticated
+#     is_authenticated = current_user.is_authenticated
+    
+#     # If GET request or form validation fails
+#     selected_category = None
+#     if request.args.get('category'):
+#         category_id = int(request.args.get('category'))
+#         selected_category = TournamentCategory.query.get(category_id)
+#         form.category_id.data = category_id
+    
+#     return render_template('player/register_tournament.html',
+#                            title='Tournament Registration',
+#                            tournament=tournament,
+#                            form=form,
+#                            is_authenticated=is_authenticated,
+#                            selected_category=selected_category)
+
+
 @bp.route('/register_tournament/<int:tournament_id>', methods=['GET', 'POST'])
 def register_tournament(tournament_id):
-    # Get tournament
+    """Register a team for a tournament without requiring login"""
     tournament = Tournament.query.get_or_404(tournament_id)
     
-    # Check if tournament registration is open
+    # Check if registration is open
     if not tournament.is_registration_open():
-        flash('Registration for this tournament is closed.', 'danger')
+        flash('Registration for this tournament is closed.', 'error')
         return redirect(url_for('main.tournament_detail', id=tournament_id))
     
-    form = TournamentRegistrationForm()
-    form.tournament_id.data = tournament_id
+    # Sort categories by display_order
+    categories = tournament.categories.order_by(TournamentCategory.display_order).all()
     
-    # Get categories for this tournament
-    categories = tournament.categories.all()
-    
-    # Populate category choices
-    category_choices = [(c.id, c.category_type.value) for c in categories]
-    form.category_id.choices = category_choices
-    
-    # Get potential partners (other players)
-    other_players = PlayerProfile.query.filter(PlayerProfile.id != 0).all()
-    
-    # Populate partner choices (for doubles)
-    partner_choices = [(0, 'No Partner')] + [(p.id, p.full_name) for p in other_players]
-    form.partner_id.choices = partner_choices
-    
-    # Check if user is authenticated
-    is_authenticated = current_user.is_authenticated
+    # Create registration form
+    form = RegistrationForm(tournament=tournament)
     
     if form.validate_on_submit():
-        # Additional validation for non-authenticated users
-        if not form.validate_registration(is_authenticated):
-            return render_template('player/register_tournament.html',
-                                  title='Tournament Registration',
-                                  tournament=tournament,
-                                  form=form,
-                                  is_authenticated=is_authenticated)
+        # Create new team registration
+        registration = TeamRegistration(
+            tournament_id=tournament.id,
+            category_id=form.category_id.data,
+            
+            # Get registration fee from category
+            registration_fee=TournamentCategory.query.get(form.category_id.data).registration_fee,
+            
+            # Player 1 details
+            player1_name=form.player1_name.data,
+            player1_email=form.player1_email.data,
+            player1_phone=form.player1_phone.data,
+            player1_dupr_id=form.player1_dupr_id.data,
+            player1_date_of_birth=form.player1_date_of_birth.data,
+            player1_nationality=form.player1_nationality.data,
+            
+            # Player 2 details
+            player2_name=form.player2_name.data,
+            player2_email=form.player2_email.data,
+            player2_phone=form.player2_phone.data,
+            player2_dupr_id=form.player2_dupr_id.data,
+            player2_date_of_birth=form.player2_date_of_birth.data,
+            player2_nationality=form.player2_nationality.data,
+            
+            # Agreements
+            terms_agreement=form.terms_agreement.data,
+            liability_waiver=form.liability_waiver.data,
+            media_release=form.media_release.data,
+            pdpa_consent=form.pdpa_consent.data,
+            
+            # Additional information
+            special_requests=form.special_requests.data,
+            
+            # Generate unique payment reference
+            payment_reference=generate_payment_reference(tournament)
+        )
         
-        # Handle user creation if not logged in
-        if not is_authenticated:
-            # Create new user
-            user = User(
-                username=form.email.data.split('@')[0],  # Generate username from email
-                email=form.email.data.lower(),
-                role=UserRole.PLAYER
-            )
-            user.set_password(form.password.data)
-            db.session.add(user)
-            db.session.commit()
-            
-            # Create player profile
-            profile = PlayerProfile(
-                user_id=user.id,
-                full_name=form.full_name.data,
-                email=form.email.data.lower(),
-                phone=form.phone.data,
-                country=form.country.data,
-                city=form.city.data,
-                gender=form.gender.data,
-                date_of_birth=form.date_of_birth.data
-            )
-            db.session.add(profile)
-            db.session.commit()
-            
-            # Log in the new user
-            login_user(user)
-            
-            flash('Your account has been created and you are now logged in.', 'success')
-        else:
-            # Get existing player profile
-            profile = PlayerProfile.query.filter_by(user_id=current_user.id).first()
-            
-            # Create profile if it doesn't exist
-            if not profile:
-                profile = PlayerProfile(
-                    user_id=current_user.id,
-                    full_name=current_user.username,  # Use username as fallback
-                    email=current_user.email
-                )
-                db.session.add(profile)
-                db.session.commit()
+        # Fetch DUPR ratings from API
+        try:
+            registration.fetch_dupr_ratings()
+        except Exception as e:
+            current_app.logger.error(f"Error fetching DUPR ratings: {e}")
+            flash("Could not fetch DUPR ratings. Registration will proceed, but please contact support.", "warning")
         
-        # Get the selected category
-        selected_category = TournamentCategory.query.get(form.category_id.data)
-        
-        # Check if already registered for this category
-        existing_reg = Registration.query.filter_by(
-            player_id=profile.id,
-            category_id=form.category_id.data
-        ).first()
-        
-        if existing_reg:
-            flash('You are already registered for this category.', 'warning')
-            return redirect(url_for('player.dashboard'))
-        else:
-            # Generate a reference number
-            reference = f"{tournament.payment_reference_prefix or 'PBT'}-{int(datetime.utcnow().timestamp())}"
-            
-            # Create new registration
-            registration = Registration(
-                player_id=profile.id,
-                category_id=form.category_id.data,
-                partner_id=form.partner_id.data if form.partner_id.data != 0 else None,
-                dupr_rating=form.dupr_rating.data,
-                emergency_contact=form.emergency_contact.data,
-                emergency_phone=form.emergency_phone.data,
-                shirt_size=form.shirt_size.data,
-                special_requests=form.special_requests.data,
-                payment_reference=reference,
-                payment_status='pending'
-            )
-            
-            db.session.add(registration)
-            db.session.commit()
-            
-            # Redirect to payment page if category has a fee
-            if selected_category.registration_fee > 0:
-                return redirect(url_for('player.payment', registration_id=registration.id))
-            else:
-                # Free registration
-                registration.payment_status = 'free'
-                registration.is_approved = True
-                db.session.commit()
-                
-                flash('You have successfully registered for the tournament!', 'success')
-                return redirect(url_for('player.dashboard'))
-    
-    # If GET request or form validation fails
-    selected_category = None
-    if request.args.get('category'):
-        category_id = int(request.args.get('category'))
-        selected_category = TournamentCategory.query.get(category_id)
-        form.category_id.data = category_id
-    
-    return render_template('player/register_tournament.html',
-                           title='Tournament Registration',
-                           tournament=tournament,
-                           form=form,
-                           is_authenticated=is_authenticated,
-                           selected_category=selected_category)
-
-@bp.route('/payment/<int:registration_id>', methods=['GET', 'POST'])
-@login_required
-def payment(registration_id):
-    registration = Registration.query.get_or_404(registration_id)
-    
-    # Ensure this registration belongs to the current user
-    profile = PlayerProfile.query.filter_by(user_id=current_user.id).first_or_404()
-    if registration.player_id != profile.id:
-        flash('You do not have permission to access this payment.', 'danger')
-        return redirect(url_for('player.dashboard'))
-    
-    tournament = registration.category.tournament
-    category = registration.category
-    
-    # If already paid, redirect to dashboard
-    if registration.payment_status in ['paid', 'free']:
-        flash('This registration has already been paid.', 'info')
-        return redirect(url_for('player.dashboard'))
-    
-    form = PaymentProofForm()
-    form.registration_id.data = registration_id
-    
-    if form.validate_on_submit():
-        # Save payment proof
-        proof_path = save_payment_proof(form.payment_proof.data, registration_id)
-        
-        # Update registration with payment info
-        registration.payment_proof = proof_path
-        registration.payment_proof_uploaded_at = datetime.utcnow()
-        registration.payment_notes = form.payment_notes.data
-        registration.payment_status = 'uploaded'  # Pending verification by organizer
+        # Add to database
+        db.session.add(registration)
         db.session.commit()
         
-        flash('Payment proof uploaded successfully! Your registration will be confirmed once the organizer verifies your payment.', 'success')
-        return redirect(url_for('player.my_registrations'))
+        # Redirect to payment page
+        return redirect(url_for('tournament.payment', registration_id=registration.id))
     
-    return render_template('player/payment.html',
-                          title='Tournament Registration Payment',
-                          registration=registration,
-                          tournament=tournament,
-                          category=category,
-                          form=form)
+    return render_template(
+        'player/register_tournament.html',
+        tournament=tournament,
+        form=form,
+        categories=categories
+    )
+
+@bp.route('/payment/<int:registration_id>', methods=['GET', 'POST'])
+def payment(registration_id):
+    """Payment page for team registration"""
+    registration = TeamRegistration.query.get_or_404(registration_id)
+    tournament = registration.tournament
+    
+    # Handle payment form submission
+    if request.method == 'POST':
+        # Process payment proof upload
+        if 'payment_proof' in request.files:
+            payment_proof = request.files['payment_proof']
+            if payment_proof.filename:
+                # Save payment proof
+                filename = secure_filename(f"payment_{registration.id}_{payment_proof.filename}")
+                payment_proof.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+                
+                # Update registration
+                registration.payment_proof = filename
+                registration.payment_status = 'pending'  # Pending verification
+                
+                # Create user accounts for both players
+                try:
+                    registration.create_user_accounts()
+                except Exception as e:
+                    current_app.logger.error(f"Error creating user accounts: {e}")
+                    flash("Could not create user accounts. Please contact support.", "warning")
+                
+                # Send confirmation emails
+                try:
+                    registration.send_confirmation_emails()
+                except Exception as e:
+                    current_app.logger.error(f"Error sending confirmation emails: {e}")
+                    flash("Could not send confirmation emails. Please contact support.", "warning")
+                
+                db.session.commit()
+                
+                flash('Your payment proof has been uploaded. Registration is pending verification. Check your email for confirmation and account details.', 'success')
+                return redirect(url_for('tournament.registration_confirmation', registration_id=registration.id))
+    
+    return render_template(
+        'tournament/payment.html',
+        registration=registration,
+        tournament=tournament
+    )
+
+@bp.route('/registration_confirmation/<int:registration_id>')
+def registration_confirmation(registration_id):
+    """Registration confirmation page"""
+    registration = TeamRegistration.query.get_or_404(registration_id)
+    tournament = registration.tournament
+    
+    return render_template(
+        'tournament/registration_confirmation.html',
+        registration=registration,
+        tournament=tournament
+    )
 
 @bp.route('/my_registrations')
 @login_required
