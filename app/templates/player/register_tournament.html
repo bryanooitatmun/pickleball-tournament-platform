@@ -359,12 +359,12 @@
                 const info = categoryInfo[categoryId];
                 feeDisplay.textContent = "RM" + info.fee.toFixed(2);
                 categoryDisplay.textContent = info.name;
-                scheduleDisplay.textContent = info.schedule;
+                //scheduleDisplay.textContent = info.schedule;
                 categoryDescription.textContent = info.description;
             } else {
                 feeDisplay.textContent = "RM0.00";
                 categoryDisplay.textContent = "Please select a category";
-                scheduleDisplay.textContent = "Available after selecting a category";
+                //scheduleDisplay.textContent = "Available after selecting a category";
                 categoryDescription.textContent = "";
             }
         });
@@ -376,7 +376,7 @@
                 const info = categoryInfo[categoryId];
                 feeDisplay.textContent = "RM" + info.fee.toFixed(2);
                 categoryDisplay.textContent = info.name;
-                scheduleDisplay.textContent = info.schedule;
+                //scheduleDisplay.textContent = info.schedule;
                 categoryDescription.textContent = info.description;
             }
         }

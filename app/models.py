@@ -54,6 +54,7 @@ partnerships = db.Table('partnerships',
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    full_name = db.Column(db.String(100))
     username = db.Column(db.String(64), index=True, unique=True, nullable=False)
     email = db.Column(db.String(120), index=True, unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
@@ -873,7 +874,7 @@ class TeamRegistration(db.Model):
         if not user1:
             self.player1_temp_password = generate_temp_password()
             user1 = User(
-                username=self.player1_email.split('@')[0],  # Use part before @ as username
+                username=self.player1_email,  # Use part before @ as username
                 email=self.player1_email,
                 full_name=self.player1_name,
                 role=UserRole.PLAYER
@@ -886,7 +887,7 @@ class TeamRegistration(db.Model):
         if not user2:
             self.player2_temp_password = generate_temp_password()
             user2 = User(
-                username=self.player2_email.split('@')[0],  # Use part before @ as username
+                username=self.player2_email,  # Use part before @ as username
                 email=self.player2_email, 
                 full_name=self.player2_name,
                 role=UserRole.PLAYER

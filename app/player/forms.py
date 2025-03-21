@@ -2,8 +2,8 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import StringField, TextAreaField, IntegerField, SelectField, SubmitField, HiddenField, EmailField, PasswordField, BooleanField, DecimalField, TelField, DateField
 from wtforms.validators import DataRequired, Email, Length, NumberRange, Optional, URL, EqualTo
-from datetime import datetime
-from app.models import Tournament, TournamentCategory, Registration, PlayerProfile, User, UserRole
+from datetime import datetime, date
+from app.models import Tournament, TournamentCategory, Registration, PlayerProfile, User, UserRole, TeamRegistration
 
 class ProfileForm(FlaskForm):
     full_name = StringField('Full Name', validators=[DataRequired(), Length(max=100)])
@@ -291,10 +291,11 @@ class SponsorForm(FlaskForm):
     link = StringField('Sponsor Website', validators=[Optional(), URL()])
     submit = SubmitField('Add Sponsor')
 
-class PaymentProofForm(FlaskForm):
-    registration_id = HiddenField('Registration ID')
-    payment_proof = FileField('Payment Proof', 
-                           validators=[FileRequired(), 
-                                      FileAllowed(['jpg', 'png', 'jpeg', 'pdf'], 
-                                                'Images or PDF only!')])
-    payment_notes = TextAreaField('Payment Notes', validators=[Optional(), Length(max=500)])
+class PaymentForm(FlaskForm):
+    """Form for payment proof upload"""
+    payment_proof = FileField('Payment Proof', validators=[
+        FileRequired(message="Please upload your payment proof"),
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Images only!')
+    ])
+    submit = SubmitField('Submit Payment')
+

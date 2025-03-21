@@ -4,8 +4,8 @@ from werkzeug.utils import secure_filename
 import os
 from app import db
 from app.player import bp
-from app.models import Tournament, TournamentCategory, Registration, PlayerProfile, User, UserRole
-from app.player.forms import TournamentRegistrationForm, PaymentProofForm, RegistrationForm
+from app.models import Tournament, TournamentCategory, Registration, PlayerProfile, User, UserRole, TeamRegistration
+from app.player.forms import TournamentRegistrationForm, PaymentForm, RegistrationForm
 from app.helpers.registration import generate_payment_reference, generate_temp_password
 
 def allowed_file(filename):
@@ -339,7 +339,7 @@ def register_tournament(tournament_id):
         db.session.commit()
         
         # Redirect to payment page
-        return redirect(url_for('tournament.payment', registration_id=registration.id))
+        return redirect(url_for('player.payment', registration_id=registration.id))
     
     return render_template(
         'player/register_tournament.html',
@@ -354,43 +354,46 @@ def payment(registration_id):
     registration = TeamRegistration.query.get_or_404(registration_id)
     tournament = registration.tournament
     
+    # Create form for CSRF protection and file validation
+    form = PaymentForm()
+    
     # Handle payment form submission
-    if request.method == 'POST':
+    if form.validate_on_submit():
         # Process payment proof upload
-        if 'payment_proof' in request.files:
-            payment_proof = request.files['payment_proof']
-            if payment_proof.filename:
-                # Save payment proof
-                filename = secure_filename(f"payment_{registration.id}_{payment_proof.filename}")
-                payment_proof.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
-                
-                # Update registration
-                registration.payment_proof = filename
-                registration.payment_status = 'pending'  # Pending verification
-                
-                # Create user accounts for both players
-                try:
-                    registration.create_user_accounts()
-                except Exception as e:
-                    current_app.logger.error(f"Error creating user accounts: {e}")
-                    flash("Could not create user accounts. Please contact support.", "warning")
-                
-                # Send confirmation emails
-                try:
-                    registration.send_confirmation_emails()
-                except Exception as e:
-                    current_app.logger.error(f"Error sending confirmation emails: {e}")
-                    flash("Could not send confirmation emails. Please contact support.", "warning")
-                
-                db.session.commit()
-                
-                flash('Your payment proof has been uploaded. Registration is pending verification. Check your email for confirmation and account details.', 'success')
-                return redirect(url_for('tournament.registration_confirmation', registration_id=registration.id))
+        if form.payment_proof.data:
+            payment_proof = form.payment_proof.data
+            # Save payment proof
+            filename = secure_filename(f"payment_{registration.id}_{payment_proof.filename}")
+            payment_proof.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+            
+            # Update registration
+            registration.payment_proof = filename
+            registration.payment_status = 'pending'  # Pending verification
+            
+            # Create user accounts for both players
+            try:
+                registration.create_user_accounts()
+            except Exception as e:
+                current_app.logger.error(f"Error creating user accounts: {e}")
+                flash("Could not create user accounts. Please contact support.", "warning")
+            
+            # Send confirmation emails
+            try:
+                registration.send_confirmation_emails()
+            except Exception as e:
+                current_app.logger.error(f"Error sending confirmation emails: {e}")
+                flash("Could not send confirmation emails. Please contact support.", "warning")
+            
+            db.session.commit()
+            
+            flash('Your payment proof has been uploaded. Registration is pending verification. Check your email for confirmation and account details.', 'success')
+            return redirect(url_for('player.registration_confirmation', registration_id=registration.id))
     
     return render_template(
-        'tournament/payment.html',
+        'player/payment.html',
         registration=registration,
-        tournament=tournament
+        tournament=tournament,
+        form=form
     )
 
 @bp.route('/registration_confirmation/<int:registration_id>')
@@ -400,7 +403,7 @@ def registration_confirmation(registration_id):
     tournament = registration.tournament
     
     return render_template(
-        'tournament/registration_confirmation.html',
+        'player/registration_confirmation.html',
         registration=registration,
         tournament=tournament
     )
