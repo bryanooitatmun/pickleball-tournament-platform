@@ -26,6 +26,215 @@ from app.helpers.tournament import (
     _create_knockout_matches
 )
 
+@bp.route('/registrations')
+@login_required
+@organizer_required
+def view_registrations():
+    # Get tournaments organized by current user
+    tournaments = Tournament.query.filter_by(organizer_id=current_user.id).all()
+    tournament_ids = [t.id for t in tournaments]
+    
+    # Get categories for these tournaments
+    categories = TournamentCategory.query.filter(TournamentCategory.tournament_id.in_(tournament_ids)).all()
+    category_ids = [c.id for c in categories]
+    
+    # Get registrations for these categories
+    registrations = Registration.query.filter(Registration.category_id.in_(category_ids)).all()
+    
+    # Filter by status if requested
+    status_filter = request.args.get('status', 'pending')
+    if status_filter == 'pending':
+        registrations = [r for r in registrations if r.payment_status == 'uploaded' and not r.payment_verified]
+    elif status_filter == 'approved':
+        registrations = [r for r in registrations if r.payment_verified]
+    elif status_filter == 'rejected':
+        registrations = [r for r in registrations if r.payment_status == 'rejected']
+    
+    # Filter by tournament if requested
+    tournament_filter = request.args.get('tournament', 'all')
+    if tournament_filter != 'all' and tournament_filter.isdigit():
+        tournament_id = int(tournament_filter)
+        if tournament_id in tournament_ids:
+            filtered_category_ids = [c.id for c in categories if c.tournament_id == tournament_id]
+            registrations = [r for r in registrations if r.category_id in filtered_category_ids]
+    
+    return render_template('organizer/view_registrations.html',
+                          title='Tournament Registrations',
+                          registrations=registrations,
+                          status_filter=status_filter,
+                          tournament_filter=tournament_filter,
+                          all_tournaments=tournaments)
+
+@bp.route('/registration/<int:id>')
+@login_required
+@organizer_required
+def view_registration(id):
+    registration = Registration.query.get_or_404(id)
+    
+    # Ensure the tournament belongs to this organizer
+    tournament = registration.category.tournament
+    if tournament.organizer_id != current_user.id and not current_user.is_admin():
+        flash('You do not have permission to view this registration.', 'danger')
+        return redirect(url_for('organizer.view_registrations'))
+    
+    category = registration.category
+    
+    # Get the user who verified the payment if applicable
+    verified_by_user = None
+    if registration.payment_verified_by:
+        verified_by_user = User.query.get(registration.payment_verified_by)
+    
+    return render_template('organizer/view_registration.html',
+                          title='View Registration',
+                          registration=registration,
+                          tournament=tournament,
+                          category=category,
+                          verified_by_user=verified_by_user)
+
+@bp.route('/registration/<int:id>/verify', methods=['POST'])
+@login_required
+@organizer_required
+def verify_registration(id):
+    registration = Registration.query.get_or_404(id)
+    
+    # Ensure the tournament belongs to this organizer
+    tournament = registration.category.tournament
+    if tournament.organizer_id != current_user.id and not current_user.is_admin():
+        flash('You do not have permission to verify this registration.', 'danger')
+        return redirect(url_for('organizer.view_registrations'))
+    
+    # Verify payment
+    registration.payment_verified = True
+    registration.payment_verified_at = datetime.utcnow()
+    registration.payment_verified_by = current_user.id
+    registration.payment_status = 'paid'
+    registration.is_approved = True
+    
+    db.session.commit()
+    
+    flash('Registration payment verified and approved!', 'success')
+    return redirect(url_for('organizer.view_registration', id=id))
+
+@bp.route('/tournament/<int:id>/payment_settings', methods=['GET', 'POST'])
+@login_required
+@organizer_required
+def payment_settings(id):
+    tournament = Tournament.query.get_or_404(id)
+    
+    # Ensure the tournament belongs to this organizer
+    if tournament.organizer_id != current_user.id and not current_user.is_admin():
+        flash('You do not have permission to edit this tournament.', 'danger')
+        return redirect(url_for('organizer.dashboard'))
+    
+    from app.organizer.forms import TournamentPaymentForm
+    form = TournamentPaymentForm(obj=tournament)
+    
+    if form.validate_on_submit():
+        tournament.payment_bank_name = form.payment_bank_name.data
+        tournament.payment_account_number = form.payment_account_number.data
+        tournament.payment_account_name = form.payment_account_name.data
+        tournament.payment_reference_prefix = form.payment_reference_prefix.data
+        tournament.payment_instructions = form.payment_instructions.data
+        
+        # Handle QR code upload
+        if form.payment_qr_code.data:
+            from app.organizer.routes import save_tournament_image
+            tournament.payment_qr_code = save_tournament_image(form.payment_qr_code.data, 'payment_qr_codes')
+        
+        db.session.commit()
+        
+        flash('Payment settings updated successfully!', 'success')
+        return redirect(url_for('organizer.tournament_detail', id=id))
+    
+    return render_template('organizer/payment_settings.html',
+                          title='Payment Settings',
+                          tournament=tournament,
+                          form=form)
+
+@bp.route('/tournament/<int:id>/door_gifts', methods=['GET', 'POST'])
+@login_required
+@organizer_required
+def door_gifts(id):
+    tournament = Tournament.query.get_or_404(id)
+    
+    # Ensure the tournament belongs to this organizer
+    if tournament.organizer_id != current_user.id and not current_user.is_admin():
+        flash('You do not have permission to edit this tournament.', 'danger')
+        return redirect(url_for('organizer.dashboard'))
+    
+    from app.organizer.forms import TournamentGiftsForm
+    form = TournamentGiftsForm(obj=tournament)
+    
+    if form.validate_on_submit():
+        tournament.door_gifts = form.door_gifts.data
+        
+        # Handle door gifts image upload
+        if form.door_gifts_image.data:
+            from app.organizer.routes import save_tournament_image
+            tournament.door_gifts_image = save_tournament_image(form.door_gifts_image.data, 'door_gifts_images')
+        
+        db.session.commit()
+        
+        flash('Door gifts information updated successfully!', 'success')
+        return redirect(url_for('organizer.tournament_detail', id=id))
+    
+    return render_template('organizer/door_gifts.html',
+                          title='Door Gifts',
+                          tournament=tournament,
+                          form=form)
+
+@bp.route('/dashboard/payments')
+@login_required
+@organizer_required
+def payment_dashboard():
+    # Get tournaments organized by current user
+    tournaments = Tournament.query.filter_by(organizer_id=current_user.id).all()
+    tournament_ids = [t.id for t in tournaments]
+    
+    # Get categories for these tournaments
+    categories = TournamentCategory.query.filter(TournamentCategory.tournament_id.in_(tournament_ids)).all()
+    category_ids = [c.id for c in categories]
+    
+    # Get registrations for these categories
+    all_registrations = Registration.query.filter(Registration.category_id.in_(category_ids)).all()
+    
+    # Summary counts
+    pending_count = sum(1 for r in all_registrations if r.payment_status == 'uploaded' and not r.payment_verified)
+    approved_count = sum(1 for r in all_registrations if r.payment_verified)
+    rejected_count = sum(1 for r in all_registrations if r.payment_status == 'rejected')
+    free_count = sum(1 for r in all_registrations if r.payment_status == 'free')
+    
+    # Total revenue by tournament
+    tournament_revenue = {}
+    for tournament in tournaments:
+        revenue = 0
+        for category in tournament.categories:
+            # Count only verified payments
+            verified_registrations = Registration.query.filter_by(
+                category_id=category.id, 
+                payment_status='paid',
+                payment_verified=True
+            ).count()
+            revenue += verified_registrations * category.registration_fee
+        tournament_revenue[tournament.id] = revenue
+    
+    # Recent payments (last 10)
+    recent_payments = Registration.query.filter(
+        Registration.category_id.in_(category_ids),
+        Registration.payment_status.in_(['paid', 'uploaded'])
+    ).order_by(Registration.payment_proof_uploaded_at.desc()).limit(10).all()
+    
+    return render_template('organizer/payment_dashboard.html',
+                          title='Payment Dashboard',
+                          tournaments=tournaments,
+                          pending_count=pending_count,
+                          approved_count=approved_count,
+                          rejected_count=rejected_count,
+                          free_count=free_count,
+                          tournament_revenue=tournament_revenue,
+                          recent_payments=recent_payments)
+
+
 def save_picture(picture, subfolder='tournament_pics'):
     # Generate a secure filename
     filename = secure_filename(picture.filename)
@@ -53,15 +262,85 @@ def dashboard():
     tournaments = Tournament.query.filter_by(organizer_id=current_user.id).order_by(Tournament.start_date.desc()).all()
     
     # Split tournaments by status
-    upcoming_tournaments = [t for t in tournaments if t.status == TournamentStatus.UPCOMING]
-    ongoing_tournaments = [t for t in tournaments if t.status == TournamentStatus.ONGOING]
-    completed_tournaments = [t for t in tournaments if t.status == TournamentStatus.COMPLETED]
+    upcoming_tournaments = []
+    ongoing_tournaments = []
+    completed_tournaments = []
+    
+    # Get registration and payment data
+    total_registrations = 0
+    pending_payments = 0
+    approved_payments = 0
+    total_revenue = 0
+    
+    for tournament in tournaments:
+        # Get all categories for this tournament
+        categories = tournament.categories.all()
+        category_ids = [c.id for c in categories]
+        
+        # Get all registrations for these categories
+        registrations = Registration.query.filter(Registration.category_id.in_(category_ids)).all()
+        
+        # Count registrations and payment status
+        registration_counts = {
+            'total': len(registrations),
+            'pending': sum(1 for r in registrations if r.payment_status == 'uploaded' and not r.payment_verified),
+            'approved': sum(1 for r in registrations if r.payment_verified),
+            'free': sum(1 for r in registrations if r.payment_status == 'free')
+        }
+        
+        # Add registration counts to tournament object
+        tournament.registration_counts = registration_counts
+        
+        # Calculate revenue for completed tournaments
+        if tournament.status == TournamentStatus.COMPLETED:
+            revenue = 0
+            for category in categories:
+                paid_registrations = Registration.query.filter_by(
+                    category_id=category.id, 
+                    payment_status='paid'
+                ).count()
+                revenue += paid_registrations * category.registration_fee
+            tournament.revenue = revenue
+            total_revenue += revenue
+        
+        # Update overall stats
+        total_registrations += registration_counts['total']
+        pending_payments += registration_counts['pending']
+        approved_payments += registration_counts['approved']
+        
+        # Split tournaments by status
+        if tournament.status == TournamentStatus.UPCOMING:
+            upcoming_tournaments.append(tournament)
+        elif tournament.status == TournamentStatus.ONGOING:
+            ongoing_tournaments.append(tournament)
+        else:  # COMPLETED
+            completed_tournaments.append(tournament)
+    
+    # Sort the lists
+    upcoming_tournaments.sort(key=lambda t: t.start_date)
+    ongoing_tournaments.sort(key=lambda t: t.end_date)
+    completed_tournaments.sort(key=lambda t: t.end_date, reverse=True)
+    
+    # Counts for summary section
+    total_tournaments = len(tournaments)
+    upcoming_count = len(upcoming_tournaments)
+    ongoing_count = len(ongoing_tournaments)
+    completed_count = len(completed_tournaments)
     
     return render_template('organizer/dashboard.html',
                            title='Organizer Dashboard',
                            upcoming_tournaments=upcoming_tournaments,
                            ongoing_tournaments=ongoing_tournaments,
-                           completed_tournaments=completed_tournaments)
+                           completed_tournaments=completed_tournaments,
+                           total_tournaments=total_tournaments,
+                           upcoming_count=upcoming_count,
+                           ongoing_count=ongoing_count,
+                           completed_count=completed_count,
+                           total_registrations=total_registrations,
+                           pending_payments=pending_payments,
+                           approved_payments=approved_payments,
+                           total_revenue=total_revenue,
+                           now=datetime.now())
 
 @bp.route('/<int:id>/manage_category/<int:category_id>', methods=['GET', 'POST'])
 @login_required

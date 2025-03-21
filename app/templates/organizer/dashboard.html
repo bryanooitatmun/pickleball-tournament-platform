@@ -1,307 +1,389 @@
 {% extends "base.html" %}
 
-{% block title %}Organizer Dashboard - Pickleball Tournament Platform{% endblock %}
+{% block title %}Organizer Dashboard{% endblock %}
 
 {% block content %}
-<div class="mb-6">
-    <h1 class="text-3xl font-bold mb-2">Organizer Dashboard</h1>
-    <div class="text-gray-600">Manage your tournaments and events</div>
-</div>
-
-<!-- Quick Actions -->
-<div class="flex flex-wrap justify-between items-center mb-8 gap-4">
-    <div class="flex space-x-4">
-        <a href="{{ url_for('organizer.create_tournament') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center">
-            <i class="fas fa-plus mr-2"></i> Create Tournament
-        </a>
+<div class="container mx-auto px-4 py-6">
+    <div class="flex flex-wrap justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">Organizer Dashboard</h1>
+        <div>
+            <a href="{{ url_for('organizer.create_tournament') }}" class="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                Create Tournament
+            </a>
+        </div>
     </div>
     
-    <div class="flex space-x-2">
-        <button id="upcoming-tab" class="tab tab-active py-2 px-4 bg-blue-800 text-white rounded-lg" data-target="upcoming-tournaments">Upcoming</button>
-        <button id="ongoing-tab" class="tab tab-inactive py-2 px-4 bg-white text-gray-700 border border-gray-200 rounded-lg" data-target="ongoing-tournaments">Ongoing</button>
-        <button id="completed-tab" class="tab tab-inactive py-2 px-4 bg-white text-gray-700 border border-gray-200 rounded-lg" data-target="completed-tournaments">Completed</button>
-    </div>
-</div>
-
-<!-- Tournaments Sections -->
-<div class="tabs-container">
-    <!-- Upcoming Tournaments -->
-    <div id="upcoming-tournaments" class="tab-content space-y-6">
-        <h2 class="text-2xl font-bold">Upcoming Tournaments</h2>
-        
-        {% if upcoming_tournaments %}
-            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                <th class="px-6 py-3">Tournament</th>
-                                <th class="px-6 py-3">Dates</th>
-                                <th class="px-6 py-3">Location</th>
-                                <th class="px-6 py-3">Tier</th>
-                                <th class="px-6 py-3">Registrations</th>
-                                <th class="px-6 py-3">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            {% for tournament in upcoming_tournaments %}
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center">
-                                            {% if tournament.logo %}
-                                                <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="w-10 h-10 object-contain mr-3">
-                                            {% else %}
-                                                <div class="w-10 h-10 bg-gray-200 flex items-center justify-center rounded mr-3">
-                                                    <span class="text-xs text-gray-500">No Logo</span>
-                                                </div>
-                                            {% endif %}
-                                            <div>
-                                                <div class="font-medium">{{ tournament.name }}</div>
-                                                <div class="text-xs text-gray-500">Created {{ tournament.created_at.strftime('%b %d, %Y') }}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        {{ tournament.location }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 py-1 text-xs rounded-full bg-{{ tournament.tier.value|lower }}-100 text-{{ tournament.tier.value|lower }}-800">
-                                            {{ tournament.tier.value }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        {% set total_registrations = 0 %}
-                                        {% for category in tournament.categories %}
-                                            {% set total_registrations = total_registrations + category.registrations.count() %}
-                                        {% endfor %}
-                                        {{ total_registrations }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex space-x-2">
-                                            <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-900">
-                                                <i class="fas fa-cog"></i>
-                                            </a>
-                                            <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-900">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a href="{{ url_for('organizer.edit_tournament', id=tournament.id) }}" class="text-blue-600 hover:text-blue-900">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+    <!-- Status Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 mb-1">Total Tournaments</p>
+                    <h2 class="text-3xl font-bold">{{ total_tournaments }}</h2>
+                </div>
+                <div class="text-blue-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
                 </div>
             </div>
-        {% else %}
-            <div class="bg-white p-8 rounded-lg shadow-sm text-center">
-                <p class="text-gray-600 mb-4">You don't have any upcoming tournaments.</p>
-                <a href="{{ url_for('organizer.create_tournament') }}" class="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                    Create Your First Tournament
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 mb-1">Upcoming</p>
+                    <h2 class="text-3xl font-bold">{{ upcoming_count }}</h2>
+                </div>
+                <div class="text-green-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 mb-1">Ongoing</p>
+                    <h2 class="text-3xl font-bold">{{ ongoing_count }}</h2>
+                </div>
+                <div class="text-yellow-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 mb-1">Completed</p>
+                    <h2 class="text-3xl font-bold">{{ completed_count }}</h2>
+                </div>
+                <div class="text-purple-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Payment Summary & Action Items -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Payment Summary Card -->
+        <div class="md:col-span-2 bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-xl font-bold mb-4">Payment Status</h2>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="text-center bg-gray-50 p-4 rounded-lg">
+                    <div class="text-blue-600 text-xl font-bold">{{ total_registrations }}</div>
+                    <div class="text-sm text-gray-500">Total Registrations</div>
+                </div>
+                <div class="text-center bg-gray-50 p-4 rounded-lg">
+                    <div class="text-yellow-600 text-xl font-bold">{{ pending_payments }}</div>
+                    <div class="text-sm text-gray-500">Pending Verification</div>
+                </div>
+                <div class="text-center bg-gray-50 p-4 rounded-lg">
+                    <div class="text-green-600 text-xl font-bold">{{ approved_payments }}</div>
+                    <div class="text-sm text-gray-500">Verified Payments</div>
+                </div>
+                <div class="text-center bg-gray-50 p-4 rounded-lg">
+                    <div class="text-purple-600 text-xl font-bold">${{ total_revenue }}</div>
+                    <div class="text-sm text-gray-500">Total Revenue</div>
+                </div>
+            </div>
+            
+            <div class="flex justify-between items-center mt-4">
+                <span class="text-sm text-gray-500">Last updated: {{ now.strftime('%b %d, %Y %H:%M') }}</span>
+                <a href="{{ url_for('organizer.payment_dashboard') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    View Payment Dashboard →
                 </a>
             </div>
-        {% endif %}
+        </div>
+        
+        <!-- Action Items Card -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-xl font-bold mb-4">Action Items</h2>
+            
+            <ul class="space-y-4">
+                {% if pending_payments > 0 %}
+                <li>
+                    <a href="{{ url_for('organizer.view_registrations', status='pending') }}" class="flex items-center p-3 bg-yellow-50 rounded-lg hover:bg-yellow-100">
+                        <div class="p-2 bg-yellow-100 rounded-full mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <span class="font-medium">{{ pending_payments }} payment{% if pending_payments != 1 %}s{% endif %} pending verification</span>
+                        </div>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% if upcoming_tournaments %}
+                <li>
+                    <a href="{{ url_for('organizer.tournament_detail', id=upcoming_tournaments[0].id) }}" class="flex items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100">
+                        <div class="p-2 bg-blue-100 rounded-full mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <span class="font-medium">Next tournament: {{ upcoming_tournaments[0].name }}</span>
+                            <div class="text-xs text-gray-500">
+                                Starts {{ upcoming_tournaments[0].start_date.strftime('%b %d, %Y') }}
+                            </div>
+                        </div>
+                    </a>
+                </li>
+                {% endif %}
+                
+                <li>
+                    <a href="{{ url_for('organizer.create_tournament') }}" class="flex items-center p-3 bg-green-50 rounded-lg hover:bg-green-100">
+                        <div class="p-2 bg-green-100 rounded-full mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                        </div>
+                        <div>
+                            <span class="font-medium">Create a new tournament</span>
+                        </div>
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
     
-    <!-- Ongoing Tournaments -->
-    <div id="ongoing-tournaments" class="tab-content space-y-6 hidden">
-        <h2 class="text-2xl font-bold">Ongoing Tournaments</h2>
+    <!-- Tournaments Tables -->
+    <div class="grid grid-cols-1 gap-8">
+        <!-- Upcoming Tournaments -->
+        {% if upcoming_tournaments %}
+        <div class="bg-white rounded-lg shadow-sm">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold">Upcoming Tournaments</h2>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Tournament
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Dates
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Location
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Registrations
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for tournament in upcoming_tournaments %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        {% if tournament.logo %}
+                                            <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="h-10 w-10 rounded-full mr-3">
+                                        {% else %}
+                                            <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                                                <span class="text-blue-600 font-bold">{{ tournament.name[:1] }}</span>
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">{{ tournament.name }}</div>
+                                            <div class="text-sm text-gray-500">{{ tournament.format.value }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ tournament.location }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if tournament.registration_counts %}
+                                        <span class="font-medium">{{ tournament.registration_counts.total }}</span>
+                                        <span class="text-sm text-gray-500">registrations</span>
+                                        
+                                        {% if tournament.registration_counts.pending > 0 %}
+                                            <div class="mt-1">
+                                                <span class="px-2 py-0.5 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
+                                                    {{ tournament.registration_counts.pending }} pending
+                                                </span>
+                                            </div>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-gray-500">No registrations</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-900 mr-3">
+                                        Manage
+                                    </a>
+                                    <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="text-gray-600 hover:text-gray-900">
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
         
+        <!-- Ongoing Tournaments -->
         {% if ongoing_tournaments %}
-            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                <th class="px-6 py-3">Tournament</th>
-                                <th class="px-6 py-3">Dates</th>
-                                <th class="px-6 py-3">Location</th>
-                                <th class="px-6 py-3">Tier</th>
-                                <th class="px-6 py-3">Matches</th>
-                                <th class="px-6 py-3">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            {% for tournament in ongoing_tournaments %}
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center">
-                                            {% if tournament.logo %}
-                                                <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="w-10 h-10 object-contain mr-3">
-                                            {% else %}
-                                                <div class="w-10 h-10 bg-gray-200 flex items-center justify-center rounded mr-3">
-                                                    <span class="text-xs text-gray-500">No Logo</span>
-                                                </div>
-                                            {% endif %}
-                                            <div>
-                                                <div class="font-medium">{{ tournament.name }}</div>
-                                                <div class="text-xs text-gray-500">Started {{ tournament.start_date.strftime('%b %d, %Y') }}</div>
+        <div class="bg-white rounded-lg shadow-sm">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold">Ongoing Tournaments</h2>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Tournament
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Dates
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Location
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for tournament in ongoing_tournaments %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        {% if tournament.logo %}
+                                            <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="h-10 w-10 rounded-full mr-3">
+                                        {% else %}
+                                            <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                                                <span class="text-blue-600 font-bold">{{ tournament.name[:1] }}</span>
                                             </div>
+                                        {% endif %}
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">{{ tournament.name }}</div>
+                                            <div class="text-sm text-gray-500">{{ tournament.format.value }}</div>
                                         </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        {{ tournament.location }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 py-1 text-xs rounded-full bg-{{ tournament.tier.value|lower }}-100 text-{{ tournament.tier.value|lower }}-800">
-                                            {{ tournament.tier.value }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        {% set completed = [] %}
-                                        {% set total = [] %}
-                                        {% for category in tournament.categories %}
-                                            {% for match in category.matches %}
-                                                {% if match.completed %}
-                                                    {% do completed.append(1) %}
-                                                {% endif %}
-                                                {% do total.append(1) %}
-                                            {% endfor %}
-                                        {% endfor %}
-                                        {{ completed|length }}/{{ total|length }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex space-x-2">
-                                            <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-900">
-                                                <i class="fas fa-cog"></i>
-                                            </a>
-                                            <a href="{{ url_for('tournament.live_scoring', id=tournament.id) }}" class="text-blue-600 hover:text-blue-900">
-                                                <i class="fas fa-chart-line"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ tournament.location }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-900 mr-3">
+                                        Manage
+                                    </a>
+                                    <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="text-gray-600 hover:text-gray-900">
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-        {% else %}
-            <div class="bg-white p-8 rounded-lg shadow-sm text-center">
-                <p class="text-gray-600">You don't have any ongoing tournaments.</p>
-            </div>
+        </div>
         {% endif %}
-    </div>
-    
-    <!-- Completed Tournaments -->
-    <div id="completed-tournaments" class="tab-content space-y-6 hidden">
-        <h2 class="text-2xl font-bold">Completed Tournaments</h2>
         
+        <!-- Completed Tournaments -->
         {% if completed_tournaments %}
-            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                <th class="px-6 py-3">Tournament</th>
-                                <th class="px-6 py-3">Dates</th>
-                                <th class="px-6 py-3">Location</th>
-                                <th class="px-6 py-3">Tier</th>
-                                <th class="px-6 py-3">Participants</th>
-                                <th class="px-6 py-3">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            {% for tournament in completed_tournaments %}
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center">
-                                            {% if tournament.logo %}
-                                                <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="w-10 h-10 object-contain mr-3">
-                                            {% else %}
-                                                <div class="w-10 h-10 bg-gray-200 flex items-center justify-center rounded mr-3">
-                                                    <span class="text-xs text-gray-500">No Logo</span>
-                                                </div>
-                                            {% endif %}
-                                            <div>
-                                                <div class="font-medium">{{ tournament.name }}</div>
-                                                <div class="text-xs text-gray-500">Ended {{ tournament.end_date.strftime('%b %d, %Y') }}</div>
+        <div class="bg-white rounded-lg shadow-sm">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold">Completed Tournaments</h2>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Tournament
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Dates
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Location
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Revenue
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for tournament in completed_tournaments %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        {% if tournament.logo %}
+                                            <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="h-10 w-10 rounded-full mr-3">
+                                        {% else %}
+                                            <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                                                <span class="text-blue-600 font-bold">{{ tournament.name[:1] }}</span>
                                             </div>
+                                        {% endif %}
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">{{ tournament.name }}</div>
+                                            <div class="text-sm text-gray-500">{{ tournament.format.value }}</div>
                                         </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        {{ tournament.location }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 py-1 text-xs rounded-full bg-{{ tournament.tier.value|lower }}-100 text-{{ tournament.tier.value|lower }}-800">
-                                            {{ tournament.tier.value }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        {% set total_registrations = 0 %}
-                                        {% for category in tournament.categories %}
-                                            {% set total_registrations = total_registrations + category.registrations.count() %}
-                                        {% endfor %}
-                                        {{ total_registrations }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex space-x-2">
-                                            <a href="{{ url_for('tournament.results', id=tournament.id) }}" class="text-blue-600 hover:text-blue-900">
-                                                <i class="fas fa-trophy"></i>
-                                            </a>
-                                            <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-900">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ tournament.location }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {% if tournament.revenue %}
+                                        ${{ tournament.revenue }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-900 mr-3">
+                                        View Report
+                                    </a>
+                                    <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="text-gray-600 hover:text-gray-900">
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-        {% else %}
-            <div class="bg-white p-8 rounded-lg shadow-sm text-center">
-                <p class="text-gray-600">You don't have any completed tournaments.</p>
-            </div>
+        </div>
         {% endif %}
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Tab functionality
-        const tabs = document.querySelectorAll('.tab');
-        const tabContents = document.querySelectorAll('.tab-content');
-        
-        tabs.forEach(tab => {
-            tab.addEventListener('click', function() {
-                // Get target content ID
-                const targetId = this.getAttribute('data-target');
-                
-                // Reset all tabs and contents
-                tabs.forEach(t => {
-                    t.classList.remove('tab-active', 'bg-blue-800', 'text-white');
-                    t.classList.add('tab-inactive', 'bg-white', 'text-gray-700', 'border', 'border-gray-200');
-                });
-                
-                tabContents.forEach(content => {
-                    content.classList.add('hidden');
-                });
-                
-                // Activate clicked tab and content
-                this.classList.add('tab-active', 'bg-blue-800', 'text-white');
-                this.classList.remove('tab-inactive', 'bg-white', 'text-gray-700', 'border', 'border-gray-200');
-                
-                const targetContent = document.getElementById(targetId);
-                if (targetContent) {
-                    targetContent.classList.remove('hidden');
-                }
-            });
-        });
-    });
-</script>
 {% endblock %}

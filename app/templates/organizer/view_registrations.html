@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}View Registration{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="mb-6 flex items-center justify-between">
+        <h1 class="text-3xl font-bold">Registration Details</h1>
+        <a href="{{ url_for('organizer.view_registrations') }}" class="text-blue-600 hover:text-blue-800">
+            &larr; Back to Registrations
+        </a>
+    </div>
+    
+    <!-- Registration Summary Card -->
+    <div class="bg-white rounded-lg shadow-sm mb-8">
+        <!-- Tournament Info -->
+        <div class="flex items-center p-6 border-b border-gray-200">
+            {% if tournament.logo %}
+            <div class="mr-4 flex-shrink-0">
+                <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="h-14 w-auto object-contain">
+            </div>
+            {% endif %}
+            <div>
+                <h2 class="text-xl font-bold">{{ tournament.name }}</h2>
+                <div class="text-gray-600 text-sm">
+                    {{ tournament.start_date.strftime('%B %d') }}-{{ tournament.end_date.strftime('%d, %Y') }} | {{ tournament.location }}
+                </div>
+                <div class="mt-1">
+                    <span class="badge-{{ tournament.tier.value }} text-xs px-2 py-1 rounded-full">
+                        {{ tournament.tier.value }}
+                    </span>
+                    <span class="badge-{{ tournament.status.value }} text-xs px-2 py-1 rounded-full ml-2">
+                        {{ tournament.status.value|capitalize }}
+                    </span>
+                </div>
+            </div>
+            <div class="ml-auto">
+                <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    View Tournament
+                </a>
+            </div>
+        </div>
+        
+        <!-- Registration Status -->
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex flex-wrap items-center justify-between">
+                <h3 class="text-lg font-bold">Registration Status</h3>
+                <div class="flex gap-2 mt-2 sm:mt-0">
+                    {% if registration.payment_status == 'pending' %}
+                        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            Payment Required
+                        </span>
+                    {% elif registration.payment_status == 'uploaded' %}
+                        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                            Pending Verification
+                        </span>
+                        
+                        <form method="POST" action="{{ url_for('organizer.verify_registration', id=registration.id) }}" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">
+                                Approve
+                            </button>
+                        </form>
+                        
+                        <button data-bs-toggle="modal" data-bs-target="#rejectModal" class="px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700">
+                            Reject
+                        </button>
+                    {% elif registration.payment_status == 'paid' %}
+                        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Verified
+                        </span>
+                    {% elif registration.payment_status == 'rejected' %}
+                        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                            Rejected
+                        </span>
+                    {% elif registration.payment_status == 'free' %}
+                        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Free Entry
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if registration.payment_status == 'rejected' and registration.payment_rejection_reason %}
+            <div class="mt-4 p-4 bg-red-50 rounded-lg border border-red-200">
+                <h4 class="text-sm font-medium text-red-800">Rejection Reason:</h4>
+                <p class="text-sm text-red-700">{{ registration.payment_rejection_reason }}</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Player Information -->
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-bold mb-4">Player Information</h3>
+            
+            <div class="flex flex-col sm:flex-row sm:items-center mb-6">
+                <div class="flex items-center mb-4 sm:mb-0">
+                    {% if registration.player.profile_image %}
+                        <img src="{{ registration.player.profile_image }}" alt="{{ registration.player.full_name }}" class="h-16 w-16 rounded-full object-cover mr-4">
+                    {% else %}
+                        <div class="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+                            <span class="text-blue-600 text-2xl font-bold">{{ registration.player.full_name[:1] }}</span>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h4 class="text-lg font-bold">{{ registration.player.full_name }}</h4>
+                        <p class="text-gray-600">{{ registration.player.user.email }}</p>
+                    </div>
+                </div>
+                <div class="ml-auto">
+                    <a href="{{ url_for('main.player_detail', id=registration.player.id) }}" class="text-blue-600 hover:text-blue-800 text-sm">
+                        View Player Profile
+                    </a>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {% if registration.player.country or registration.player.city %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Location</h4>
+                    <p class="text-gray-900">
+                        {% if registration.player.city and registration.player.country %}
+                            {{ registration.player.city }}, {{ registration.player.country }}
+                        {% elif registration.player.city %}
+                            {{ registration.player.city }}
+                        {% elif registration.player.country %}
+                            {{ registration.player.country }}
+                        {% endif %}
+                    </p>
+                </div>
+                {% endif %}
+                
+                {% if registration.player.age %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Age</h4>
+                    <p class="text-gray-900">{{ registration.player.age }}</p>
+                </div>
+                {% endif %}
+                
+                {% if registration.player.plays %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Plays</h4>
+                    <p class="text-gray-900">{{ registration.player.plays }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Registration Details -->
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-bold mb-4">Registration Details</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Category</h4>
+                    <p class="text-gray-900">{{ category.category_type.value }}</p>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Registration Date</h4>
+                    <p class="text-gray-900">{{ registration.registration_date.strftime('%B %d, %Y %H:%M') }}</p>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Registration Fee</h4>
+                    <p class="text-gray-900">${{ category.registration_fee }}</p>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Reference Number</h4>
+                    <p class="text-gray-900">{{ registration.payment_reference }}</p>
+                </div>
+                
+                {% if category.is_doubles() %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Partner</h4>
+                    <p class="text-gray-900">
+                        {% if registration.partner %}
+                            {{ registration.partner.full_name }}
+                        {% else %}
+                            No partner selected
+                        {% endif %}
+                    </p>
+                </div>
+                {% endif %}
+                
+                {% if registration.dupr_rating %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">DUPR Rating</h4>
+                    <p class="text-gray-900">{{ registration.dupr_rating }}</p>
+                </div>
+                {% endif %}
+                
+                {% if registration.is_approved %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Approval Status</h4>
+                    <p class="text-green-600 font-medium">Approved</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Payment Information -->
+        {% if registration.payment_status not in ['free'] and category.registration_fee > 0 %}
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-bold mb-4">Payment Information</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% if registration.payment_proof %}
+                <div class="md:col-span-2">
+                    <h4 class="text-sm font-medium text-gray-500 mb-2">Payment Proof</h4>
+                    <div class="border border-gray-200 rounded-lg p-2">
+                        <img src="{{ registration.payment_proof }}" alt="Payment Proof" class="max-h-96 mx-auto">
+                        <div class="mt-2 text-center">
+                            <a href="{{ registration.payment_proof }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">
+                                View Full Size
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if registration.payment_proof_uploaded_at %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Uploaded On</h4>
+                    <p class="text-gray-900">{{ registration.payment_proof_uploaded_at.strftime('%B %d, %Y %H:%M') }}</p>
+                </div>
+                {% endif %}
+                
+                {% if registration.payment_status == 'paid' and registration.payment_verified_at %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Verified On</h4>
+                    <p class="text-gray-900">{{ registration.payment_verified_at.strftime('%B %d, %Y %H:%M') }}</p>
+                </div>
+                {% endif %}
+                
+                {% if registration.payment_status == 'paid' and registration.payment_verified_by %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Verified By</h4>
+                    <p class="text-gray-900">{{ verified_by_user.username if verified_by_user else "Unknown" }}</p>
+                </div>
+                {% endif %}
+                
+                {% if registration.payment_notes %}
+                <div class="md:col-span-2">
+                    <h4 class="text-sm font-medium text-gray-500">Payment Notes</h4>
+                    <p class="text-gray-900">{{ registration.payment_notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Additional Information -->
+        <div class="p-6">
+            <h3 class="text-lg font-bold mb-4">Additional Information</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% if registration.emergency_contact and registration.emergency_phone %}
+                <div class="md:col-span-2">
+                    <h4 class="text-sm font-medium text-gray-500">Emergency Contact</h4>
+                    <p class="text-gray-900">{{ registration.emergency_contact }} ({{ registration.emergency_phone }})</p>
+                </div>
+                {% endif %}
+                
+                {% if registration.shirt_size %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Shirt Size</h4>
+                    <p class="text-gray-900">{{ registration.shirt_size }}</p>
+                </div>
+                {% endif %}
+                
+                {% if registration.special_requests %}
+                <div class="md:col-span-2">
+                    <h4 class="text-sm font-medium text-gray-500">Special Requests</h4>
+                    <p class="text-gray-900">{{ registration.special_requests }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Payment Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1" role="dialog" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('organizer.reject_registration', id=registration.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rejectModalLabel">Reject Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Please provide a reason for rejecting this payment. This will be shown to the player.</p>
+                    <div class="form-group">
+                        <label for="rejection_reason" class="form-label">Rejection Reason</label>
+                        <textarea id="rejection_reason" name="rejection_reason" class="form-control" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Reject Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

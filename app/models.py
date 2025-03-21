@@ -149,11 +149,22 @@ class Tournament(db.Model):
     prize_pool = db.Column(db.Float)
     logo = db.Column(db.String(255))
     banner = db.Column(db.String(255))
-    registration_fee = db.Column(db.Float, default=0.0)
     created_at = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=True)
     is_featured = db.Column(db.Boolean, default=False)
     featured_image = db.Column(db.String(255))
+
+    # Payment details
+    payment_bank_name = db.Column(db.String(100), nullable=True)
+    payment_account_number = db.Column(db.String(50), nullable=True)
+    payment_account_name = db.Column(db.String(100), nullable=True)
+    payment_reference_prefix = db.Column(db.String(20), nullable=True)
+    payment_qr_code = db.Column(db.String(255), nullable=True)
+    payment_instructions = db.Column(db.Text, nullable=True)
+
+    # Door gifts (prize fields already exist in your model)
+    door_gifts = db.Column(db.Text, nullable=True)
+    door_gifts_image = db.Column(db.String(255), nullable=True)
     
     # Relationships
     categories = db.relationship('TournamentCategory', backref='tournament', lazy='dynamic')
@@ -227,10 +238,12 @@ class TournamentCategory(db.Model):
     max_participants = db.Column(db.Integer)
     points_awarded = db.Column(db.Integer)
     format = db.Column(Enum(TournamentFormat), default=TournamentFormat.SINGLE_ELIMINATION)
+    registration_fee = db.Column(db.Float, default=0.0)
     
     # Prize money details
     prize_percentage = db.Column(db.Float, default=0)  # Percentage of total prize pool
     prize_money = db.Column(db.Float, default=0)  # Calculated amount
+    prize_image = db.Column(db.String(255), nullable=True)
     
     # New category restrictions
     min_dupr_rating = db.Column(db.Float, nullable=True)
@@ -347,6 +360,18 @@ class Registration(db.Model):
     payment_status = db.Column(db.String(20), default='pending')
     payment_date = db.Column(db.DateTime, nullable=True)
     payment_reference = db.Column(db.String(100), nullable=True)
+
+    # Add payment proof fields
+    payment_proof = db.Column(db.String(255), nullable=True)
+    payment_proof_uploaded_at = db.Column(db.DateTime, nullable=True)
+    payment_notes = db.Column(db.Text, nullable=True)
+
+    # Add payment verification
+    payment_verified = db.Column(db.Boolean, default=False)
+    payment_verified_at = db.Column(db.DateTime, nullable=True)
+    payment_verified_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    payment_rejection_reason = db.Column(db.Text, nullable=True)
+
 
     def create_team(self, partner_registration):
         """Create a team from this registration and a partner registration"""

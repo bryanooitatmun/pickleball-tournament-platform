@@ -1,206 +1,374 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Tournament Registration{% endblock %}
+{% block title %}Registration - {{ tournament.name }}{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="max-w-3xl mx-auto">
-        <div class="mb-6">
-            <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-800 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                Back to Tournament
-            </a>
+<div class="container mx-auto px-4 py-6">
+    <!-- Tournament Header -->
+    <div class="mb-6 flex items-center">
+        {% if tournament.logo %}
+        <div class="mr-4 flex-shrink-0">
+            <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="h-20 w-auto object-contain">
         </div>
-
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-            <!-- Tournament header -->
-            <div class="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-4">
-                <div class="flex items-center">
-                    {% if tournament.logo %}
-                        <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="h-16 w-16 rounded-full bg-white p-1 mr-4">
-                    {% else %}
-                        <div class="h-16 w-16 rounded-full bg-white flex items-center justify-center mr-4">
-                            <span class="text-blue-600 text-xl font-bold">{{ tournament.name[:2] }}</span>
-                        </div>
-                    {% endif %}
-                    <div>
-                        <h1 class="text-xl md:text-2xl font-bold text-white">{{ tournament.name }}</h1>
-                        <p class="text-blue-100 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
-                            </svg>
-                            {{ tournament.location }}
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="p-6">
-                <h2 class="text-xl font-bold text-gray-800 mb-4">Registration Form</h2>
-                
-                <div class="flex flex-col md:flex-row mb-6">
-                    <div class="md:w-1/2 mb-4 md:mb-0 md:pr-4">
-                        <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Tournament Info</h3>
-                        <div class="bg-gray-50 rounded p-4">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p class="text-sm text-gray-500">Dates:</p>
-                                    <p class="text-sm font-medium">
-                                        {{ tournament.start_date.strftime('%b %d, %Y') }}
-                                        {% if tournament.start_date != tournament.end_date %}
-                                            - {{ tournament.end_date.strftime('%b %d, %Y') }}
-                                        {% endif %}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-500">Tier:</p>
-                                    <p class="text-sm font-medium">
-                                        <span class="px-2 py-1 rounded-full text-xs font-semibold badge-{{ tournament.tier.name }}">
-                                            {{ tournament.tier.value }}
-                                        </span>
-                                    </p>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-500">Format:</p>
-                                    <p class="text-sm font-medium">{{ tournament.format.value }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-500">Registration Deadline:</p>
-                                    <p class="text-sm font-medium">{{ tournament.registration_deadline.strftime('%b %d, %Y') }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-500">Registration Fee:</p>
-                                    <p class="text-sm font-medium">
-                                        {% if tournament.registration_fee > 0 %}
-                                            ${{ tournament.registration_fee }}
-                                        {% else %}
-                                            Free
-                                        {% endif %}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="md:w-1/2 md:pl-4">
-                        <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Prize Pool</h3>
-                        <div class="bg-gray-50 rounded p-4">
-                            <div class="text-center">
-                                <span class="text-2xl font-bold text-green-600">${{ '{:,.2f}'.format(tournament.prize_pool) }}</span>
-                                <p class="text-sm text-gray-500 mt-2">Points awarded based on tournament tier and placement</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <form method="POST" id="tournament-registration-form" class="space-y-6">
-                    {{ form.hidden_tag() }}
-                    
-                    <div class="form-group">
-                        {{ form.category_id.label(class="form-label") }}
-                        {{ form.category_id(class="form-input") }}
-                        {% if form.category_id.errors %}
-                            {% for error in form.category_id.errors %}
-                                <span class="form-error">{{ error }}</span>
-                            {% endfor %}
-                        {% endif %}
-                        <p class="text-sm text-gray-500 mt-1">Select the category you want to participate in</p>
-                    </div>
-                    
-                    <div class="form-group" id="partner-field">
-                        {{ form.partner_id.label(class="form-label") }}
-                        {{ form.partner_id(class="form-input") }}
-                        {% if form.partner_id.errors %}
-                            {% for error in form.partner_id.errors %}
-                                <span class="form-error">{{ error }}</span>
-                            {% endfor %}
-                        {% endif %}
-                        <p class="text-sm text-gray-500 mt-1">Required for doubles categories only</p>
-                    </div>
-                    
-                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm text-yellow-700">
-                                    By registering, you commit to participating in this tournament. 
-                                    Please ensure you're available for all tournament dates before registering.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex justify-end">
-                        <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="btn btn-secondary mr-4">Cancel</a>
-                        {{ form.submit(class="btn btn-primary") }}
-                    </div>
-                </form>
-            </div>
-        </div>
-        
-        <div class="mt-8 bg-white rounded-lg shadow-md p-6">
-            <h3 class="text-lg font-bold text-gray-800 mb-4">Registration Information</h3>
-            
-            <div class="space-y-4">
-                <div>
-                    <h4 class="font-semibold text-gray-700">Registration Process</h4>
-                    <p class="text-sm text-gray-600">
-                        After you register, tournament organizers will review your application.
-                        You'll be notified when your registration is approved. You can check the status in your registrations page.
-                    </p>
-                </div>
-                
-                <div>
-                    <h4 class="font-semibold text-gray-700">Doubles Registration</h4>
-                    <p class="text-sm text-gray-600">
-                        For doubles categories, both you and your partner need to register separately.
-                        Make sure to coordinate with your partner to select the same category and each other as partners.
-                    </p>
-                </div>
-                
-                <div>
-                    <h4 class="font-semibold text-gray-700">Cancellation Policy</h4>
-                    <p class="text-sm text-gray-600">
-                        You can cancel your registration at any time before the tournament begins.
-                        Once a tournament has started, you cannot cancel your registration.
-                    </p>
-                </div>
+        {% endif %}
+        <div>
+            <h1 class="text-3xl font-bold">{{ tournament.name }}</h1>
+            <div class="text-gray-600">{{ tournament.start_date.strftime('%B %d') }}-{{ tournament.end_date.strftime('%d, %Y') }} | {{ tournament.location }}</div>
+            <div class="mt-1">
+                <span class="badge-{{ tournament.tier.value }} px-2 py-1 rounded-full text-xs font-medium inline-flex items-center">
+                    {{ tournament.tier.value }}
+                </span>
             </div>
         </div>
     </div>
+
+    <!-- Registration Form -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-2xl font-bold mb-4">Tournament Registration</h2>
+        
+        {% if not is_authenticated %}
+        <div class="bg-blue-50 p-4 mb-6 rounded-lg">
+            <h3 class="font-medium text-blue-700">Create an Account</h3>
+            <p class="text-blue-600 text-sm">You'll need to create an account or login to register for this tournament.</p>
+            <div class="mt-2">
+                <a href="{{ url_for('auth.login', next=request.url) }}" class="text-blue-700 underline font-medium">Already have an account? Login</a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <form method="POST" class="space-y-6">
+            {{ form.hidden_tag() }}
+            {{ form.tournament_id() }}
+            
+            <div class="mb-6 border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-medium mb-4">Tournament Details</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label for="{{ form.category_id.id }}" class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                        {{ form.category_id(class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
+                        {% if form.category_id.errors %}
+                            <div class="text-red-500 text-sm mt-1">
+                                {% for error in form.category_id.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.partner_id.id }}" class="block text-sm font-medium text-gray-700 mb-1">Partner (for doubles)</label>
+                        {{ form.partner_id(class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
+                        {% if form.partner_id.errors %}
+                            <div class="text-red-500 text-sm mt-1">
+                                {% for error in form.partner_id.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            {% if not is_authenticated %}
+            <div class="mb-6 border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-medium mb-4">Account Information</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label for="{{ form.email.id }}" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                        {{ form.email(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", required=true) }}
+                        {% if form.email.errors %}
+                            <div class="text-red-500 text-sm mt-1">
+                                {% for error in form.email.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.full_name.id }}" class="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                        {{ form.full_name(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", required=true) }}
+                        {% if form.full_name.errors %}
+                            <div class="text-red-500 text-sm mt-1">
+                                {% for error in form.full_name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.password.id }}" class="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                        {{ form.password(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", required=true) }}
+                        {% if form.password.errors %}
+                            <div class="text-red-500 text-sm mt-1">
+                                {% for error in form.password.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <p class="text-xs text-gray-500 mt-1">Password must be at least 8 characters</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.confirm_password.id }}" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label>
+                        {{ form.confirm_password(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", required=true) }}
+                        {% if form.confirm_password.errors %}
+                            <div class="text-red-500 text-sm mt-1">
+                                {% for error in form.confirm_password.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="mb-6 border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-medium mb-4">Player Information</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% if not is_authenticated %}
+                    <div class="form-group">
+                        <label for="{{ form.phone.id }}" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                        {{ form.phone(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
+                        {% if form.phone.errors %}
+                            <div class="text-red-500 text-sm mt-1">
+                                {% for error in form.phone.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.country.id }}" class="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                        {{ form.country(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
+                        {% if form.country.errors %}
+                            <div class="text-red-500 text-sm mt-1">
+                                {% for error in form.country.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.city.id }}" class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                        {{ form.city(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
+                        {% if form.city.errors %}
+                            <div class="text-red-500 text-sm mt-1">
+                                {% for error in form.city.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="form-group">
+                        <label for="{{ form.dupr_rating.id }}" class="block text-sm font-medium text-gray-700 mb-1">DUPR Rating</label>
+                        {{ form.dupr_rating(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
+                        {% if form.dupr_rating.errors %}
+                            <div class="text-red-500 text-sm mt-1">
+                                {% for error in form.dupr_rating.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.shirt_size.id }}" class="block text-sm font-medium text-gray-700 mb-1">Shirt Size</label>
+                        {{ form.shirt_size(class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
+                        {% if form.shirt_size.errors %}
+                            <div class="text-red-500 text-sm mt-1">
+                                {% for error in form.shirt_size.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if not is_authenticated %}
+                    <div class="form-group">
+                        <label for="{{ form.date_of_birth.id }}" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                        {{ form.date_of_birth(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", placeholder="YYYY-MM-DD") }}
+                        {% if form.date_of_birth.errors %}
+                            <div class="text-red-500 text-sm mt-1">
+                                {% for error in form.date_of_birth.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.gender.id }}" class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                        {{ form.gender(class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
+                        {% if form.gender.errors %}
+                            <div class="text-red-500 text-sm mt-1">
+                                {% for error in form.gender.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mb-6 border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-medium mb-4">Emergency Contact</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label for="{{ form.emergency_contact.id }}" class="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Name</label>
+                        {{ form.emergency_contact(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
+                        {% if form.emergency_contact.errors %}
+                            <div class="text-red-500 text-sm mt-1">
+                                {% for error in form.emergency_contact.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.emergency_phone.id }}" class="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Phone</label>
+                        {{ form.emergency_phone(class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500") }}
+                        {% if form.emergency_phone.errors %}
+                            <div class="text-red-500 text-sm mt-1">
+                                {% for error in form.emergency_phone.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-6 border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-medium mb-4">Additional Information</h3>
+                
+                <div class="form-group">
+                    <label for="{{ form.special_requests.id }}" class="block text-sm font-medium text-gray-700 mb-1">Special Requests</label>
+                    {{ form.special_requests(class="form-textarea block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", rows=3) }}
+                    {% if form.special_requests.errors %}
+                        <div class="text-red-500 text-sm mt-1">
+                            {% for error in form.special_requests.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">Please let us know if you have any special requirements or requests</p>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <h3 class="text-lg font-medium mb-4">Terms and Agreements</h3>
+                
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            {{ form.terms_agreement(class="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500") }}
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <label for="{{ form.terms_agreement.id }}" class="font-medium text-gray-700">Terms and Conditions *</label>
+                            <p class="text-gray-500">I agree to the tournament rules and regulations</p>
+                            {% if form.terms_agreement.errors %}
+                                <div class="text-red-500 text-sm mt-1">
+                                    {% for error in form.terms_agreement.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            {{ form.liability_waiver(class="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500") }}
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <label for="{{ form.liability_waiver.id }}" class="font-medium text-gray-700">Liability Waiver *</label>
+                            <p class="text-gray-500">I acknowledge that pickleball involves risks and waive liability</p>
+                            {% if form.liability_waiver.errors %}
+                                <div class="text-red-500 text-sm mt-1">
+                                    {% for error in form.liability_waiver.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Registration Fee Display -->
+            <div class="bg-gray-50 p-4 mb-6 rounded-lg">
+                <h3 class="font-medium text-gray-800 mb-2">Registration Fee</h3>
+                <div id="fee-display">
+                    <div class="flex justify-between">
+                        <span>Category Fee:</span>
+                        <span class="font-medium" id="display-fee">
+                            {% if selected_category %}
+                                ${{ selected_category.registration_fee }}
+                            {% else %}
+                                Please select a category
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-between items-center pt-6">
+                <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="text-gray-600 font-medium">
+                    Back to Tournament
+                </a>
+                
+                <button type="submit" class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Continue to Payment
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
+{% endblock %}
 
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize partner field visibility based on selected category
-        const categorySelect = document.getElementById('tournament-registration-form').querySelector('select[name="category_id"]');
-        const partnerField = document.getElementById('partner-field');
+        const categorySelect = document.getElementById('{{ form.category_id.id }}');
+        const feeDisplay = document.getElementById('display-fee');
         
-        function updatePartnerField() {
-            const selectedOption = categorySelect.options[categorySelect.selectedIndex].text;
-            
-            // If selected category is doubles, show partner field
-            if (selectedOption.includes('Doubles')) {
-                partnerField.classList.remove('hidden');
-                partnerField.querySelector('select').required = true;
+        // Category fees mapping
+        const categoryFees = {
+            {% for category in tournament.categories %}
+                {{ category.id }}: {{ category.registration_fee }},
+            {% endfor %}
+        };
+        
+        // Update fee display when category changes
+        categorySelect.addEventListener('change', function() {
+            const categoryId = parseInt(this.value);
+            if (categoryId && categoryFees[categoryId] !== undefined) {
+                feeDisplay.textContent = '$' + categoryFees[categoryId];
             } else {
-                partnerField.classList.add('hidden');
-                partnerField.querySelector('select').required = false;
+                feeDisplay.textContent = 'Please select a category';
+            }
+        });
+        
+        // Initialize fee display
+        if (categorySelect.value) {
+            const categoryId = parseInt(categorySelect.value);
+            if (categoryId && categoryFees[categoryId] !== undefined) {
+                feeDisplay.textContent = '$' + categoryFees[categoryId];
             }
         }
-        
-        // Set initial state
-        updatePartnerField();
-        
-        // Add change event listener
-        categorySelect.addEventListener('change', updatePartnerField);
     });
 </script>
-{% endblock %}
 {% endblock %}

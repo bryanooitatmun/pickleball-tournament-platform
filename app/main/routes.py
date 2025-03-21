@@ -7,62 +7,93 @@ from app.services import BracketService, PlacingService, PrizeService, Registrat
 from datetime import datetime
 import os
 
+# @bp.route('/')
+# @bp.route('/index')
+# def index():
+#     # Featured tournament (current or upcoming)
+#     featured_tournament = Tournament.query.filter_by(is_featured=True).first()
+#     if not featured_tournament:
+#         # If no featured tournament, get the nearest upcoming one
+#         featured_tournament = Tournament.query.filter_by(status=TournamentStatus.UPCOMING).order_by(Tournament.start_date).first()
+    
+#     # Get upcoming tournaments
+#     upcoming_tournaments = Tournament.query.filter_by(status=TournamentStatus.UPCOMING).order_by(Tournament.start_date).limit(3).all()
+    
+#     # Get top players for each category
+#     top_mens_singles = PlayerProfile.query.order_by(PlayerProfile.mens_singles_points.desc()).limit(5).all()
+#     top_womens_singles = PlayerProfile.query.order_by(PlayerProfile.womens_singles_points.desc()).limit(5).all()
+#     top_mens_doubles = PlayerProfile.query.order_by(PlayerProfile.mens_doubles_points.desc()).limit(5).all()
+#     top_womens_doubles = PlayerProfile.query.order_by(PlayerProfile.womens_doubles_points.desc()).limit(5).all()
+#     top_mixed_doubles = PlayerProfile.query.order_by(PlayerProfile.mixed_doubles_points.desc()).limit(5).all()
+    
+#     # Get featured sponsors
+#     featured_platform_sponsors = PlatformSponsor.query.filter_by(is_featured=True).all()
+    
+#     # Get featured venues
+#     featured_venues = Venue.query.filter_by(is_featured=True).limit(3).all()
+    
+#     # Get active advertisements
+#     hero_ads = Advertisement.query.filter_by(
+#         position='hero', 
+#         is_active=True
+#     ).filter(
+#         Advertisement.start_date <= datetime.utcnow(),
+#         Advertisement.end_date >= datetime.utcnow()
+#     ).all()
+    
+#     sidebar_ads = Advertisement.query.filter_by(
+#         position='sidebar', 
+#         is_active=True
+#     ).filter(
+#         Advertisement.start_date <= datetime.utcnow(),
+#         Advertisement.end_date >= datetime.utcnow()
+#     ).all()
+    
+#     return render_template('main/index.html', 
+#                           title='Home',
+#                           featured_tournament=featured_tournament,
+#                           upcoming_tournaments=upcoming_tournaments,
+#                           top_mens_singles=top_mens_singles,
+#                           top_womens_singles=top_womens_singles,
+#                           top_mens_doubles=top_mens_doubles,
+#                           top_womens_doubles=top_womens_doubles,
+#                           top_mixed_doubles=top_mixed_doubles,
+#                           featured_platform_sponsors=featured_platform_sponsors,
+#                           featured_venues=featured_venues,
+#                           hero_ads=hero_ads,
+#                           sidebar_ads=sidebar_ads,
+#                           now=datetime.now())
+
 @bp.route('/')
 @bp.route('/index')
-def index():
-    # Featured tournament (current or upcoming)
-    featured_tournament = Tournament.query.filter_by(is_featured=True).first()
-    if not featured_tournament:
-        # If no featured tournament, get the nearest upcoming one
-        featured_tournament = Tournament.query.filter_by(status=TournamentStatus.UPCOMING).order_by(Tournament.start_date).first()
+def tournament_detail(id):
+    id = 1
+    tournament = Tournament.query.get_or_404(id)
+    categories = tournament.categories.all()
     
-    # Get upcoming tournaments
-    upcoming_tournaments = Tournament.query.filter_by(status=TournamentStatus.UPCOMING).order_by(Tournament.start_date).limit(3).all()
+    # For ongoing or completed tournaments, get matches
+    matches = {}
+    winners = {}
     
-    # Get top players for each category
-    top_mens_singles = PlayerProfile.query.order_by(PlayerProfile.mens_singles_points.desc()).limit(5).all()
-    top_womens_singles = PlayerProfile.query.order_by(PlayerProfile.womens_singles_points.desc()).limit(5).all()
-    top_mens_doubles = PlayerProfile.query.order_by(PlayerProfile.mens_doubles_points.desc()).limit(5).all()
-    top_womens_doubles = PlayerProfile.query.order_by(PlayerProfile.womens_doubles_points.desc()).limit(5).all()
-    top_mixed_doubles = PlayerProfile.query.order_by(PlayerProfile.mixed_doubles_points.desc()).limit(5).all()
+    if tournament.status in [TournamentStatus.ONGOING, TournamentStatus.COMPLETED]:
+        for category in categories:
+            # Fixed query: Use Match model directly instead of relationship
+            matches[category.id] = Match.query.filter_by(category_id=category.id).order_by(Match.round.desc(), Match.match_order).all()
+            
+            # For completed tournaments, get winners
+            if tournament.status == TournamentStatus.COMPLETED:
+                # Get final match for each category - Fixed query
+                final_match = Match.query.filter_by(category_id=category.id, round=1).first()
+                if final_match and hasattr(final_match, 'winner_id') and final_match.winner_id:
+                    winners[category.id] = final_match.winner
     
-    # Get featured sponsors
-    featured_platform_sponsors = PlatformSponsor.query.filter_by(is_featured=True).all()
-    
-    # Get featured venues
-    featured_venues = Venue.query.filter_by(is_featured=True).limit(3).all()
-    
-    # Get active advertisements
-    hero_ads = Advertisement.query.filter_by(
-        position='hero', 
-        is_active=True
-    ).filter(
-        Advertisement.start_date <= datetime.utcnow(),
-        Advertisement.end_date >= datetime.utcnow()
-    ).all()
-    
-    sidebar_ads = Advertisement.query.filter_by(
-        position='sidebar', 
-        is_active=True
-    ).filter(
-        Advertisement.start_date <= datetime.utcnow(),
-        Advertisement.end_date >= datetime.utcnow()
-    ).all()
-    
-    return render_template('main/index.html', 
-                          title='Home',
-                          featured_tournament=featured_tournament,
-                          upcoming_tournaments=upcoming_tournaments,
-                          top_mens_singles=top_mens_singles,
-                          top_womens_singles=top_womens_singles,
-                          top_mens_doubles=top_mens_doubles,
-                          top_womens_doubles=top_womens_doubles,
-                          top_mixed_doubles=top_mixed_doubles,
-                          featured_platform_sponsors=featured_platform_sponsors,
-                          featured_venues=featured_venues,
-                          hero_ads=hero_ads,
-                          sidebar_ads=sidebar_ads,
-                          now=datetime.now())
+    return render_template('main/tournament_detail.html',
+                           title=tournament.name,
+                           tournament=tournament,
+                           categories=categories,
+                           matches=matches,
+                           winners=winners)
+
 
 @bp.route('/sponsors')
 def sponsors():

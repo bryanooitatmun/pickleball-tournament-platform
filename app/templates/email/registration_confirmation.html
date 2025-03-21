@@ -1,0 +1,520 @@
+<!-- Registration Confirmation Email -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Confirmation - {{ tournament.name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #103675;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .logo {
+            max-height: 80px;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .info-box {
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .info-box h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 10px;
+            color: #103675;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #555;
+        }
+        .payment-button {
+            display: block;
+            background-color: #103675;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            padding: 12px 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .payment-info {
+            background-color: #fffde7;
+            border: 1px solid #fff9c4;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .footer {
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            {% if tournament.logo %}
+            <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="logo">
+            {% endif %}
+            <h1>Registration Confirmation</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear {{ player.full_name }},</p>
+            
+            <p>Thank you for registering for <strong>{{ tournament.name }}</strong>! We're excited to have you join us.</p>
+            
+            <div class="info-box">
+                <h3>Registration Details</h3>
+                <div class="info-row">
+                    <span class="info-label">Tournament:</span>
+                    <span>{{ tournament.name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Dates:</span>
+                    <span>{{ tournament.start_date.strftime('%B %d') }} - {{ tournament.end_date.strftime('%d, %Y') }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Location:</span>
+                    <span>{{ tournament.location }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Category:</span>
+                    <span>{{ category.category_type.value }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Registration Date:</span>
+                    <span>{{ registration.registration_date.strftime('%B %d, %Y') }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Registration Fee:</span>
+                    <span>${{ category.registration_fee }}</span>
+                </div>
+                {% if registration.payment_reference %}
+                <div class="info-row">
+                    <span class="info-label">Payment Reference:</span>
+                    <span>{{ registration.payment_reference }}</span>
+                </div>
+                {% endif %}
+                <div class="info-row">
+                    <span class="info-label">Status:</span>
+                    <span>
+                        {% if registration.payment_status == 'pending' %}
+                            Payment Required
+                        {% elif registration.payment_status == 'uploaded' %}
+                            Payment Verification Pending
+                        {% elif registration.payment_status == 'paid' %}
+                            Confirmed
+                        {% elif registration.payment_status == 'rejected' %}
+                            Payment Rejected
+                        {% elif registration.payment_status == 'free' %}
+                            Free Entry - Confirmed
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            
+            {% if registration.payment_status == 'pending' %}
+            <div class="payment-info">
+                <h3>Payment Information</h3>
+                <p>Please complete your payment to confirm your registration. You can do this by clicking the button below or logging into your account.</p>
+                
+                <p><strong>Bank Details:</strong></p>
+                <ul>
+                    <li><strong>Bank Name:</strong> {{ tournament.payment_bank_name }}</li>
+                    <li><strong>Account Name:</strong> {{ tournament.payment_account_name }}</li>
+                    <li><strong>Account Number:</strong> {{ tournament.payment_account_number }}</li>
+                    <li><strong>Reference:</strong> {{ registration.payment_reference }}</li>
+                </ul>
+                
+                <p><strong>Important:</strong> Please use the reference number when making your payment to ensure it's correctly assigned to your registration.</p>
+                
+                <a href="{{ payment_url }}" class="payment-button">Complete Payment</a>
+            </div>
+            {% endif %}
+            
+            {% if registration.payment_status == 'rejected' %}
+            <div class="payment-info">
+                <h3>Payment Rejected</h3>
+                <p>Unfortunately, your payment was rejected for the following reason:</p>
+                <p><em>{{ registration.payment_rejection_reason }}</em></p>
+                <p>Please resubmit your payment by clicking the button below or logging into your account.</p>
+                
+                <a href="{{ payment_url }}" class="payment-button">Resubmit Payment</a>
+            </div>
+            {% endif %}
+            
+            <p>If you have any questions, please don't hesitate to contact the tournament organizer.</p>
+            
+            <p>Best regards,<br>
+            The {{ tournament.name }} Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated email. Please do not reply to this message.</p>
+            <p>&copy; {{ current_year }} Pickleball Tournament Platform. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
+
+<!-- Payment Verified Email -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Confirmed - {{ tournament.name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #103675;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .logo {
+            max-height: 80px;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .info-box {
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .info-box h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 10px;
+            color: #103675;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #555;
+        }
+        .success-message {
+            background-color: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .success-icon {
+            color: #2e7d32;
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .view-button {
+            display: block;
+            background-color: #103675;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            padding: 12px 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .footer {
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            {% if tournament.logo %}
+            <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="logo">
+            {% endif %}
+            <h1>Payment Confirmed</h1>
+        </div>
+        
+        <div class="content">
+            <div class="success-message">
+                <div class="success-icon">✓</div>
+                <h2>Your payment has been verified!</h2>
+                <p>Your registration for {{ tournament.name }} is now complete.</p>
+            </div>
+            
+            <p>Dear {{ player.full_name }},</p>
+            
+            <p>We're pleased to confirm that your payment for <strong>{{ tournament.name }}</strong> has been received and verified. Your registration is now complete!</p>
+            
+            <div class="info-box">
+                <h3>Registration Details</h3>
+                <div class="info-row">
+                    <span class="info-label">Tournament:</span>
+                    <span>{{ tournament.name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Dates:</span>
+                    <span>{{ tournament.start_date.strftime('%B %d') }} - {{ tournament.end_date.strftime('%d, %Y') }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Location:</span>
+                    <span>{{ tournament.location }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Category:</span>
+                    <span>{{ category.category_type.value }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Registration Fee:</span>
+                    <span>${{ category.registration_fee }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Payment Reference:</span>
+                    <span>{{ registration.payment_reference }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Status:</span>
+                    <span>Confirmed</span>
+                </div>
+            </div>
+            
+            <p>Important information:</p>
+            <ul>
+                <li>Please arrive at least 30 minutes before your scheduled match time.</li>
+                <li>Don't forget to bring your identification and equipment.</li>
+                <li>The tournament schedule will be published closer to the event date.</li>
+                <li>Door gifts will be distributed during check-in at the tournament venue.</li>
+            </ul>
+            
+            <p>We look forward to seeing you at the tournament!</p>
+            
+            <a href="{{ tournament_url }}" class="view-button">View Tournament Details</a>
+            
+            <p>If you have any questions, please don't hesitate to contact the tournament organizer.</p>
+            
+            <p>Best regards,<br>
+            The {{ tournament.name }} Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated email. Please do not reply to this message.</p>
+            <p>&copy; {{ current_year }} Pickleball Tournament Platform. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
+
+<!-- Payment Rejected Email -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Rejected - {{ tournament.name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #103675;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .logo {
+            max-height: 80px;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .info-box {
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .info-box h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 10px;
+            color: #103675;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #555;
+        }
+        .error-message {
+            background-color: #ffebee;
+            border: 1px solid #ffcdd2;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .resubmit-button {
+            display: block;
+            background-color: #103675;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            padding: 12px 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .footer {
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            {% if tournament.logo %}
+            <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="logo">
+            {% endif %}
+            <h1>Payment Rejected</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear {{ player.full_name }},</p>
+            
+            <p>We regret to inform you that your payment for <strong>{{ tournament.name }}</strong> could not be verified and has been rejected.</p>
+            
+            <div class="error-message">
+                <h3>Reason for Rejection:</h3>
+                <p>{{ registration.payment_rejection_reason }}</p>
+            </div>
+            
+            <div class="info-box">
+                <h3>Registration Details</h3>
+                <div class="info-row">
+                    <span class="info-label">Tournament:</span>
+                    <span>{{ tournament.name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Dates:</span>
+                    <span>{{ tournament.start_date.strftime('%B %d') }} - {{ tournament.end_date.strftime('%d, %Y') }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Category:</span>
+                    <span>{{ category.category_type.value }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Registration Fee:</span>
+                    <span>${{ category.registration_fee }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Payment Reference:</span>
+                    <span>{{ registration.payment_reference }}</span>
+                </div>
+            </div>
+            
+            <p>Please resubmit your payment by clicking the button below or by logging into your account. Ensure that:</p>
+            <ul>
+                <li>The payment proof clearly shows the transaction details</li>
+                <li>The correct amount was transferred</li>
+                <li>You included the payment reference in your transaction</li>
+            </ul>
+            
+            <div class="info-box">
+                <h3>Payment Information</h3>
+                <p><strong>Bank Details:</strong></p>
+                <ul>
+                    <li><strong>Bank Name:</strong> {{ tournament.payment_bank_name }}</li>
+                    <li><strong>Account Name:</strong> {{ tournament.payment_account_name }}</li>
+                    <li><strong>Account Number:</strong> {{ tournament.payment_account_number }}</li>
+                    <li><strong>Reference:</strong> {{ registration.payment_reference }}</li>
+                </ul>
+            </div>
+            
+            <a href="{{ payment_url }}" class="resubmit-button">Resubmit Payment</a>
+            
+            <p>If you believe this rejection was made in error or if you have any questions, please contact the tournament organizer directly.</p>
+            
+            <p>Best regards,<br>
+            The {{ tournament.name }} Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated email. Please do not reply to this message.</p>
+            <p>&copy; {{ current_year }} Pickleball Tournament Platform. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

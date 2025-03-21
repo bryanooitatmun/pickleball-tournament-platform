@@ -1,104 +1,254 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Tournament Registration Payment{% endblock %}
+{% block title %}Payment - {{ tournament.name }}{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="max-w-3xl mx-auto">
-        <div class="mb-6">
-            <a href="{{ url_for('player.my_registrations') }}" class="text-blue-600 hover:text-blue-800 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                Back to My Registrations
-            </a>
+<div class="container mx-auto px-4 py-6">
+    <!-- Tournament Header -->
+    <div class="mb-6 flex items-center">
+        {% if tournament.logo %}
+        <div class="mr-4 flex-shrink-0">
+            <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="h-20 w-auto object-contain">
         </div>
-
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-            <div class="bg-gradient-to-r from-green-600 to-green-800 px-6 py-4">
-                <h1 class="text-xl md:text-2xl font-bold text-white">Tournament Registration Payment</h1>
+        {% endif %}
+        <div>
+            <h1 class="text-3xl font-bold">{{ tournament.name }}</h1>
+            <div class="text-gray-600">{{ tournament.start_date.strftime('%B %d') }}-{{ tournament.end_date.strftime('%d, %Y') }} | {{ tournament.location }}</div>
+            <div class="mt-1">
+                <span class="badge-{{ tournament.tier.value }} px-2 py-1 rounded-full text-xs font-medium inline-flex items-center">
+                    {{ tournament.tier.value }}
+                </span>
             </div>
+        </div>
+    </div>
 
-            <div class="p-6">
-                <div class="bg-gray-50 rounded-lg p-6 mb-6">
-                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Registration Details</h2>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <p class="text-sm text-gray-500">Tournament:</p>
-                            <p class="font-medium">{{ tournament.name }}</p>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Payment Information -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4">Payment Information</h2>
+                
+                <div class="mb-6">
+                    <h3 class="font-medium text-gray-700 mb-2">Registration Summary</h3>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-gray-600">Category:</span>
+                            <span class="font-medium">{{ category.category_type.value }}</span>
                         </div>
-                        <div>
-                            <p class="text-sm text-gray-500">Category:</p>
-                            <p class="font-medium">{{ registration.category.category_type.value }}</p>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-gray-600">Registration Fee:</span>
+                            <span class="font-medium">${{ category.registration_fee }}</span>
                         </div>
-                        <div>
-                            <p class="text-sm text-gray-500">Registration Date:</p>
-                            <p class="font-medium">{{ registration.registration_date.strftime('%b %d, %Y') }}</p>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-gray-600">Payment Reference:</span>
+                            <span class="font-medium">{{ registration.payment_reference }}</span>
                         </div>
-                        <div>
-                            <p class="text-sm text-gray-500">Payment Status:</p>
-                            <p class="font-medium">
-                                <span class="px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">Pending</span>
-                            </p>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Due:</span>
+                            <span class="font-bold">${{ category.registration_fee }}</span>
                         </div>
                     </div>
                 </div>
-
-                <div class="border-t border-gray-200 pt-6 mb-6">
-                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Payment Summary</h2>
-                    <div class="bg-gray-50 rounded-lg p-6">
-                        <div class="flex justify-between py-2 border-b border-gray-200">
-                            <span class="text-gray-700">Registration Fee</span>
-                            <span class="font-medium">${{ tournament.registration_fee }}</span>
-                        </div>
-                        <div class="flex justify-between py-2 font-bold mt-4">
-                            <span class="text-gray-800">Total</span>
-                            <span class="text-green-700">${{ tournament.registration_fee }}</span>
-                        </div>
+                
+                <div class="mb-6">
+                    <h3 class="font-medium text-gray-700 mb-2">Bank Transfer Details</h3>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <table class="w-full">
+                            <tbody>
+                                <tr>
+                                    <td class="py-2 text-gray-600">Bank Name:</td>
+                                    <td class="py-2 font-medium">{{ tournament.payment_bank_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 text-gray-600">Account Number:</td>
+                                    <td class="py-2 font-medium">{{ tournament.payment_account_number }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 text-gray-600">Account Name:</td>
+                                    <td class="py-2 font-medium">{{ tournament.payment_account_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 text-gray-600">Reference:</td>
+                                    <td class="py-2 font-medium">{{ registration.payment_reference }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-
-                <form method="POST" class="mt-6">
-                    <div class="mb-6">
-                        <h2 class="text-lg font-semibold text-gray-800 mb-4">Payment Method</h2>
-                        
-                        <!-- In a real application, this would be a payment form with credit card fields -->
-                        <div class="bg-gray-50 rounded-lg p-6">
-                            <div class="flex items-center mb-4">
-                                <input id="card-payment" name="payment_method" type="radio" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500">
-                                <label for="card-payment" class="ml-2 block text-sm font-medium text-gray-700">Credit Card</label>
-                            </div>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Card Number</label>
-                                    <input type="text" class="form-input mt-1" placeholder="4242 4242 4242 4242">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Cardholder Name</label>
-                                    <input type="text" class="form-input mt-1" placeholder="John Doe">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Expiration Date</label>
-                                    <input type="text" class="form-input mt-1" placeholder="MM/YY">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">CVC</label>
-                                    <input type="text" class="form-input mt-1" placeholder="123">
-                                </div>
-                            </div>
-                            
-                            <p class="text-sm text-gray-500 mt-4">This is a demonstration payment form. In a real application, this would securely process payments.</p>
-                        </div>
+                
+                {% if tournament.payment_instructions %}
+                <div class="mb-6">
+                    <h3 class="font-medium text-gray-700 mb-2">Payment Instructions</h3>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-gray-700 whitespace-pre-line">{{ tournament.payment_instructions }}</p>
                     </div>
+                </div>
+                {% endif %}
+                
+                <!-- Payment Proof Upload Form -->
+                <div>
+                    <h3 class="font-medium text-gray-700 mb-2">Upload Payment Proof</h3>
                     
-                    <div class="flex justify-end">
-                        <a href="{{ url_for('player.my_registrations') }}" class="btn btn-secondary mr-4">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Pay Now ${{ tournament.registration_fee }}</button>
-                    </div>
-                </form>
+                    <form method="POST" enctype="multipart/form-data" class="mt-4">
+                        {{ form.hidden_tag() }}
+                        {{ form.registration_id() }}
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.payment_proof.id }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Payment Proof *
+                            </label>
+                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                                <div class="space-y-1 text-center">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4h-12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    <div class="flex text-sm text-gray-600">
+                                        <label for="{{ form.payment_proof.id }}" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                            <span>Upload a file</span>
+                                            {{ form.payment_proof(class="sr-only") }}
+                                        </label>
+                                        <p class="pl-1">or drag and drop</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500">PNG, JPG, JPEG, PDF up to 10MB</p>
+                                    
+                                    <div id="selected-file" class="mt-2 text-sm text-gray-900 hidden">
+                                        Selected: <span id="file-name"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if form.payment_proof.errors %}
+                                <div class="text-red-500 text-sm mt-1">
+                                    {% for error in form.payment_proof.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label for="{{ form.payment_notes.id }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Additional Notes
+                            </label>
+                            {{ form.payment_notes(class="form-textarea block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", rows=3) }}
+                            <p class="mt-1 text-sm text-gray-500">Include any additional information about your payment if needed</p>
+                            {% if form.payment_notes.errors %}
+                                <div class="text-red-500 text-sm mt-1">
+                                    {% for error in form.payment_notes.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="flex justify-between">
+                            <a href="{{ url_for('player.my_registrations') }}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                                Cancel
+                            </a>
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Submit Payment Proof
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- QR Code Sidebar -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="font-medium text-gray-700 mb-4">Payment QR Code</h3>
+                
+                {% if tournament.payment_qr_code %}
+                <div class="flex justify-center mb-4">
+                    <img src="{{ tournament.payment_qr_code }}" alt="Payment QR Code" class="max-w-full h-auto rounded">
+                </div>
+                <p class="text-sm text-gray-500 text-center">Scan this QR code to make your payment</p>
+                {% else %}
+                <div class="bg-gray-100 p-8 rounded flex items-center justify-center">
+                    <p class="text-gray-500 text-center">No QR code available.</p>
+                </div>
+                {% endif %}
+                
+                <div class="mt-6 p-4 bg-yellow-50 rounded-lg">
+                    <h4 class="font-medium text-yellow-800 mb-2">Important Note</h4>
+                    <p class="text-sm text-yellow-700">
+                        Please make sure to include your reference number ({{ registration.payment_reference }}) 
+                        when making your payment. Your registration will not be confirmed until payment is verified.
+                    </p>
+                </div>
+                
+                <div class="mt-6">
+                    <h4 class="font-medium text-gray-700 mb-2">Need Help?</h4>
+                    <p class="text-sm text-gray-600 mb-4">
+                        If you have any questions about the payment process, please contact the tournament organizer.
+                    </p>
+                    <a href="mailto:{{ tournament.organizer.email }}" class="text-blue-600 text-sm font-medium hover:text-blue-800">
+                        Contact Organizer
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // File input display
+        const fileInput = document.getElementById('{{ form.payment_proof.id }}');
+        const fileNameDisplay = document.getElementById('file-name');
+        const selectedFileDiv = document.getElementById('selected-file');
+        
+        fileInput.addEventListener('change', function() {
+            if (fileInput.files.length > 0) {
+                fileNameDisplay.textContent = fileInput.files[0].name;
+                selectedFileDiv.classList.remove('hidden');
+            } else {
+                selectedFileDiv.classList.add('hidden');
+            }
+        });
+        
+        // Drag and drop functionality
+        const dropArea = fileInput.closest('.border-dashed');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dropArea.classList.add('border-blue-300', 'bg-blue-50');
+        }
+        
+        function unhighlight() {
+            dropArea.classList.remove('border-blue-300', 'bg-blue-50');
+        }
+        
+        dropArea.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            fileInput.files = files;
+            
+            // Trigger change event
+            const event = new Event('change');
+            fileInput.dispatchEvent(event);
+        }
+    });
+</script>
 {% endblock %}

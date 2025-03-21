@@ -5,6 +5,7 @@ from wtforms.validators import DataRequired, Length, NumberRange, Optional, Vali
 from datetime import datetime, timedelta
 from app.models import TournamentTier, TournamentFormat, CategoryType, TournamentStatus
 
+
 class TournamentForm(FlaskForm):
     name = StringField('Tournament Name', validators=[DataRequired(), Length(max=100)])
     location = StringField('Location', validators=[DataRequired(), Length(max=200)])
@@ -47,17 +48,88 @@ class TournamentForm(FlaskForm):
         if registration_deadline.data > self.start_date.data:
             raise ValidationError('Registration deadline must be before the start date.')
 
-class CategoryForm(FlaskForm):
-    category_type = SelectField('Category', validators=[DataRequired()], choices=[
-        (CategoryType.MENS_SINGLES.name, "Men's Singles"),
-        (CategoryType.WOMENS_SINGLES.name, "Women's Singles"),
-        (CategoryType.MENS_DOUBLES.name, "Men's Doubles"),
-        (CategoryType.WOMENS_DOUBLES.name, "Women's Doubles"),
-        (CategoryType.MIXED_DOUBLES.name, "Mixed Doubles")
-    ])
-    max_participants = IntegerField('Maximum Participants', validators=[DataRequired(), NumberRange(min=2, max=128)])
-    points_awarded = IntegerField('Points Awarded', validators=[DataRequired(), NumberRange(min=0)])
-    submit = SubmitField('Add Category')
+
+class TournamentRegistrationForm(FlaskForm):
+    # Hidden fields
+    tournament_id = HiddenField('Tournament ID')
+    category_id = SelectField('Category', coerce=int, validators=[DataRequired()])
+    
+    # Player fields (only required if user is not logged in)
+    email = EmailField('Email', validators=[Optional(), Email(), Length(max=120)])
+    full_name = StringField('Full Name', validators=[Optional(), Length(max=100)])
+    phone = StringField('Phone Number', validators=[Optional(), Length(max=20)])
+    country = StringField('Country', validators=[Optional(), Length(max=50)])
+    city = StringField('City', validators=[Optional(), Length(max=50)])
+    password = PasswordField('Password', validators=[Optional(), Length(min=8)])
+    confirm_password = PasswordField('Confirm Password', 
+                                    validators=[Optional(), EqualTo('password', message='Passwords must match')])
+    
+    # Registration-specific fields
+    partner_id = SelectField('Partner (for doubles)', coerce=int, validators=[Optional()])
+    dupr_rating = StringField('DUPR Rating', validators=[Optional(), Length(max=10)])
+    emergency_contact = StringField('Emergency Contact', validators=[Optional(), Length(max=100)])
+    emergency_phone = StringField('Emergency Contact Phone', validators=[Optional(), Length(max=20)])
+    
+    # Additional player info
+    date_of_birth = StringField('Date of Birth', validators=[Optional(), Length(max=10)])
+    gender = SelectField('Gender', choices=[('', 'Select Gender'), ('M', 'Male'), ('F', 'Female'), ('O', 'Other')], 
+                        validators=[Optional()])
+    shirt_size = SelectField('Shirt Size', 
+                           choices=[('', 'Select Size'), ('XS', 'XS'), ('S', 'S'), ('M', 'M'), 
+                                   ('L', 'L'), ('XL', 'XL'), ('XXL', 'XXL')],
+                           validators=[Optional()])
+    
+    # Special requests
+    special_requests = TextAreaField('Special Requests', validators=[Optional(), Length(max=500)])
+    
+    # Agreements
+    terms_agreement = BooleanField('I agree to the rules and regulations of this tournament', 
+                                 validators=[DataRequired()])
+    liability_waiver = BooleanField('I acknowledge that pickleball involves risks and waive liability', 
+                                  validators=[DataRequired()])
+    
+    def validate_email(self, email):
+        if not self.is_authenticated:  # Only validate if creating a new user
+            user = User.query.filter_by(email=email.data.lower()).first()
+            if user:
+                raise ValidationError('This email is already registered. Please log in instead.')
+    
+    # Custom validation function to be used in the route
+    def validate_registration(self, is_authenticated):
+        self.is_authenticated = is_authenticated
+        
+        # If not authenticated, validate all user fields
+        if not is_authenticated:
+            if not self.email.data:
+                self.email.errors.append('Email is required')
+                return False
+            
+            if not self.full_name.data:
+                self.full_name.errors.append('Full name is required')
+                return False
+            
+            if not self.password.data:
+                self.password.errors.append('Password is required')
+                return False
+                
+            if self.password.data != self.confirm_password.data:
+                self.confirm_password.errors.append('Passwords must match')
+                return False
+        
+        return True
+
+
+# class CategoryForm(FlaskForm):
+#     category_type = SelectField('Category', validators=[DataRequired()], choices=[
+#         (CategoryType.MENS_SINGLES.name, "Men's Singles"),
+#         (CategoryType.WOMENS_SINGLES.name, "Women's Singles"),
+#         (CategoryType.MENS_DOUBLES.name, "Men's Doubles"),
+#         (CategoryType.WOMENS_DOUBLES.name, "Women's Doubles"),
+#         (CategoryType.MIXED_DOUBLES.name, "Mixed Doubles")
+#     ])
+#     max_participants = IntegerField('Maximum Participants', validators=[DataRequired(), NumberRange(min=2, max=128)])
+#     points_awarded = IntegerField('Points Awarded', validators=[DataRequired(), NumberRange(min=0)])
+#     submit = SubmitField('Add Category')
 
 class SeedingForm(FlaskForm):
     player_id = IntegerField('Player ID', validators=[DataRequired()])
@@ -91,3 +163,108 @@ class CompleteMatchForm(FlaskForm):
     winner_id = IntegerField('Winner ID', validators=[DataRequired()])
     completed = BooleanField('Mark as Completed')
     submit = SubmitField('Complete Match')
+
+
+class CategoryForm(FlaskForm):
+    category_type = SelectField('Category Type', choices=[
+        (CategoryType.MENS_SINGLES.name, 'Men\'s Singles'),
+        (CategoryType.WOMENS_SINGLES.name, 'Women\'s Singles'),
+        (CategoryType.MENS_DOUBLES.name, 'Men\'s Doubles'),
+        (CategoryType.WOMENS_DOUBLES.name, 'Women\'s Doubles'),
+        (CategoryType.MIXED_DOUBLES.name, 'Mixed Doubles'),
+    ], validators=[DataRequired()])
+    
+    max_participants = IntegerField('Maximum Participants', 
+                                  validators=[DataRequired(), NumberRange(min=2, message="Must have at least 2 participants")],
+                                  default=32)
+    
+    points_awarded = IntegerField('Points Awarded', validators=[DataRequired()], default=100)
+    
+    registration_fee = DecimalField('Registration Fee', 
+                                   validators=[Optional(), NumberRange(min=0)],
+                                   default=0.0)
+    
+    # Format options
+    format = SelectField('Category Format', choices=[
+        (TournamentFormat.SINGLE_ELIMINATION.name, 'Single Elimination'),
+        (TournamentFormat.DOUBLE_ELIMINATION.name, 'Double Elimination'),
+        (TournamentFormat.ROUND_ROBIN.name, 'Round Robin'),
+        (TournamentFormat.GROUP_KNOCKOUT.name, 'Group Stage + Knockout'),
+    ], validators=[Optional()])
+    
+    # Prize money 
+    prize_percentage = FloatField('Prize Percentage', 
+                                validators=[Optional(), NumberRange(min=0, max=100)],
+                                default=0)
+    
+    # DUPR rating restrictions
+    min_dupr_rating = FloatField('Minimum DUPR Rating', 
+                              validators=[Optional(), NumberRange(min=0, max=8.0)])
+    max_dupr_rating = FloatField('Maximum DUPR Rating', 
+                              validators=[Optional(), NumberRange(min=0, max=8.0)])
+    
+    # Age restrictions
+    min_age = IntegerField('Minimum Age', 
+                         validators=[Optional(), NumberRange(min=0, max=120)])
+    max_age = IntegerField('Maximum Age', 
+                         validators=[Optional(), NumberRange(min=0, max=120)])
+    
+    # Gender restriction
+    gender_restriction = SelectField('Gender Restriction', choices=[
+        ('', 'No Restriction'),
+        ('male', 'Male Only'),
+        ('female', 'Female Only'),
+        ('mixed', 'Mixed')
+    ], validators=[Optional()])
+    
+    # Format-specific settings
+    group_count = IntegerField('Number of Groups', 
+                             validators=[Optional(), NumberRange(min=0)],
+                             default=0)
+    teams_per_group = IntegerField('Teams Per Group', 
+                                 validators=[Optional(), NumberRange(min=0)],
+                                 default=0)
+    teams_advancing_per_group = IntegerField('Teams Advancing Per Group', 
+                                           validators=[Optional(), NumberRange(min=0)],
+                                           default=0)
+
+
+class TournamentGiftsForm(FlaskForm):
+    door_gifts = TextAreaField('Door Gifts Description', 
+                             validators=[Optional(), Length(max=1000)],
+                             description="Describe the door gifts participants will receive")
+    
+    door_gifts_image = FileField('Door Gifts Image', 
+                               validators=[Optional(), 
+                                         FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')])
+
+class TournamentPaymentForm(FlaskForm):
+    payment_bank_name = StringField('Bank Name', 
+                                  validators=[DataRequired(), Length(max=100)])
+    
+    payment_account_number = StringField('Account Number', 
+                                      validators=[DataRequired(), Length(max=50)])
+    
+    payment_account_name = StringField('Account Name', 
+                                     validators=[DataRequired(), Length(max=100)])
+    
+    payment_reference_prefix = StringField('Payment Reference Prefix', 
+                                         validators=[Optional(), Length(max=20)],
+                                         description="Prefix for payment references (e.g., 'PBT' will generate references like 'PBT-123456789')")
+    
+    payment_qr_code = FileField('Payment QR Code', 
+                              validators=[Optional(), 
+                                        FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')])
+    
+    payment_instructions = TextAreaField('Payment Instructions', 
+                                       validators=[Optional(), Length(max=1000)],
+                                       description="Additional payment instructions for players")
+
+
+class PaymentProofForm(FlaskForm):
+    registration_id = HiddenField('Registration ID')
+    payment_proof = FileField('Payment Proof', 
+                           validators=[FileRequired(), 
+                                      FileAllowed(['jpg', 'png', 'jpeg', 'pdf'], 
+                                                'Images or PDF only!')])
+    payment_notes = TextAreaField('Payment Notes', validators=[Optional(), Length(max=500)])

@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Registration Details{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="mb-6 flex items-center justify-between">
+        <h1 class="text-3xl font-bold">Registration Details</h1>
+        <a href="{{ url_for('player.my_registrations') }}" class="text-blue-600 hover:text-blue-800">
+            &larr; Back to My Registrations
+        </a>
+    </div>
+    
+    <!-- Registration Summary Card -->
+    <div class="bg-white rounded-lg shadow-sm mb-8">
+        <!-- Tournament Info -->
+        <div class="flex items-center p-6 border-b border-gray-200">
+            {% if tournament.logo %}
+            <div class="mr-4 flex-shrink-0">
+                <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="h-14 w-auto object-contain">
+            </div>
+            {% endif %}
+            <div>
+                <h2 class="text-xl font-bold">{{ tournament.name }}</h2>
+                <div class="text-gray-600 text-sm">
+                    {{ tournament.start_date.strftime('%B %d') }}-{{ tournament.end_date.strftime('%d, %Y') }} | {{ tournament.location }}
+                </div>
+                <div class="mt-1">
+                    <span class="badge-{{ tournament.tier.value }} text-xs px-2 py-1 rounded-full">
+                        {{ tournament.tier.value }}
+                    </span>
+                    <span class="badge-{{ tournament.status.value }} text-xs px-2 py-1 rounded-full ml-2">
+                        {{ tournament.status.value|capitalize }}
+                    </span>
+                </div>
+            </div>
+            <div class="ml-auto">
+                <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    View Tournament
+                </a>
+            </div>
+        </div>
+        
+        <!-- Registration Status -->
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold">Registration Status</h3>
+                <div>
+                    {% if registration.payment_status == 'pending' %}
+                        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            Payment Required
+                        </span>
+                    {% elif registration.payment_status == 'uploaded' %}
+                        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                            Payment Verification Pending
+                        </span>
+                    {% elif registration.payment_status == 'paid' %}
+                        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Confirmed
+                        </span>
+                    {% elif registration.payment_status == 'rejected' %}
+                        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                            Payment Rejected
+                        </span>
+                    {% elif registration.payment_status == 'free' %}
+                        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Free Entry - Confirmed
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if registration.payment_status == 'rejected' and registration.payment_rejection_reason %}
+            <div class="mt-4 p-4 bg-red-50 rounded-lg border border-red-200">
+                <h4 class="text-sm font-medium text-red-800">Rejection Reason:</h4>
+                <p class="text-sm text-red-700">{{ registration.payment_rejection_reason }}</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Registration Details -->
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-bold mb-4">Registration Details</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Category</h4>
+                    <p class="text-gray-900">{{ category.category_type.value }}</p>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Registration Date</h4>
+                    <p class="text-gray-900">{{ registration.registration_date.strftime('%B %d, %Y %H:%M') }}</p>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Registration Fee</h4>
+                    <p class="text-gray-900">${{ category.registration_fee }}</p>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Reference Number</h4>
+                    <p class="text-gray-900">{{ registration.payment_reference }}</p>
+                </div>
+                
+                {% if category.is_doubles() %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Partner</h4>
+                    <p class="text-gray-900">
+                        {% if registration.partner %}
+                            {{ registration.partner.full_name }}
+                        {% else %}
+                            No partner selected
+                        {% endif %}
+                    </p>
+                </div>
+                {% endif %}
+                
+                {% if registration.dupr_rating %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">DUPR Rating</h4>
+                    <p class="text-gray-900">{{ registration.dupr_rating }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Payment Information -->
+        {% if registration.payment_status not in ['free'] and category.registration_fee > 0 %}
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-bold mb-4">Payment Information</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% if registration.payment_proof %}
+                <div class="md:col-span-2">
+                    <h4 class="text-sm font-medium text-gray-500 mb-2">Payment Proof</h4>
+                    <div class="border border-gray-200 rounded-lg p-2">
+                        <img src="{{ registration.payment_proof }}" alt="Payment Proof" class="max-h-60 mx-auto">
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if registration.payment_proof_uploaded_at %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Uploaded On</h4>
+                    <p class="text-gray-900">{{ registration.payment_proof_uploaded_at.strftime('%B %d, %Y %H:%M') }}</p>
+                </div>
+                {% endif %}
+                
+                {% if registration.payment_status == 'paid' and registration.payment_verified_at %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Verified On</h4>
+                    <p class="text-gray-900">{{ registration.payment_verified_at.strftime('%B %d, %Y %H:%M') }}</p>
+                </div>
+                {% endif %}
+                
+                {% if registration.payment_notes %}
+                <div class="md:col-span-2">
+                    <h4 class="text-sm font-medium text-gray-500">Payment Notes</h4>
+                    <p class="text-gray-900">{{ registration.payment_notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Additional Information -->
+        <div class="p-6">
+            <h3 class="text-lg font-bold mb-4">Additional Information</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% if registration.emergency_contact and registration.emergency_phone %}
+                <div class="md:col-span-2">
+                    <h4 class="text-sm font-medium text-gray-500">Emergency Contact</h4>
+                    <p class="text-gray-900">{{ registration.emergency_contact }} ({{ registration.emergency_phone }})</p>
+                </div>
+                {% endif %}
+                
+                {% if registration.shirt_size %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500">Shirt Size</h4>
+                    <p class="text-gray-900">{{ registration.shirt_size }}</p>
+                </div>
+                {% endif %}
+                
+                {% if registration.special_requests %}
+                <div class="md:col-span-2">
+                    <h4 class="text-sm font-medium text-gray-500">Special Requests</h4>
+                    <p class="text-gray-900">{{ registration.special_requests }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="p-6 bg-gray-50 rounded-b-lg flex justify-between">
+            {% if registration.payment_status == 'pending' %}
+                <a href="{{ url_for('player.payment', registration_id=registration.id) }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Make Payment
+                </a>
+            {% elif registration.payment_status == 'rejected' %}
+                <a href="{{ url_for('player.payment', registration_id=registration.id) }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Resubmit Payment
+                </a>
+            {% else %}
+                <span></span> <!-- Empty span to maintain flex layout -->
+            {% endif %}
+            
+            {% if tournament.status.value == 'upcoming' and tournament.is_registration_open() and registration.payment_status != 'paid' %}
+                <form method="POST" action="{{ url_for('player.cancel_registration', registration_id=registration.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="px-4 py-2 border border-red-300 text-red-700 bg-white rounded-md hover:bg-red-50" 
+                            onclick="return confirm('Are you sure you want to cancel this registration?');">
+                        Cancel Registration
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

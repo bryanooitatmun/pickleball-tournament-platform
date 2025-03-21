@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Payments{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="mb-6 flex items-center justify-between">
+        <h1 class="text-3xl font-bold">Verify Payments</h1>
+        <a href="{{ url_for('organizer.dashboard') }}" class="text-blue-600 hover:text-blue-800">
+            &larr; Back to Dashboard
+        </a>
+    </div>
+    
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-sm mb-6 p-4">
+        <form method="GET" class="flex flex-wrap items-center gap-4">
+            <div>
+                <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
+                <select id="status" name="status" class="form-select rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Waiting for Verification</option>
+                    <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                    <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+                </select>
+            </div>
+            
+            <div>
+                <label for="tournament" class="block text-sm font-medium text-gray-700 mb-1">Tournament</label>
+                <select id="tournament" name="tournament" class="form-select rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="all">All Tournaments</option>
+                    {% for t in all_tournaments %}
+                        <option value="{{ t.id }}" {% if tournament_filter == t.id %}selected{% endif %}>
+                            {{ t.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="ml-auto pt-6">
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                    Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Registrations Table -->
+    <div class="bg-white rounded-lg shadow-sm mb-8">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-xl font-bold">Registration Payments</h2>
+            <p class="text-gray-600">
+                {% if status_filter == 'pending' %}
+                    Showing registrations waiting for payment verification
+                {% elif status_filter == 'approved' %}
+                    Showing approved registrations
+                {% elif status_filter == 'rejected' %}
+                    Showing rejected registrations
+                {% else %}
+                    Showing all registrations
+                {% endif %}
+            </p>
+        </div>
+        
+        {% if registrations %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Player
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Tournament
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Category
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Fee
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Reference
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Date
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for registration in registrations %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10">
+                                            {% if registration.player.profile_image %}
+                                                <img class="h-10 w-10 rounded-full" src="{{ registration.player.profile_image }}" alt="{{ registration.player.full_name }}">
+                                            {% else %}
+                                                <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                                    <span class="text-blue-600 font-bold">{{ registration.player.full_name[:1] }}</span>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">
+                                                {{ registration.player.full_name }}
+                                            </div>
+                                            <div class="text-sm text-gray-500">
+                                                {{ registration.player.user.email }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ registration.category.tournament.name }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ registration.category.category_type.value }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    ${{ registration.category.registration_fee }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ registration.payment_reference }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if registration.payment_status == 'pending' %}
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                            Payment Required
+                                        </span>
+                                    {% elif registration.payment_status == 'uploaded' %}
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                            Pending Verification
+                                        </span>
+                                    {% elif registration.payment_status == 'paid' %}
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            Verified
+                                        </span>
+                                    {% elif registration.payment_status == 'rejected' %}
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                            Rejected
+                                        </span>
+                                    {% elif registration.payment_status == 'free' %}
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            Free Entry
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {% if registration.payment_proof_uploaded_at %}
+                                        {{ registration.payment_proof_uploaded_at.strftime('%b %d, %Y') }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="{{ url_for('organizer.view_registration', id=registration.id) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                                        View
+                                    </a>
+                                    {% if registration.payment_status == 'uploaded' %}
+                                        <a href="{{ url_for('organizer.verify_registration', id=registration.id) }}" class="text-green-600 hover:text-green-900 mr-3">
+                                            Approve
+                                        </a>
+                                        <button data-registration-id="{{ registration.id }}" class="text-red-600 hover:text-red-900 reject-btn">
+                                            Reject
+                                        </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="p-6 text-center text-gray-500">
+                No registrations matching the selected filters.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Reject Payment Modal -->
+<div id="rejectModal" class="fixed inset-0 z-10 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+            <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+        </div>
+        
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="rejectForm" method="POST" action="{{ url_for('organizer.reject_registration', id=0) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" id="registrationId" name="registration_id" value="">
+                
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                Reject Payment
+                            </h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500">
+                                    Please provide a reason for rejecting this payment. This will be shown to the player.
+                                </p>
+                                <div class="mt-4">
+                                    <label for="rejection_reason" class="block text-sm font-medium text-gray-700">Rejection Reason</label>
+                                    <textarea id="rejection_reason" name="rejection_reason" rows="3" class="mt-1 shadow-sm focus:ring-red-500 focus:border-red-500 block w-full sm:text-sm border-gray-300 rounded-md"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Reject
+                    </button>
+                    <button type="button" id="cancelReject" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Modal functionality
+        const rejectModal = document.getElementById('rejectModal');
+        const rejectForm = document.getElementById('rejectForm');
+        const registrationIdInput = document.getElementById('registrationId');
+        const rejectButtons = document.querySelectorAll('.reject-btn');
+        const cancelRejectButton = document.getElementById('cancelReject');
+        
+        function showModal(registrationId) {
+            registrationIdInput.value = registrationId;
+            // Update form action with the right ID
+            rejectForm.action = rejectForm.action.replace('/0', '/' + registrationId);
+            rejectModal.classList.remove('hidden');
+        }
+        
+        function hideModal() {
+            rejectModal.classList.add('hidden');
+        }
+        
+        rejectButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const registrationId = this.getAttribute('data-registration-id');
+                showModal(registrationId);
+            });
+        });
+        
+        cancelRejectButton.addEventListener('click', hideModal);
+        
+        // Close modal when clicking outside
+        rejectModal.addEventListener('click', function(event) {
+            if (event.target === rejectModal) {
+                hideModal();
+            }
+        });
+    });
+</script>
+{% endblock %}
