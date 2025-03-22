@@ -55,13 +55,13 @@
 <div class="bg-gray-50 min-h-screen">
     <div class="container mx-auto px-4 py-8">
         <!-- Tournament Header -->
-        <div class="mb-8 bg-white p-6 rounded-xl shadow-md flex items-center">
+        <div class="mb-8 bg-white p-3 md:p-6 rounded-xl shadow-md flex items-center">
             {% if tournament.logo %}
             <div class="mr-6 flex-shrink-0">
                 <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="h-24 w-auto object-contain">
             </div>
             {% else %}
-            <div class="mr-6 flex-shrink-0 w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center">
+            <div class="mr-6 flex-shrink-0 md:w-24 md:h-24 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
                 <span class="text-white text-3xl font-bold">{{ tournament.name[0] }}</span>
             </div>
             {% endif %}
@@ -332,21 +332,42 @@
 {% endblock %}
 
 {% block scripts %}
+{{ super() }}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const categorySelect = document.getElementById('{{ form.category_id.id }}');
         const feeDisplay = document.getElementById('summary-fee');
         const categoryDisplay = document.getElementById('summary-category');
-        const scheduleDisplay = document.getElementById('summary-schedule');
         const categoryDescription = document.getElementById('category-description');
+        const form = document.querySelector('form');
         
+        // Save form data when submitting
+        form.addEventListener('submit', function() {
+            // Collect all form field values
+            const formData = {};
+            const inputs = form.querySelectorAll('input, select, textarea');
+            
+            inputs.forEach(input => {
+                if (input.id && input.id !== 'csrf_token') {
+                    if (input.type === 'checkbox') {
+                        formData[input.id] = input.checked;
+                    } else {
+                        formData[input.id] = input.value;
+                    }
+                }
+            });
+            
+            // Save form data to localStorage for back navigation
+            localStorage.setItem('submittedFormData', JSON.stringify(formData));
+        });
+
         // Category information mapping
         const categoryInfo = {
             {% for category in tournament.categories %}
                 {{ category.id }}: {
-                    name: "{{ category.name |safe }}",
+                    name: "{{ category.name|safe }}",
                     fee: {{ category.registration_fee }},
-                    schedule: "{{ category.name |safe }} - Day {{ loop.index }}",
+                    schedule: "{{ category.name|safe }} - Day {{ loop.index }}",
                     description: "{% if category.max_dupr_rating %}Max DUPR Rating: {{ category.max_dupr_rating }}{% endif %}"
                 },
             {% endfor %}
@@ -359,15 +380,63 @@
                 const info = categoryInfo[categoryId];
                 feeDisplay.textContent = "RM" + info.fee.toFixed(2);
                 categoryDisplay.textContent = info.name;
-                //scheduleDisplay.textContent = info.schedule;
                 categoryDescription.textContent = info.description;
+                
+                // Save to localStorage
+                localStorage.setItem('selectedCategoryId', categoryId);
             } else {
                 feeDisplay.textContent = "RM0.00";
                 categoryDisplay.textContent = "Please select a category";
-                //scheduleDisplay.textContent = "Available after selecting a category";
                 categoryDescription.textContent = "";
             }
         });
+
+        // Function to restore form data
+        function restoreFormData(data) {
+            // Skip if no data is available
+            if (!data) return;
+            
+            // Fill all input fields
+            Object.keys(data).forEach(fieldName => {
+                const field = document.getElementById(fieldName);
+                if (field) {
+                    if (field.type === 'checkbox') {
+                        field.checked = data[fieldName];
+                    } else {
+                        field.value = data[fieldName];
+                    }
+                }
+            });
+            
+            // Trigger change event on category select to update summary
+            if (categorySelect.value) {
+                categorySelect.dispatchEvent(new Event('change'));
+            }
+        }
+        
+        // Check for previously submitted form data (for back button navigation)
+        const submittedData = localStorage.getItem('submittedFormData');
+        if (submittedData) {
+            restoreFormData(JSON.parse(submittedData));
+        } else {
+            // Initialize displays if no submitted data
+            if (categorySelect.value) {
+                const categoryId = parseInt(categorySelect.value);
+                if (categoryId && categoryInfo[categoryId]) {
+                    const info = categoryInfo[categoryId];
+                    feeDisplay.textContent = "RM" + info.fee.toFixed(2);
+                    categoryDisplay.textContent = info.name;
+                    categoryDescription.textContent = info.description;
+                }
+            } else {
+                // Try to restore from localStorage
+                const savedCategoryId = localStorage.getItem('selectedCategoryId');
+                if (savedCategoryId && categorySelect.querySelector(`option[value="${savedCategoryId}"]`)) {
+                    categorySelect.value = savedCategoryId;
+                    categorySelect.dispatchEvent(new Event('change'));
+                }
+            }
+        }
         
         // Initialize displays
         if (categorySelect.value) {
@@ -376,9 +445,122 @@
                 const info = categoryInfo[categoryId];
                 feeDisplay.textContent = "RM" + info.fee.toFixed(2);
                 categoryDisplay.textContent = info.name;
-                //scheduleDisplay.textContent = info.schedule;
                 categoryDescription.textContent = info.description;
             }
+        } else {
+            // Try to restore from localStorage
+            const savedCategoryId = localStorage.getItem('selectedCategoryId');
+            if (savedCategoryId && categorySelect.querySelector(`option[value="${savedCategoryId}"]`)) {
+                categorySelect.value = savedCategoryId;
+                categorySelect.dispatchEvent(new Event('change'));
+            }
+        }
+        
+        // Add test data button
+        const formContainer = document.querySelector('form').parentNode;
+        const testButton = document.createElement('div');
+        testButton.className = "mb-4 bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center justify-between";
+        testButton.innerHTML = `
+            <div>
+                <span class="font-medium">Developer Mode</span>
+                <span class="text-xs ml-2 text-gray-300">Pre-fill the form with test data</span>
+            </div>
+            <div class="flex">
+                <button type="button" id="fillTestData" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded mr-2">Fill Test Data</button>
+                <button type="button" id="saveFormData" class="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded mr-2">Save Current Data</button>
+                <button type="button" id="clearFormData" class="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded">Clear Saved Data</button>
+            </div>
+        `;
+        
+        formContainer.insertBefore(testButton, formContainer.firstChild);
+        
+        // Test data
+        const testData = {
+            player1_name: "John Smith",
+            player1_email: "bryanotm@hotmail.com",
+            player1_email_confirm: "bryanotm@hotmail.com",
+            player1_phone: "0123456789",
+            player1_dupr_id: "X2KO9X", 
+            player1_date_of_birth: "1990-01-15",
+            player1_nationality: "Malaysian",
+            
+            player2_name: "Jane Doe",
+            player2_email: "bryanbakat88@gmail.com",
+            player2_email_confirm: "bryanbakat88@gmail.com",
+            player2_phone: "0198765432",
+            player2_dupr_id: "4Z5JW2",
+            player2_date_of_birth: "1992-05-20",
+            player2_nationality: "Malaysian",
+            
+            terms_agreement: true,
+            liability_waiver: true,
+            media_release: true,
+            pdpa_consent: true
+        };
+        
+        // Fill form with test data
+        document.getElementById('fillTestData').addEventListener('click', function() {
+            // Try to load saved data from localStorage if available
+            const savedData = localStorage.getItem('formTestData');
+            const dataToUse = savedData ? JSON.parse(savedData) : testData;
+            
+            // Fill all input fields
+            Object.keys(dataToUse).forEach(fieldName => {
+                const field = document.getElementById(fieldName);
+                if (field) {
+                    if (field.type === 'checkbox') {
+                        field.checked = dataToUse[fieldName];
+                    } else {
+                        field.value = dataToUse[fieldName];
+                    }
+                }
+            });
+            
+            // If category is not set, select the first available category
+            if (!categorySelect.value && categorySelect.options.length > 0) {
+                categorySelect.value = categorySelect.options[1].value; // Skip the first empty option
+                categorySelect.dispatchEvent(new Event('change'));
+            }
+            
+            alert('Form filled with test data');
+        });
+        
+        // Save current form data
+        document.getElementById('saveFormData').addEventListener('click', function() {
+            const formData = {};
+            const form = document.querySelector('form');
+            
+            // Get all input elements
+            const inputs = form.querySelectorAll('input, select, textarea');
+            
+            inputs.forEach(input => {
+                if (input.id && input.id !== '{{ form.category_id.id }}' && input.id !== 'csrf_token') {
+                    if (input.type === 'checkbox') {
+                        formData[input.id] = input.checked;
+                    } else {
+                        formData[input.id] = input.value;
+                    }
+                }
+            });
+            
+            // Save to localStorage
+            localStorage.setItem('formTestData', JSON.stringify(formData));
+            
+            alert('Current form data saved');
+        });
+        
+        // Clear saved form data
+        document.getElementById('clearFormData').addEventListener('click', function() {
+            localStorage.removeItem('formTestData');
+            localStorage.removeItem('selectedCategoryId');
+            alert('Saved form data cleared');
+        });
+        
+        // Check for URL params to prefill form
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('test') && urlParams.get('test') === 'true') {
+            // Trigger test data fill automatically
+            document.getElementById('fillTestData').click();
         }
     });
 </script>

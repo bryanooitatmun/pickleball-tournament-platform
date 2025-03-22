@@ -69,7 +69,7 @@
 
 {% block content %}
 <!-- Tournament Banner -->
-<div class="relative w-full h-80 rounded-xl overflow-hidden mb-10 shadow-lg">
+<div class="relative w-full h-80 rounded-xl overflow-hidden mb-10 shadow-lg min-h-[500px]">
     {% if tournament.banner %}
         <img src="{{ tournament.banner }}" alt="{{ tournament.name }}" class="w-full h-full object-cover">
     {% else %}
@@ -379,11 +379,11 @@
                                 <span class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mr-2 mb-2">
                                     Max {{ category.max_participants }} participants
                                 </span>
-                                {% if category.gender_restriction %}
+                                {# {% if category.gender_restriction %}
                                 <span class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mr-2 mb-2">
                                     {{ category.gender_restriction|capitalize }}
                                 </span>
-                                {% endif %}
+                                {% endif %} #}
                             </div>
                         </div>
                         <div class="text-center">

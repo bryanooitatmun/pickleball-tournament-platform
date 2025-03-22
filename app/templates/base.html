@@ -13,44 +13,55 @@
     <header class="bg-white border-b border-gray-200">
         <div class="container mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-8">
-                    <a href="{{ url_for('main.index') }}" class="text-2xl font-bold text-blue-900">
-                        <img src="{{ url_for('static', filename='images/logo.jpeg') }}" alt="Pickleball Pro Tour" class="h-12">
-                    </a>
-                    <nav class="hidden md:flex space-x-6">
-                        <a href="{{ url_for('main.index') }}" class="font-bold hover:text-blue-600 px-2 py-4 flex items-center">HOME</a>
-                        <a href="{{ url_for('main.events') }}" class="font-bold hover:text-blue-600 px-2 py-4 flex items-center">EVENTS</a>
-                        <a href="{{ url_for('main.rankings') }}" class="font-bold hover:text-blue-600 px-2 py-4 flex items-center">RANKING</a>
+                <!-- Logo (visible on all screen sizes) -->
+                <a href="{{ url_for('main.index') }}" class="text-2xl font-bold text-blue-900 flex items-center">
+                    <img src="{{ url_for('static', filename='images/logo.jpeg') }}" alt="Sports Sync" class="h-10 mr-2">
+                </a>
+                
+                <!-- Desktop Navigation and Auth Buttons (hidden on mobile) -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <nav class="flex space-x-6 mr-6">
+                        <a href="{{ url_for('main.index') }}" class="font-medium hover:text-blue-600">Home</a>
+                        <a href="{{ url_for('main.events') }}" class="hidden font-medium hover:text-blue-600">Events</a>
+                        <a href="{{ url_for('main.rankings') }}" class="hidden font-medium hover:text-blue-600">Rankings</a>
                         {% if current_user.is_authenticated %}
                             {% if current_user.is_player() %}
-                                <a href="{{ url_for('player.dashboard') }}" class="font-bold hover:text-blue-600 px-2 py-4 flex items-center">My Profile</a>
+                                <a href="{{ url_for('player.dashboard') }}" class="font-medium hover:text-blue-600">My Profile</a>
                             {% elif current_user.is_organizer() %}
-                                <a href="{{ url_for('organizer.dashboard') }}" class="font-bold hover:text-blue-600 px-2 py-4 flex items-center">Organize</a>
+                                <a href="{{ url_for('organizer.dashboard') }}" class="font-medium hover:text-blue-600">Organize</a>
                             {% elif current_user.is_admin() %}
-                                <a href="{{ url_for('admin.dashboard') }}" class="font-bold hover:text-blue-600 px-2 py-4 flex items-center">Admin</a>
+                                <a href="{{ url_for('admin.dashboard') }}" class="font-medium hover:text-blue-600">Admin</a>
                             {% endif %}
                         {% endif %}
                     </nav>
-                </div>
-                <div class="flex space-x-4">
+                    
                     {% if current_user.is_authenticated %}
-                        <span class="hidden md:inline-block px-4 py-2 text-gray-700">Welcome, {{ current_user.username }}</span>
-                        <a href="{{ url_for('auth.logout') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">Logout</a>
+                        <span class="mr-2">Welcome, {{ current_user.username }}</span>
+                        <a href="{{ url_for('auth.logout') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Logout</a>
                     {% else %}
-                        <a href="{{ url_for('auth.login') }}" class="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-bold hidden md:block">Sign In</a>
-                        <a href="{{ url_for('auth.register') }}" class="bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-4 py-2 rounded-md text-sm font-bold">Register</a>
+                        <a href="{{ url_for('auth.login') }}" class="px-5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-md text-sm font-medium">Sign In</a>
+                        <a href="{{ url_for('auth.register') }}" class="hidden px-5 py-2 bg-yellow-400 hover:bg-yellow-500 text-blue-900 rounded-md text-sm font-medium">Register</a>
                     {% endif %}
                 </div>
+                
+                <!-- Mobile Menu Button (only visible on mobile) -->
+                <button id="menu-button" class="md:hidden text-gray-700 hover:text-blue-600 focus:outline-none">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+
+
             </div>
         </div>
     </header>
 
-    <!-- Mobile Menu (Hidden by default) -->
+    <!-- Mobile Menu (Hidden by default, only shown on mobile) -->
     <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-gray-200 p-4">
-        <nav class="flex flex-col space-y-4">
+        <nav class="flex flex-col space-y-4 mb-4">
             <a href="{{ url_for('main.index') }}" class="text-gray-600 hover:text-blue-600">Home</a>
-            <a href="{{ url_for('main.events') }}" class="text-gray-600 hover:text-blue-600">Events</a>
-            <a href="{{ url_for('main.rankings') }}" class="text-gray-600 hover:text-blue-600">Rankings</a>
+            <a href="{{ url_for('main.events') }}" class="hidden text-gray-600 hover:text-blue-600">Events</a>
+            <a href="{{ url_for('main.rankings') }}" class="hidden text-gray-600 hover:text-blue-600">Rankings</a>
             {% if current_user.is_authenticated %}
                 {% if current_user.is_player() %}
                     <a href="{{ url_for('player.dashboard') }}" class="text-gray-600 hover:text-blue-600">My Profile</a>
@@ -61,6 +72,16 @@
                 {% endif %}
             {% endif %}
         </nav>
+        
+        {% if current_user.is_authenticated %}
+            <span class="block mb-2">Welcome, {{ current_user.username }}</span>
+            <a href="{{ url_for('auth.logout') }}" class="block w-full text-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Logout</a>
+        {% else %}
+            <div class="flex flex-col space-y-2">
+                <a href="{{ url_for('auth.login') }}" class="w-full text-center px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-md text-sm font-medium">Sign In</a>
+                <a href="{{ url_for('auth.register') }}" class="hidden w-full text-center px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-blue-900 rounded-md text-sm font-medium">Register</a>
+            </div>
+        {% endif %}
     </div>
 
     <!-- Flash Messages -->

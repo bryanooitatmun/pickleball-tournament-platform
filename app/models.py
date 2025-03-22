@@ -1,5 +1,6 @@
 from datetime import datetime
 from flask_login import UserMixin
+from flask import current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, login
 import enum
@@ -873,6 +874,8 @@ class TeamRegistration(db.Model):
         # Create account for player 1 if needed
         if not user1:
             self.player1_temp_password = generate_temp_password()
+            print(self.player1_email)
+            print(self.player1_temp_password)
             user1 = User(
                 username=self.player1_email,  # Use part before @ as username
                 email=self.player1_email,
@@ -886,6 +889,8 @@ class TeamRegistration(db.Model):
         # Create account for player 2 if needed
         if not user2:
             self.player2_temp_password = generate_temp_password()
+            print(self.player2_email)
+            print(self.player2_temp_password)
             user2 = User(
                 username=self.player2_email,  # Use part before @ as username
                 email=self.player2_email, 
@@ -900,7 +905,7 @@ class TeamRegistration(db.Model):
         
     def send_confirmation_emails(self):
         """Send confirmation emails to both players"""
-        from app.email import send_email
+        from app.helpers.email_utils import send_email
         
         # Send email to player 1
         subject = f"Registration Confirmation - {self.tournament.name}"

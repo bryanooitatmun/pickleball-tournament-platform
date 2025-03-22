@@ -2,10 +2,11 @@ from flask import render_template, redirect, url_for, flash, request, current_ap
 from flask_login import current_user, login_required
 from werkzeug.utils import secure_filename
 import os
+import requests
 from app import db
 from app.player import bp
 from app.models import Tournament, TournamentCategory, Registration, PlayerProfile, User, UserRole, TeamRegistration
-from app.player.forms import TournamentRegistrationForm, PaymentForm, RegistrationForm
+from app.player.forms import TournamentRegistrationForm, PaymentForm, RegistrationForm, ProfileForm
 from app.helpers.registration import generate_payment_reference, generate_temp_password
 
 def allowed_file(filename):

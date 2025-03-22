@@ -180,3 +180,12 @@
     </div>
 </div>
 {% endblock %}
+{% block scripts %}
+<script>
+    // Clear submitted form data when payment is confirmed
+    document.addEventListener('DOMContentLoaded', function() {
+        // Remove stored form data to prevent it from reappearing on next new registration
+        localStorage.removeItem('submittedFormData');
+    });
+</script>
+{% endblock %}
