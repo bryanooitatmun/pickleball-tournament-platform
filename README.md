@@ -98,6 +98,25 @@ The platform has three different types of users:
    - Can view their profile and rankings
    - Can track their tournament history
 
+## Setting up the server
+
+1. apt update
+
+2. apt install nginx
+
+3. nano /etc/nginx/sites-available/pickleball
+
+4. ln -s /etc/nginx/sites-available/pickleball /etc/nginx/sites-enabled/
+
+5. systemctl restart nginx
+
+6. nano /etc/systemd/system/pickleball.service
+
+7. systemctl enable pickleball
+
+8. systemctl start pickleball
+
+
 ## Default Accounts
 
 After running the seed script, the following accounts will be available:
@@ -124,3 +143,4 @@ After running the seed script, the following accounts will be available:
 ## License
 
 MIT License
+
