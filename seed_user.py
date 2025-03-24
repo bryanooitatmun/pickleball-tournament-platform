@@ -392,7 +392,7 @@ def main():
         db.create_all()
     
     seed_tournament()
-    #seed_team_registration()
+    seed_team_registration()
 
 if __name__ == "__main__":
     with app.app_context():
