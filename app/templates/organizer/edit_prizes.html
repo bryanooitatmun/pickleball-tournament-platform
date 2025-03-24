@@ -1,0 +1,586 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Prizes - {{ tournament.name }}{% endblock %}
+
+{% block styles %}
+<style>
+    .edit-tabs {
+        display: flex;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .edit-tab {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        border-bottom: 2px solid transparent;
+        margin-right: 1rem;
+    }
+    
+    .edit-tab.active {
+        border-bottom-color: #3b82f6;
+        color: #3b82f6;
+    }
+    
+    .category-card {
+        background-color: #f9fafb;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+    
+    .category-header {
+        background-color: #e5e7eb;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .category-body {
+        padding: 1.5rem;
+    }
+    
+    .category-action {
+        color: #6b7280;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    
+    .category-action:hover {
+        color: #1f2937;
+    }
+    
+    .prize-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .prize-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .new-prize-card {
+        border: 2px dashed #d1d5db;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .hint-text {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .badge-cash {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+    
+    .badge-merchandise {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .badge-trophy {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .badge-medal {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .badge-voucher {
+        background-color: #f3e8ff;
+        color: #6b21a8;
+    }
+    
+    .badge-sponsored_product {
+        background-color: #e0f2fe;
+        color: #0369a1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold">Edit Tournament Prizes</h1>
+        <div>
+            <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Tournament
+            </a>
+        </div>
+    </div>
+    
+    <!-- Edit Tabs -->
+    <div class="edit-tabs">
+        <a href="{{ url_for('organizer.edit_tournament', id=tournament.id) }}" class="edit-tab">
+            Tournament Details
+        </a>
+        <a href="{{ url_for('organizer.edit_categories', id=tournament.id) }}" class="edit-tab">
+            Categories
+        </a>
+        <a href="{{ url_for('organizer.edit_prizes', id=tournament.id) }}" class="edit-tab active">
+            Prizes
+        </a>
+    </div>
+    
+    <form method="POST" class="space-y-6">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <!-- Prize Summary -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4">Prize Summary</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <div class="text-sm text-green-600 font-medium">Total Cash Prize</div>
+                    <div class="text-2xl font-bold text-green-800">RM{{ tournament.total_cash_prize|int }}</div>
+                </div>
+                
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <div class="text-sm text-blue-600 font-medium">Merchandise Value</div>
+                    <div class="text-2xl font-bold text-blue-800">RM{{ (tournament.total_prize_value - tournament.total_cash_prize)|int }}</div>
+                </div>
+                
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <div class="text-sm text-purple-600 font-medium">Total Prize Value</div>
+                    <div class="text-2xl font-bold text-purple-800">RM{{ tournament.total_prize_value|int }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Category Prizes -->
+        {% for category in categories %}
+        <div class="category-card" id="category-{{ category.id }}">
+            <div class="category-header">
+                <h3 class="font-medium">{{ category.name }}</h3>
+                <div class="flex items-center">
+                    <div class="category-action" onclick="toggleCategory('{{ category.id }}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="category-body" id="category-body-{{ category.id }}">
+                <!-- Prize Summary for this category -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <div class="text-sm text-green-600 font-medium">Category Cash Prize</div>
+                        <div class="text-2xl font-bold text-green-800">RM{{ category.prize_money|int }}</div>
+                    </div>
+                    
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <div class="text-sm text-blue-600 font-medium">Percentage of Total</div>
+                        <div class="text-2xl font-bold text-blue-800">{{ category.prize_percentage }}%</div>
+                    </div>
+                    
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <div class="text-sm text-purple-600 font-medium">Category Total Value</div>
+                        <div class="text-2xl font-bold text-purple-800">RM{{ category.total_prize_value|int }}</div>
+                    </div>
+                </div>
+                
+                <!-- Existing Prizes -->
+                <h4 class="font-medium mb-3 text-gray-700">Existing Prizes</h4>
+                
+                {% if prize_data[category.id] %}
+                    {% for prize in prize_data[category.id] %}
+                    <div class="prize-card" id="prize-{{ prize.id }}">
+                        <div class="prize-header">
+                            <div class="flex items-center">
+                                <span class="badge badge-{{ prize.prize_type.value }}">{{ prize.prize_type.name }}</span>
+                                <span class="ml-2 font-medium">{{ prize.placement }} Place</span>
+                            </div>
+                            <button type="button" class="category-action text-red-500" onclick="confirmDeletePrize('{{ prize.id }}', '{{ category.id }}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Prize Type
+                                </label>
+                                <select name="prize_type_{{ prize.id }}" class="prize-type-select w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" data-prize-id="{{ prize.id }}">
+                                    {% for type_value, type_name in prize_types %}
+                                    <option value="{{ type_value }}" {% if prize.prize_type.value == type_value %}selected{% endif %}>
+                                        {{ type_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Placement
+                                </label>
+                                <input type="text" name="placement_{{ prize.id }}" value="{{ prize.placement }}" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <p class="hint-text">Examples: "1", "2", "3", "3-4", etc.</p>
+                            </div>
+                            
+                            <!-- Cash Fields -->
+                            <div class="prize-fields cash-fields-{{ prize.id }} {% if prize.prize_type.value != 'cash' %}hidden{% endif %} md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Cash Amount (RM)
+                                </label>
+                                <input type="number" name="cash_amount_{{ prize.id }}" value="{{ prize.cash_amount }}" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                       min="0" step="0.01">
+                            </div>
+                            
+                            <!-- Merchandise/Trophy Fields -->
+                            <div class="prize-fields item-fields-{{ prize.id }} {% if prize.prize_type.value not in ['merchandise', 'trophy', 'medal', 'voucher', 'sponsored_product'] %}hidden{% endif %} md:col-span-2">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            Title
+                                        </label>
+                                        <input type="text" name="title_{{ prize.id }}" value="{{ prize.title }}" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    
+                                    <div class="voucher-fields-{{ prize.id }} {% if prize.prize_type.value != 'voucher' %}hidden{% endif %}">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            Vendor
+                                        </label>
+                                        <input type="text" name="vendor_{{ prize.id }}" value="{{ prize.vendor }}" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            Description
+                                        </label>
+                                        <textarea name="description_{{ prize.id }}" rows="2" 
+                                                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">{{ prize.description }}</textarea>
+                                    </div>
+                                    
+                                    <div class="value-fields-{{ prize.id }} {% if prize.prize_type.value not in ['merchandise', 'voucher', 'sponsored_product'] %}hidden{% endif %}">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            Monetary Value (RM)
+                                        </label>
+                                        <input type="number" name="monetary_value_{{ prize.id }}" value="{{ prize.monetary_value }}" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                               min="0" step="0.01">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            Quantity
+                                        </label>
+                                        <input type="number" name="quantity_{{ prize.id }}" value="{{ prize.quantity }}" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                               min="1">
+                                    </div>
+                                    
+                                    <div class="voucher-fields-{{ prize.id }} {% if prize.prize_type.value != 'voucher' %}hidden{% endif %}">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            Expiry Date
+                                        </label>
+                                        <input type="date" name="expiry_date_{{ prize.id }}" value="{{ prize.expiry_date.strftime('%Y-%m-%d') if prize.expiry_date else '' }}" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-500 italic mb-4">No prizes added yet. Add prizes below.</p>
+                {% endif %}
+                
+                <!-- Add New Prize -->
+                <div class="mt-6">
+                    <h4 class="font-medium mb-3 text-gray-700">Add New Prize</h4>
+                    
+                    <div id="new-prizes-{{ category.id }}">
+                        <!-- New prizes will be added here -->
+                    </div>
+                    
+                    <button type="button" class="mt-4 inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700" onclick="addNewPrize('{{ category.id }}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Add New Prize
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        <!-- Submit Button -->
+        <div class="flex justify-between mt-8">
+            <a href="{{ url_for('organizer.edit_categories', id=tournament.id) }}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Categories
+            </a>
+            
+            <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                Save Prizes and Finish
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+        <h3 class="text-xl font-bold mb-4">Confirm Deletion</h3>
+        <p class="mb-6">Are you sure you want to delete this prize? This action cannot be undone.</p>
+        <input type="hidden" id="delete-prize-id" value="">
+        <input type="hidden" id="delete-category-id" value="">
+        <div class="flex justify-end">
+            <button onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 mr-2">
+                Cancel
+            </button>
+            <button onclick="deletePrize()" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                Delete
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Toggle category visibility
+    function toggleCategory(id) {
+        const body = document.getElementById(`category-body-${id}`);
+        if (body.style.display === 'none') {
+            body.style.display = 'block';
+        } else {
+            body.style.display = 'none';
+        }
+    }
+    
+    // Delete prize confirmation
+    function confirmDeletePrize(prizeId, categoryId) {
+        document.getElementById('delete-prize-id').value = prizeId;
+        document.getElementById('delete-category-id').value = categoryId;
+        document.getElementById('delete-modal').classList.remove('hidden');
+    }
+    
+    function closeDeleteModal() {
+        document.getElementById('delete-modal').classList.add('hidden');
+    }
+    
+    function deletePrize() {
+        const prizeId = document.getElementById('delete-prize-id').value;
+        const categoryId = document.getElementById('delete-category-id').value;
+        
+        const form = document.createElement('input');
+        form.type = 'hidden';
+        form.name = `delete_prize_${categoryId}`;
+        form.value = prizeId;
+        document.querySelector('form').appendChild(form);
+        
+        // Remove the prize card from the DOM for better UX
+        const prizeCard = document.getElementById(`prize-${prizeId}`);
+        if (prizeCard) {
+            prizeCard.remove();
+        }
+        
+        closeDeleteModal();
+    }
+    
+    // Add new prize
+    function addNewPrize(categoryId) {
+        const container = document.getElementById(`new-prizes-${categoryId}`);
+        const newPrizeIndex = container.children.length + 1;
+        
+        const newPrizeHtml = `
+            <div class="new-prize-card" id="new-prize-${categoryId}-${newPrizeIndex}">
+                <div class="flex justify-between mb-4">
+                    <h3 class="font-medium">New Prize</h3>
+                    <button type="button" class="category-action text-red-500" onclick="removeNewPrize('${categoryId}', ${newPrizeIndex})">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Prize Type <span class="text-red-600">*</span>
+                        </label>
+                        <select name="new_prize_type_${categoryId}" class="new-prize-type-select w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" data-category-id="${categoryId}" data-prize-index="${newPrizeIndex}" required>
+                            {% for type_value, type_name in prize_types %}
+                            <option value="{{ type_value }}">{{ type_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Placement <span class="text-red-600">*</span>
+                        </label>
+                        <input type="text" name="new_placement_${categoryId}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="1, 2, 3-4, etc." required>
+                        <p class="hint-text">Examples: "1", "2", "3", "3-4", etc.</p>
+                    </div>
+                    
+                    <!-- Cash Fields -->
+                    <div class="new-prize-fields new-cash-fields-${categoryId}-${newPrizeIndex} md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Cash Amount (RM) <span class="text-red-600">*</span>
+                        </label>
+                        <input type="number" name="new_cash_amount_${categoryId}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                               min="0" step="0.01" required>
+                    </div>
+                    
+                    <!-- Merchandise/Trophy Fields -->
+                    <div class="new-prize-fields new-item-fields-${categoryId}-${newPrizeIndex} hidden md:col-span-2">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Title <span class="text-red-600">*</span>
+                                </label>
+                                <input type="text" name="new_title_${categoryId}" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            
+                            <div class="new-voucher-fields-${categoryId}-${newPrizeIndex} hidden">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Vendor
+                                </label>
+                                <input type="text" name="new_vendor_${categoryId}" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Description
+                                </label>
+                                <textarea name="new_description_${categoryId}" rows="2" 
+                                          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+                            </div>
+                            
+                            <div class="new-value-fields-${categoryId}-${newPrizeIndex} hidden">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Monetary Value (RM) <span class="text-red-600">*</span>
+                                </label>
+                                <input type="number" name="new_monetary_value_${categoryId}" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                       min="0" step="0.01">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Quantity
+                                </label>
+                                <input type="number" name="new_quantity_${categoryId}" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                       min="1" value="1">
+                            </div>
+                            
+                            <div class="new-voucher-fields-${categoryId}-${newPrizeIndex} hidden">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Expiry Date
+                                </label>
+                                <input type="date" name="new_expiry_date_${categoryId}" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', newPrizeHtml);
+        
+        // Set up event listeners for the new prize type select
+        setupPrizeTypeEvents();
+    }
+    
+    function removeNewPrize(categoryId, index) {
+        const element = document.getElementById(`new-prize-${categoryId}-${index}`);
+        if (element) {
+            element.remove();
+        }
+    }
+    
+    // Handle prize type changes
+    function setupPrizeTypeEvents() {
+        // For existing prizes
+        document.querySelectorAll('.prize-type-select').forEach(select => {
+            select.addEventListener('change', function() {
+                const prizeId = this.getAttribute('data-prize-id');
+                const prizeType = this.value;
+                
+                // Toggle fields based on prize type
+                document.querySelector(`.cash-fields-${prizeId}`).classList.toggle('hidden', prizeType !== 'cash');
+                document.querySelector(`.item-fields-${prizeId}`).classList.toggle('hidden', prizeType === 'cash');
+                
+                // Toggle voucher-specific fields
+                if (document.querySelector(`.voucher-fields-${prizeId}`)) {
+                    document.querySelector(`.voucher-fields-${prizeId}`).classList.toggle('hidden', prizeType !== 'voucher');
+                }
+                
+                // Toggle value fields (only for merchandise, voucher, sponsored_product)
+                if (document.querySelector(`.value-fields-${prizeId}`)) {
+                    document.querySelector(`.value-fields-${prizeId}`).classList.toggle('hidden', 
+                        !['merchandise', 'voucher', 'sponsored_product'].includes(prizeType));
+                }
+            });
+        });
+        
+        // For new prizes
+        document.querySelectorAll('.new-prize-type-select').forEach(select => {
+            select.addEventListener('change', function() {
+                const categoryId = this.getAttribute('data-category-id');
+                const prizeIndex = this.getAttribute('data-prize-index');
+                const prizeType = this.value;
+                
+                // Toggle fields based on prize type
+                document.querySelector(`.new-cash-fields-${categoryId}-${prizeIndex}`).classList.toggle('hidden', prizeType !== 'cash');
+                document.querySelector(`.new-item-fields-${categoryId}-${prizeIndex}`).classList.toggle('hidden', prizeType === 'cash');
+                
+                // Toggle voucher-specific fields
+                document.querySelector(`.new-voucher-fields-${categoryId}-${prizeIndex}`).classList.toggle('hidden', prizeType !== 'voucher');
+                
+                // Toggle value fields (only for merchandise, voucher, sponsored_product)
+                document.querySelector(`.new-value-fields-${categoryId}-${prizeIndex}`).classList.toggle('hidden', 
+                    !['merchandise', 'voucher', 'sponsored_product'].includes(prizeType));
+            });
+        });
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set up event listeners for prize type changes
+        setupPrizeTypeEvents();
+    });
+</script>
+{% endblock %}

@@ -1,7 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from app import db, create_app
 import sys
-from app.models import Tournament, TournamentCategory, CategoryType, TournamentTier, TournamentFormat, TournamentStatus, Venue, User, UserRole, PrizeType, Prize
+from app.models import Tournament, TournamentCategory, CategoryType, TournamentTier, TournamentFormat, TournamentStatus, Venue, User, UserRole, PrizeType, Prize, Registration
+from werkzeug.utils import secure_filename
+import random
+import string
 
 app = create_app()
 app.app_context().push()
@@ -238,12 +241,7 @@ def seed_tournament():
             
             {"placement": "3", "type": PrizeType.MERCHANDISE, "title": "Exclusive Merchandise Package", 
                 "description": "Selected pickleball accessories and Alliance Bank KL Open merchandise", 
-                "value": 400.00},  
-            
-            # Trophies
-            {"placement": "1", "type": PrizeType.TROPHY, "title": "Grand Prize Trophy"},
-            {"placement": "2", "type": PrizeType.TROPHY, "title": "First Runner-Up Trophy"},
-            {"placement": "3", "type": PrizeType.MEDAL, "title": "Second Runner-Up Medal"}
+                "value": 400.00}
         ])
     
     # For Intermediate Category (Mixed Doubles Intermediate, Men's Doubles Intermediate, Women's Doubles Intermediate)
@@ -265,12 +263,7 @@ def seed_tournament():
             
             {"placement": "3", "type": PrizeType.MERCHANDISE, "title": "Exclusive Merchandise Package", 
                 "description": "Alliance Bank KL Open branded merchandise and accessories", 
-                "value": 150.00},  
-            
-            # Trophies
-            {"placement": "1", "type": PrizeType.TROPHY, "title": "Grand Prize Trophy"},
-            {"placement": "2", "type": PrizeType.TROPHY, "title": "First Runner-Up Trophy"},
-            {"placement": "3", "type": PrizeType.MEDAL, "title": "Second Runner-Up Medal"}
+                "value": 150.00}
         ])
     
     # Commit all changes
@@ -293,7 +286,7 @@ def add_prizes_to_category(category, prizes):
         # Set specific fields based on prize type
         if prize_type == PrizeType.CASH:
             prize.cash_amount = prize_data["amount"]
-        elif prize_type in [PrizeType.MERCHANDISE, PrizeType.VOUCHER, PrizeType.SPONSORED_PRODUCT]:
+        elif prize_type in [PrizeType.MERCHANDISE]:
             prize.title = prize_data["title"]
             prize.description = prize_data.get("description")
             prize.monetary_value = prize_data.get("value", 0.0)
@@ -302,12 +295,91 @@ def add_prizes_to_category(category, prizes):
                 prize.vendor = prize_data["vendor"]
             if "expiry_date" in prize_data:
                 prize.expiry_date = prize_data["expiry_date"]
-        elif prize_type in [PrizeType.TROPHY, PrizeType.MEDAL]:
-            prize.title = prize_data["title"]
-            prize.quantity = prize_data.get("quantity", 1)
-            # Most trophies don't have a monetary value in the model
         
         db.session.add(prize)
+
+def generate_payment_reference(tournament):
+    """Generate a unique payment reference"""
+    prefix = tournament.payment_reference_prefix or "REF"
+    random_suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    return f"{prefix}{random_suffix}"
+
+def seed_team_registration():
+    """Register a team for Men's Doubles Open competition"""
+    # Find the tournament
+    tournament = Tournament.query.filter_by(name="SportsSync-Oncourt Pickleball Tournament").first()
+    
+    if not tournament:
+        print("Tournament not found. Please run seed_tournament() first.")
+        return
+    
+    # Find the Men's Doubles Open category
+    category = TournamentCategory.query.filter_by(
+        tournament_id=tournament.id,
+        name="Men's Doubles Open"
+    ).first()
+    
+    if not category:
+        print("Men's Doubles Open category not found.")
+        return
+    
+    # Create a team registration
+    registration = Registration(
+        category_id=category.id,
+        registration_date=datetime.utcnow(),
+        registration_fee=category.registration_fee,
+        
+        # Flag this as a team registration
+        is_team_registration=True,
+        
+        # Payment info
+        payment_status='uploaded',
+        payment_proof = secure_filename("payment_1_alw.png"),
+        payment_proof_uploaded_at = datetime.utcnow(),
+        payment_reference=generate_payment_reference(tournament),
+        
+        # Player 1 details
+        player1_name="John Smith",
+        player1_email="john.smith@example.com",
+        player1_phone="+60123456789",
+        player1_dupr_id="DUPR12345",
+        player1_dupr_rating=4.5,  # Advanced player
+        player1_date_of_birth=date(1985, 5, 15),
+        player1_nationality="Malaysia",
+        
+        # Player 2 details
+        player2_name="Michael Wong",
+        player2_email="michael.wong@example.com",
+        player2_phone="+60198765432",
+        player2_dupr_id="DUPR54321",
+        player2_dupr_rating=4.8,  # Advanced player
+        player2_date_of_birth=date(1988, 8, 22),
+        player2_nationality="Malaysia",
+        
+        # Agreements
+        terms_agreement=True,
+        liability_waiver=True,
+        media_release=True,
+        pdpa_consent=True,
+        
+        # Notes
+        special_requests="We prefer morning matches if possible.",
+        payment_notes="Seeded registration"
+    )
+    
+    db.session.add(registration)
+    db.session.commit()
+    
+    # Create user accounts with temporary passwords
+    registration.create_user_accounts()
+    db.session.commit()
+    
+    print(f"Team '{registration.player1_name}/{registration.player2_name}' registered for Men's Doubles Open!")
+    print(f"User accounts created with temporary passwords:")
+    if registration.player1_account_created:
+        print(f"  - {registration.player1_name}: Email: {registration.player1_email}, Password: {registration.player1_temp_password}")
+    if registration.player2_account_created:
+        print(f"  - {registration.player2_name}: Email: {registration.player2_email}, Password: {registration.player2_temp_password}")
 
 
 def main():
@@ -320,6 +392,7 @@ def main():
         db.create_all()
     
     seed_tournament()
+    seed_team_registration()
 
 if __name__ == "__main__":
     with app.app_context():

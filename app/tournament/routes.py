@@ -85,39 +85,40 @@ def participants(id):
     # Get players from registrations with DUPR info
     participants = []
     for reg in registrations:
-        player = PlayerProfile.query.get(reg.player_id)
-        partner = None
-        if reg.partner_id:
-            partner = PlayerProfile.query.get(reg.partner_id)
-        
-        # Get appropriate DUPR rating based on category
-        player_dupr = None
-        partner_dupr = None
-        
-        if selected_category.category_type == CategoryType.MENS_SINGLES:
-            player_dupr = player.mens_singles_dupr if hasattr(player, 'mens_singles_dupr') else None
-        elif selected_category.category_type == CategoryType.WOMENS_SINGLES:
-            player_dupr = player.womens_singles_dupr if hasattr(player, 'womens_singles_dupr') else None
-        elif selected_category.category_type == CategoryType.MENS_DOUBLES:
-            player_dupr = player.mens_doubles_dupr if hasattr(player, 'mens_doubles_dupr') else None
-            if partner:
-                partner_dupr = partner.mens_doubles_dupr if hasattr(partner, 'mens_doubles_dupr') else None
-        elif selected_category.category_type == CategoryType.WOMENS_DOUBLES:
-            player_dupr = player.womens_doubles_dupr if hasattr(player, 'womens_doubles_dupr') else None
-            if partner:
-                partner_dupr = partner.womens_doubles_dupr if hasattr(partner, 'womens_doubles_dupr') else None
-        elif selected_category.category_type == CategoryType.MIXED_DOUBLES:
-            player_dupr = player.mixed_doubles_dupr if hasattr(player, 'mixed_doubles_dupr') else None
-            if partner:
-                partner_dupr = partner.mixed_doubles_dupr if hasattr(partner, 'mixed_doubles_dupr') else None
-        
-        participants.append({
-            'player': player,
-            'partner': partner,
-            'seed': reg.seed,
-            'player_dupr': player_dupr,
-            'partner_dupr': partner_dupr
-        })
+        if reg.is_approved:
+            player = PlayerProfile.query.get(reg.player_id)
+            partner = None
+            if reg.partner_id:
+                partner = PlayerProfile.query.get(reg.partner_id)
+            
+            # Get appropriate DUPR rating based on category
+            player_dupr = None
+            partner_dupr = None
+            
+            if selected_category.category_type == CategoryType.MENS_SINGLES:
+                player_dupr = player.mens_singles_dupr if hasattr(player, 'mens_singles_dupr') else None
+            elif selected_category.category_type == CategoryType.WOMENS_SINGLES:
+                player_dupr = player.womens_singles_dupr if hasattr(player, 'womens_singles_dupr') else None
+            elif selected_category.category_type == CategoryType.MENS_DOUBLES:
+                player_dupr = player.mens_doubles_dupr if hasattr(player, 'mens_doubles_dupr') else None
+                if partner:
+                    partner_dupr = partner.mens_doubles_dupr if hasattr(partner, 'mens_doubles_dupr') else None
+            elif selected_category.category_type == CategoryType.WOMENS_DOUBLES:
+                player_dupr = player.womens_doubles_dupr if hasattr(player, 'womens_doubles_dupr') else None
+                if partner:
+                    partner_dupr = partner.womens_doubles_dupr if hasattr(partner, 'womens_doubles_dupr') else None
+            elif selected_category.category_type == CategoryType.MIXED_DOUBLES:
+                player_dupr = player.mixed_doubles_dupr if hasattr(player, 'mixed_doubles_dupr') else None
+                if partner:
+                    partner_dupr = partner.mixed_doubles_dupr if hasattr(partner, 'mixed_doubles_dupr') else None
+            
+            participants.append({
+                'player': player,
+                'partner': partner,
+                'seed': reg.seed,
+                'player_dupr': player_dupr,
+                'partner_dupr': partner_dupr
+            })
     
     # Sort by seed (if available)
     participants.sort(key=lambda x: x['seed'] if x['seed'] else 999)

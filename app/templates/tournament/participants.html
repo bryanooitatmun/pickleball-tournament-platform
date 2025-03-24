@@ -22,7 +22,7 @@
         {% for category in categories %}
             <a href="{{ url_for('tournament.participants', id=tournament.id, category=category.id) }}" 
                 class="py-2 px-4 border-b-2 font-medium text-sm {% if category.id == selected_category.id %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
-                {{ category.category_type.value }}
+                {{ category.name }}
             </a>
         {% endfor %}
     </div>
@@ -31,7 +31,7 @@
 <!-- Participants List -->
 <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
     <div class="px-6 py-4 border-b border-gray-200">
-        <h2 class="text-xl font-bold">{{ selected_category.category_type.value }} Participants</h2>
+        <h2 class="text-xl font-bold">{{ selected_category.name }} Participants</h2>
         <div class="text-sm text-gray-600">
             {% if selected_category.is_doubles() %}
                 {# For doubles categories, count unique teams instead of individual players #}
@@ -184,7 +184,7 @@
     {% endif %}
 </div>
 
-<!-- Registration CTA -->
+{# <!-- Registration CTA -->
 {% if tournament.status.value == 'upcoming' and tournament.is_registration_open() %}
     <div class="text-center mb-8">
         {% if current_user.is_authenticated and current_user.is_player() %}
@@ -197,7 +197,7 @@
             </a>
         {% endif %}
     </div>
-{% endif %}
+{% endif %} #}
 
 <!-- Back to Tournament -->
 <div class="text-center mb-8">

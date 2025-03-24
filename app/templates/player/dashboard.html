@@ -6,11 +6,11 @@
 <div class="container mx-auto px-4 py-6">
     <div class="flex flex-wrap justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Player Dashboard</h1>
-        <div>
+        {# <div>
             <a href="{{ url_for('main.events') }}" class="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                 Browse Tournaments
             </a>
-        </div>
+        </div> #}
     </div>
     
     <!-- Player Profile Summary -->
@@ -65,9 +65,9 @@
                 </div>
                 
                 <div class="mt-3">
-                    <a href="{{ url_for('player.edit_profile') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    {# <a href="{{ url_for('player.edit_profile') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                         <i class="fas fa-pencil-alt mr-1"></i> Edit Profile
-                    </a>
+                    </a> #}
                     {% if profile.dupr_rating %}
                     <span class="ml-4 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
                         DUPR: {{ profile.dupr_rating }}
@@ -152,7 +152,7 @@
     
     <!-- Registration Actions & Alerts -->
     <div class="mb-8">
-        {% if stats.pending_payments > 0 %}
+        {# {% if stats.pending_payments > 0 %}
         <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4">
             <div class="flex">
                 <div class="flex-shrink-0">
@@ -172,7 +172,7 @@
                 </div>
             </div>
         </div>
-        {% endif %}
+        {% endif %} #}
         
         {% if stats.rejected_payments > 0 %}
         <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
@@ -311,9 +311,9 @@
         {% else %}
             <div class="p-6 text-center text-gray-500">
                 <p>You don't have any upcoming tournaments.</p>
-                <a href="{{ url_for('main.events') }}" class="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                {# <a href="{{ url_for('main.events') }}" class="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                     Browse Tournaments
-                </a>
+                </a> #}
             </div>
         {% endif %}
     </div>

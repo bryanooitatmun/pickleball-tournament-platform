@@ -1,247 +1,520 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Edit Tournament: {{ tournament.name }}{% endblock %}
+{% block title %}Edit Tournament - {{ tournament.name }}{% endblock %}
+
+{% block styles %}
+<style>
+    .edit-tabs {
+        display: flex;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .edit-tab {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        border-bottom: 2px solid transparent;
+        margin-right: 1rem;
+    }
+    
+    .edit-tab.active {
+        border-bottom-color: #3b82f6;
+        color: #3b82f6;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background-color: #f9fafb;
+        border-radius: 0.5rem;
+    }
+    
+    .form-section h3 {
+        margin-top: 0;
+        margin-bottom: 1.25rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    .file-preview {
+        margin-top: 0.75rem;
+        max-width: 200px;
+        max-height: 200px;
+    }
+    
+    .hint-text {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <div class="max-w-3xl mx-auto">
-        <div class="mb-6">
-            <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-800 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold">Edit Tournament</h1>
+        <div>
+            <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
                 Back to Tournament
             </a>
-            <h1 class="text-2xl font-bold text-gray-800 mt-2">Edit Tournament: {{ tournament.name }}</h1>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-            <div class="px-6 py-4 bg-blue-600 text-white">
-                <h2 class="text-xl font-bold">Tournament Details</h2>
-            </div>
-            
-            <form method="POST" enctype="multipart/form-data" class="p-6 space-y-6">
-                {{ form.hidden_tag() }}
-                
-                <!-- Basic Information Section -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Basic Information</h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="form-group">
-                            {{ form.name.label(class="form-label") }}
-                            {{ form.name(class="form-input") }}
-                            {% if form.name.errors %}
-                                {% for error in form.name.errors %}
-                                    <span class="form-error">{{ error }}</span>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                        
-                        <div class="form-group">
-                            {{ form.location.label(class="form-label") }}
-                            {{ form.location(class="form-input") }}
-                            {% if form.location.errors %}
-                                {% for error in form.location.errors %}
-                                    <span class="form-error">{{ error }}</span>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                        
-                        <div class="form-group md:col-span-2">
-                            {{ form.description.label(class="form-label") }}
-                            {{ form.description(class="form-input h-32") }}
-                            {% if form.description.errors %}
-                                {% for error in form.description.errors %}
-                                    <span class="form-error">{{ error }}</span>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Tournament Details Section -->
-                <div class="border-t border-gray-200 pt-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Tournament Details</h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="form-group">
-                            {{ form.start_date.label(class="form-label") }}
-                            {{ form.start_date(class="form-input", type="date") }}
-                            {% if form.start_date.errors %}
-                                {% for error in form.start_date.errors %}
-                                    <span class="form-error">{{ error }}</span>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                        
-                        <div class="form-group">
-                            {{ form.end_date.label(class="form-label") }}
-                            {{ form.end_date(class="form-input", type="date") }}
-                            {% if form.end_date.errors %}
-                                {% for error in form.end_date.errors %}
-                                    <span class="form-error">{{ error }}</span>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                        
-                        <div class="form-group">
-                            {{ form.registration_deadline.label(class="form-label") }}
-                            {{ form.registration_deadline(class="form-input", type="date") }}
-                            {% if form.registration_deadline.errors %}
-                                {% for error in form.registration_deadline.errors %}
-                                    <span class="form-error">{{ error }}</span>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                        
-                        <div class="form-group">
-                            {{ form.prize_pool.label(class="form-label") }}
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500">$</span>
-                                </div>
-                                {{ form.prize_pool(class="form-input pl-8") }}
-                            </div>
-                            {% if form.prize_pool.errors %}
-                                {% for error in form.prize_pool.errors %}
-                                    <span class="form-error">{{ error }}</span>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                        
-                        <div class="form-group">
-                            {{ form.registration_fee.label(class="form-label") }}
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500">$</span>
-                                </div>
-                                {{ form.registration_fee(class="form-input pl-8") }}
-                            </div>
-                            {% if form.registration_fee.errors %}
-                                {% for error in form.registration_fee.errors %}
-                                    <span class="form-error">{{ error }}</span>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                        
-                        <div class="form-group">
-                            {{ form.tier.label(class="form-label") }}
-                            {{ form.tier(class="form-input") }}
-                            {% if form.tier.errors %}
-                                {% for error in form.tier.errors %}
-                                    <span class="form-error">{{ error }}</span>
-                                {% endfor %}
-                            {% endif %}
-                            <p class="text-sm text-gray-500 mt-1">
-                                Tournament tier determines ranking points distributed.
-                            </p>
-                        </div>
-                        
-                        <div class="form-group">
-                            {{ form.format.label(class="form-label") }}
-                            {{ form.format(class="form-input") }}
-                            {% if form.format.errors %}
-                                {% for error in form.format.errors %}
-                                    <span class="form-error">{{ error }}</span>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                        
-                        <div class="form-group">
-                            {{ form.status.label(class="form-label") }}
-                            {{ form.status(class="form-input") }}
-                            {% if form.status.errors %}
-                                {% for error in form.status.errors %}
-                                    <span class="form-error">{{ error }}</span>
-                                {% endfor %}
-                            {% endif %}
-                            <p class="text-sm text-gray-500 mt-1">
-                                <span class="font-medium text-gray-700">Note:</span> Changing status to 'Completed' will distribute ranking points to players.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Tournament Media Section -->
-                <div class="border-t border-gray-200 pt-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Tournament Media</h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="form-group">
-                            {{ form.logo.label(class="form-label") }}
-                            <div class="flex items-center space-x-4">
-                                {% if tournament.logo %}
-                                    <img src="{{ url_for('static', filename=tournament.logo) }}" alt="Tournament Logo" class="h-16 w-16 object-cover rounded">
-                                {% endif %}
-                                {{ form.logo(class="form-input mt-1") }}
-                            </div>
-                            {% if form.logo.errors %}
-                                {% for error in form.logo.errors %}
-                                    <span class="form-error">{{ error }}</span>
-                                {% endfor %}
-                            {% endif %}
-                            <p class="text-sm text-gray-500 mt-1">
-                                Upload a square logo for your tournament (optional).
-                            </p>
-                        </div>
-                        
-                        <div class="form-group">
-                            {{ form.banner.label(class="form-label") }}
-                            <div class="flex items-center space-x-4">
-                                {% if tournament.banner %}
-                                    <img src="{{ url_for('static', filename=tournament.banner) }}" alt="Tournament Banner" class="h-16 w-32 object-cover rounded">
-                                {% endif %}
-                                {{ form.banner(class="form-input mt-1") }}
-                            </div>
-                            {% if form.banner.errors %}
-                                {% for error in form.banner.errors %}
-                                    <span class="form-error">{{ error }}</span>
-                                {% endfor %}
-                            {% endif %}
-                            <p class="text-sm text-gray-500 mt-1">
-                                Upload a banner image for your tournament (optional). Recommended size: 1200x400px.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Form Actions -->
-                <div class="border-t border-gray-200 pt-6 flex justify-end space-x-4">
-                    <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="btn btn-secondary">
-                        Cancel
-                    </a>
-                    {{ form.submit(class="btn btn-primary") }}
-                </div>
-            </form>
-        </div>
-        
-        <!-- Warning Card -->
-        <div class="mt-8 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md">
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <h3 class="text-sm font-medium text-yellow-800">Important Notes</h3>
-                    <div class="mt-2 text-sm text-yellow-700">
-                        <ul class="list-disc pl-5 space-y-1">
-                            <li>
-                                Changing tournament dates will not automatically update match schedules.
-                            </li>
-                            <li>
-                                Changing the tournament format will not affect existing brackets. You'll need to regenerate brackets for each category.
-                            </li>
-                            <li>
-                                Setting status to "Completed" will finalize all results and distribute ranking points to players. This action cannot be undone.
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
+    
+    <!-- Edit Tabs -->
+    <div class="edit-tabs">
+        <a href="{{ url_for('organizer.edit_tournament', id=tournament.id) }}" class="edit-tab active">
+            Tournament Details
+        </a>
+        <a href="{{ url_for('organizer.edit_categories', id=tournament.id) }}" class="edit-tab">
+            Categories
+        </a>
+        <a href="{{ url_for('organizer.edit_prizes', id=tournament.id) }}" class="edit-tab">
+            Prizes
+        </a>
+    </div>
+    
+    <form method="POST" enctype="multipart/form-data" class="space-y-6">
+        {{ form.csrf_token }}
+        
+        <!-- Basic Information Section -->
+        <div class="form-section">
+            <h3>Basic Information</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                        Tournament Name <span class="text-red-600">*</span>
+                    </label>
+                    {{ form.name(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                    {% if form.name.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.name.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="location" class="block text-sm font-medium text-gray-700 mb-1">
+                        Location <span class="text-red-600">*</span>
+                    </label>
+                    {{ form.location(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                    {% if form.location.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.location.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="venue_id" class="block text-sm font-medium text-gray-700 mb-1">
+                        Venue
+                    </label>
+                    {{ form.venue_id(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                    {% if form.venue_id.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.venue_id.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="tier" class="block text-sm font-medium text-gray-700 mb-1">
+                        Tournament Tier <span class="text-red-600">*</span>
+                    </label>
+                    {{ form.tier(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                    {% if form.tier.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.tier.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="format" class="block text-sm font-medium text-gray-700 mb-1">
+                        Tournament Format <span class="text-red-600">*</span>
+                    </label>
+                    {{ form.format(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                    {% if form.format.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.format.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">
+                        Tournament Status <span class="text-red-600">*</span>
+                    </label>
+                    {{ form.status(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                    {% if form.status.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.status.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="prize_pool" class="block text-sm font-medium text-gray-700 mb-1">
+                        Prize Pool (RM)
+                    </label>
+                    {{ form.prize_pool(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                    {% if form.prize_pool.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.prize_pool.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+    
+            </div>
+        </div>
+        
+        <!-- Dates Section -->
+        <div class="form-section">
+            <h3>Tournament Dates</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">
+                        Start Date <span class="text-red-600">*</span>
+                    </label>
+                    {{ form.start_date(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500", type="datetime-local") }}
+                    {% if form.start_date.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.start_date.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">
+                        End Date <span class="text-red-600">*</span>
+                    </label>
+                    {{ form.end_date(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500", type="datetime-local") }}
+                    {% if form.end_date.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.end_date.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="registration_deadline" class="block text-sm font-medium text-gray-700 mb-1">
+                        Registration Deadline <span class="text-red-600">*</span>
+                    </label>
+                    {{ form.registration_deadline(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500", type="datetime-local") }}
+                    {% if form.registration_deadline.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.registration_deadline.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Description Section -->
+        <div class="form-section">
+            <h3>Tournament Description</h3>
+            
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
+                    Description <span class="text-red-600">*</span>
+                </label>
+                {{ form.description(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500", rows=10) }}
+                {% if form.description.errors %}
+                <div class="text-red-600 text-sm mt-1">
+                    {% for error in form.description.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <p class="hint-text">
+                    Markdown formatting is supported. Add details about tournament schedule, rules, etc.
+                </p>
+            </div>
+        </div>
+        
+        <!-- Media Section -->
+        <div class="form-section">
+            <h3>Tournament Media</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="logo" class="block text-sm font-medium text-gray-700 mb-1">
+                        Tournament Logo
+                    </label>
+                    {{ form.logo(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                    {% if form.logo.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.logo.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <p class="hint-text">Recommended size: 400x400px</p>
+                    
+                    {% if tournament.logo %}
+                    <div class="mt-2">
+                        <p class="text-sm font-medium text-gray-700">Current Logo:</p>
+                        <img src="{{ tournament.logo }}" alt="Tournament Logo" class="file-preview mt-1 border border-gray-200 rounded">
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="banner" class="block text-sm font-medium text-gray-700 mb-1">
+                        Tournament Banner
+                    </label>
+                    {{ form.banner(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                    {% if form.banner.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.banner.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <p class="hint-text">Recommended size: 1200x400px</p>
+                    
+                    {% if tournament.banner %}
+                    <div class="mt-2">
+                        <p class="text-sm font-medium text-gray-700">Current Banner:</p>
+                        <img src="{{ tournament.banner }}" alt="Tournament Banner" class="file-preview mt-1 border border-gray-200 rounded">
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Prize Section -->
+        <div class="form-section">
+            <h3>Prize Information</h3>
+            
+            <div>
+                <label for="prize_structure_description" class="block text-sm font-medium text-gray-700 mb-1">
+                    Prize Structure Description
+                </label>
+                {{ form.prize_structure_description(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500", rows=5) }}
+                {% if form.prize_structure_description.errors %}
+                <div class="text-red-600 text-sm mt-1">
+                    {% for error in form.prize_structure_description.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <p class="hint-text">
+                    Describe the overall prize structure. Detailed prizes can be set in the Prizes tab.
+                </p>
+            </div>
+        </div>
+        
+        <!-- Door Gifts Section -->
+        <div class="form-section">
+            <h3>Door Gifts</h3>
+            
+            <div class="grid grid-cols-1 gap-6">
+                <div>
+                    <label for="door_gifts" class="block text-sm font-medium text-gray-700 mb-1">
+                        Door Gifts Description
+                    </label>
+                    {{ form.door_gifts(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500", rows=5) }}
+                    {% if form.door_gifts.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.door_gifts.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="door_gifts_image" class="block text-sm font-medium text-gray-700 mb-1">
+                        Door Gifts Image
+                    </label>
+                    {{ form.door_gifts_image(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                    {% if form.door_gifts_image.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.door_gifts_image.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    {% if tournament.door_gifts_image %}
+                    <div class="mt-2">
+                        <p class="text-sm font-medium text-gray-700">Current Door Gifts Image:</p>
+                        <img src="{{ tournament.door_gifts_image }}" alt="Door Gifts" class="file-preview mt-1 border border-gray-200 rounded">
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Payment Details Section -->
+        <div class="form-section">
+            <h3>Payment Details</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="payment_bank_name" class="block text-sm font-medium text-gray-700 mb-1">
+                        Bank Name
+                    </label>
+                    {{ form.payment_bank_name(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                    {% if form.payment_bank_name.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.payment_bank_name.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="payment_account_name" class="block text-sm font-medium text-gray-700 mb-1">
+                        Account Name
+                    </label>
+                    {{ form.payment_account_name(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                    {% if form.payment_account_name.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.payment_account_name.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="payment_account_number" class="block text-sm font-medium text-gray-700 mb-1">
+                        Account Number
+                    </label>
+                    {{ form.payment_account_number(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                    {% if form.payment_account_number.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.payment_account_number.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="payment_reference_prefix" class="block text-sm font-medium text-gray-700 mb-1">
+                        Payment Reference Prefix
+                    </label>
+                    {{ form.payment_reference_prefix(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                    {% if form.payment_reference_prefix.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.payment_reference_prefix.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <p class="hint-text">
+                        This will be used as a prefix for payment references (e.g., SSOPT2025)
+                    </p>
+                </div>
+                
+                <div>
+                    <label for="payment_qr_code" class="block text-sm font-medium text-gray-700 mb-1">
+                        Payment QR Code
+                    </label>
+                    {{ form.payment_qr_code(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                    {% if form.payment_qr_code.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.payment_qr_code.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    {% if tournament.payment_qr_code %}
+                    <div class="mt-2">
+                        <p class="text-sm font-medium text-gray-700">Current QR Code:</p>
+                        <img src="{{ tournament.payment_qr_code }}" alt="Payment QR Code" class="file-preview mt-1 border border-gray-200 rounded">
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label for="payment_instructions" class="block text-sm font-medium text-gray-700 mb-1">
+                        Payment Instructions
+                    </label>
+                    {{ form.payment_instructions(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500", rows=4) }}
+                    {% if form.payment_instructions.errors %}
+                    <div class="text-red-600 text-sm mt-1">
+                        {% for error in form.payment_instructions.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Submit Button -->
+        <div class="flex justify-between">
+            <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                Cancel
+            </a>
+            
+            {{ form.submit(class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700") }}
+        </div>
+    </form>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Format datetime fields to correct format on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to format date for datetime-local input
+        function formatDateForInput(dateStr) {
+            if (!dateStr) return '';
+            
+            const date = new Date(dateStr);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+        
+        // Set initial values for date inputs
+        if (document.getElementById('start_date')) {
+            document.getElementById('start_date').value = formatDateForInput('{{ tournament.start_date }}');
+        }
+        
+        if (document.getElementById('end_date')) {
+            document.getElementById('end_date').value = formatDateForInput('{{ tournament.end_date }}');
+        }
+        
+        if (document.getElementById('registration_deadline')) {
+            document.getElementById('registration_deadline').value = formatDateForInput('{{ tournament.registration_deadline }}');
+        }
+    });
+</script>
 {% endblock %}

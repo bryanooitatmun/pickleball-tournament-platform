@@ -1,6 +1,8 @@
-from datetime import datetime
+from datetime import datetime, date
 import random
 import string
+from werkzeug.utils import secure_filename
+import os
 
 def generate_payment_reference(tournament):
     """Generate a unique payment reference for a tournament registration"""
@@ -29,3 +31,38 @@ def generate_temp_password(length=10):
     random.shuffle(password_list)
     
     return ''.join(password_list)
+
+def calculate_age(birth_date):
+    """Calculate age from birth date"""
+    today = date.today()
+    return today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+
+def save_picture(picture, subfolder='tournament_pics'):
+    # Generate a secure filename
+    filename = secure_filename(picture.filename)
+    
+    # Generate a unique filename with timestamp
+    unique_filename = f"{subfolder}_{int(datetime.utcnow().timestamp())}_{filename}"
+    
+    # Create full path
+    file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], subfolder, unique_filename)
+    
+    # Ensure directory exists
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    
+    # Save the file
+    picture.save(file_path)
+    
+    # Return the relative path for the database
+    return os.path.join('uploads', subfolder, unique_filename)
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
+
+def generate_payment_reference(tournament):
+    """Generate a unique payment reference"""
+    prefix = tournament.payment_reference_prefix or "REF"
+    random_suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    return f"{prefix}{random_suffix}"
+    

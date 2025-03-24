@@ -5,32 +5,11 @@ import os
 import requests
 from app import db
 from app.player import bp
-from app.models import Tournament, TournamentCategory, Registration, PlayerProfile, User, UserRole, TeamRegistration
+from app.models import Tournament, TournamentCategory, Registration, PlayerProfile, User, UserRole, TournamentStatus
 from app.player.forms import TournamentRegistrationForm, PaymentForm, RegistrationForm, ProfileForm
-from app.helpers.registration import generate_payment_reference, generate_temp_password
+from app.helpers.registration import generate_payment_reference, generate_temp_password, save_picture
+from datetime import datetime
 
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
-
-def save_picture(picture, subfolder='profile_pics'):
-    # Generate a secure filename
-    filename = secure_filename(picture.filename)
-    
-    # Generate a unique filename with timestamp
-    unique_filename = f"{subfolder}_{int(datetime.utcnow().timestamp())}_{filename}"
-    
-    # Create full path
-    file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], subfolder, unique_filename)
-    
-    # Ensure directory exists
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    
-    # Save the file
-    picture.save(file_path)
-    
-    # Return the relative path for the database
-    return os.path.join('uploads', subfolder, unique_filename)
 
 @bp.route('/dashboard')
 @login_required
@@ -42,8 +21,13 @@ def dashboard():
         return redirect(url_for('player.create_profile'))
     
     # Get registrations for this player
-    registrations = Registration.query.filter_by(player_id=profile.id).all()
-    
+    registrations = []
+    registrations_player = Registration.query.filter_by(player_id=profile.id).all()
+    registrations_partner = Registration.query.filter_by(partner_id=profile.id).all()
+
+    registrations.extend(registrations_player)
+    registrations.extend(registrations_partner)
+
     # Prepare data structures for the dashboard
     upcoming_tournaments = []
     ongoing_tournaments = []
@@ -291,13 +275,14 @@ def register_tournament(tournament_id):
     form = RegistrationForm(tournament=tournament)
     
     if form.validate_on_submit():
-        # Create new team registration
-        registration = TeamRegistration(
-            tournament_id=tournament.id,
+        category = TournamentCategory.query.get(form.category_id.data)
+        is_doubles = category.is_doubles()
+
+        # Create registration
+        registration = Registration(
             category_id=form.category_id.data,
-            
-            # Get registration fee from category
-            registration_fee=TournamentCategory.query.get(form.category_id.data).registration_fee,
+            registration_fee=category.registration_fee,
+            is_team_registration=is_doubles,
             
             # Player 1 details
             player1_name=form.player1_name.data,
@@ -306,14 +291,6 @@ def register_tournament(tournament_id):
             player1_dupr_id=form.player1_dupr_id.data,
             player1_date_of_birth=form.player1_date_of_birth.data,
             player1_nationality=form.player1_nationality.data,
-            
-            # Player 2 details
-            player2_name=form.player2_name.data,
-            player2_email=form.player2_email.data,
-            player2_phone=form.player2_phone.data,
-            player2_dupr_id=form.player2_dupr_id.data,
-            player2_date_of_birth=form.player2_date_of_birth.data,
-            player2_nationality=form.player2_nationality.data,
             
             # Agreements
             terms_agreement=form.terms_agreement.data,
@@ -324,9 +301,18 @@ def register_tournament(tournament_id):
             # Additional information
             special_requests=form.special_requests.data,
             
-            # Generate unique payment reference
+            # Generate reference
             payment_reference=generate_payment_reference(tournament)
         )
+        
+        # Add player 2 details for doubles
+        if is_doubles:
+            registration.player2_name = form.player2_name.data
+            registration.player2_email = form.player2_email.data
+            registration.player2_phone = form.player2_phone.data
+            registration.player2_dupr_id = form.player2_dupr_id.data
+            registration.player2_date_of_birth = form.player2_date_of_birth.data
+            registration.player2_nationality = form.player2_nationality.data
         
         # Fetch DUPR ratings from API
         try:
@@ -352,7 +338,7 @@ def register_tournament(tournament_id):
 @bp.route('/payment/<int:registration_id>', methods=['GET', 'POST'])
 def payment(registration_id):
     """Payment page for team registration"""
-    registration = TeamRegistration.query.get_or_404(registration_id)
+    registration = Registration.query.get_or_404(registration_id)
     tournament = registration.tournament
     
     # Create form for CSRF protection and file validation
@@ -369,7 +355,8 @@ def payment(registration_id):
             
             # Update registration
             registration.payment_proof = filename
-            registration.payment_status = 'pending'  # Pending verification
+            registration.payment_status = 'uploaded'  # Pending verification
+            registration.payment_proof_uploaded_at = datetime.utcnow()
             
             # Create user accounts for both players
             try:
@@ -400,7 +387,7 @@ def payment(registration_id):
 @bp.route('/registration_confirmation/<int:registration_id>')
 def registration_confirmation(registration_id):
     """Registration confirmation page"""
-    registration = TeamRegistration.query.get_or_404(registration_id)
+    registration = Registration.query.get_or_404(registration_id)
     tournament = registration.tournament
     
     return render_template(

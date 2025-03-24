@@ -3,7 +3,7 @@ from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import StringField, TextAreaField, IntegerField, SelectField, SubmitField, HiddenField, EmailField, PasswordField, BooleanField, DecimalField, TelField, DateField
 from wtforms.validators import DataRequired, Email, Length, NumberRange, Optional, URL, EqualTo
 from datetime import datetime, date
-from app.models import Tournament, TournamentCategory, Registration, PlayerProfile, User, UserRole, TeamRegistration
+from app.models import Tournament, TournamentCategory, Registration, PlayerProfile, User, UserRole
 
 class ProfileForm(FlaskForm):
     full_name = StringField('Full Name', validators=[DataRequired(), Length(max=100)])
@@ -67,38 +67,19 @@ class RegistrationForm(FlaskForm):
         Length(min=2, max=50, message="Nationality must be between 2 and 50 characters")
     ])
     
-    # Player 2 Fields
-    player2_name = StringField('Player 2 Full Name', validators=[
-        DataRequired(), 
-        Length(min=2, max=100, message="Name must be between 2 and 100 characters")
-    ])
-    player2_email = EmailField('Player 2 Email', validators=[
-        DataRequired(), 
-        Email(message="Please enter a valid email address")
-    ])
-    player2_email_confirm = EmailField('Confirm Player 2 Email', validators=[
-        DataRequired(),
-        Email(message="Please enter a valid email address"),
-        EqualTo('player2_email', message="Email addresses must match")
-    ])
-    player2_phone = TelField('Player 2 Phone', validators=[
-        DataRequired(), 
-        Length(min=8, max=20, message="Phone number must be between 8 and 20 characters")
-    ])
-    player2_dupr_id = StringField('Player 2 DUPR ID', validators=[
-        DataRequired(),
-        Length(min=2, max=50, message="DUPR ID must be between 2 and 50 characters")
-    ])
-    player2_date_of_birth = DateField('Player 2 Date of Birth', validators=[DataRequired()])
-    player2_nationality = StringField('Player 2 Nationality', validators=[
-        DataRequired(),
-        Length(min=2, max=50, message="Nationality must be between 2 and 50 characters")
-    ])
+    # Player 2 Fields (conditional validators added in code)
+    player2_name = StringField('Player 2 Full Name')
+    player2_email = EmailField('Player 2 Email')
+    player2_email_confirm = EmailField('Confirm Player 2 Email')
+    player2_phone = TelField('Player 2 Phone')
+    player2_dupr_id = StringField('Player 2 DUPR ID')
+    player2_date_of_birth = DateField('Player 2 Date of Birth')
+    player2_nationality = StringField('Player 2 Nationality')
     
-    # Additional information
+    # Additional fields
     special_requests = TextAreaField('Special Requests', validators=[
         Optional(), 
-        Length(max=500, message="Special requests must be less than 500 characters")
+        Length(max=500)
     ])
     
     # Agreements
@@ -123,6 +104,31 @@ class RegistrationForm(FlaskForm):
         categories = [(c.id, c.name) for c in tournament.categories.order_by(TournamentCategory.display_order)]
         self.category_id.choices = categories
         
+    def validate(self, extra_validators=None):
+        """Custom validation to handle doubles vs singles categories"""
+        if not super(RegistrationForm, self).validate(extra_validators=extra_validators):
+            return False
+            
+        # Get selected category
+        category = TournamentCategory.query.get(self.category_id.data)
+        if not category:
+            return False
+            
+        # For doubles categories, validate player 2 info
+        if category.is_doubles():
+            if not self.player2_name.data:
+                self.player2_name.errors = ['Partner name is required for doubles events']
+                return False
+            if not self.player2_email.data:
+                self.player2_email.errors = ['Partner email is required for doubles events']
+                return False
+            if not self.player2_phone.data:
+                self.player2_phone.errors = ['Partner phone is required for doubles events']
+                return False
+            # Add more validation as needed
+            
+        return True
+
     def validate_category_id(self, field):
         """Validate the selected category exists in this tournament"""
         category = TournamentCategory.query.filter_by(
@@ -134,7 +140,7 @@ class RegistrationForm(FlaskForm):
         
         # Check if category is full
         if category.max_participants:
-            current_registrations = TeamRegistration.query.filter_by(
+            current_registrations = Registration.query.filter_by(
                 category_id=category.id, payment_status='paid'
             ).count()
             

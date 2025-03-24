@@ -1,44 +1,65 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, TextAreaField, IntegerField, FloatField, SelectField, DateField, TimeField, BooleanField, SubmitField, FieldList, FormField, DecimalField
+from wtforms import StringField, TextAreaField, IntegerField, FloatField, SelectField, DateField, DateTimeField, TimeField, BooleanField, SubmitField, FieldList, FormField, DecimalField
 from wtforms.validators import DataRequired, Length, NumberRange, Optional, ValidationError
 from datetime import datetime, timedelta
-from app.models import TournamentTier, TournamentFormat, CategoryType, TournamentStatus
+from app.models import TournamentTier, TournamentFormat, CategoryType, TournamentStatus, Venue
 
 
 class TournamentForm(FlaskForm):
-    name = StringField('Tournament Name', validators=[DataRequired(), Length(max=100)])
+    name = StringField('Tournament Name', validators=[DataRequired(), Length(min=5, max=100)])
     location = StringField('Location', validators=[DataRequired(), Length(max=200)])
     description = TextAreaField('Description', validators=[DataRequired()])
-    start_date = DateField('Start Date', validators=[DataRequired()], format='%Y-%m-%d')
-    end_date = DateField('End Date', validators=[DataRequired()], format='%Y-%m-%d')
-    registration_deadline = DateField('Registration Deadline', validators=[DataRequired()], format='%Y-%m-%d')
-    registration_fee = FloatField('Registration Fee ($)', validators=[DataRequired(), NumberRange(min=0)])
-    tier = SelectField('Tournament Tier', validators=[DataRequired()], choices=[
-        (TournamentTier.SLATE.name, 'SLATE (2,000 PTS)'),
-        (TournamentTier.CUP.name, 'CUP (3,200 PTS)'), 
-        (TournamentTier.OPEN.name, 'OPEN (1,400 PTS)'),
-        (TournamentTier.CHALLENGE.name, 'CHALLENGE (925 PTS)')
-    ])
-    format = SelectField('Tournament Format', validators=[DataRequired()], choices=[
-        (TournamentFormat.SINGLE_ELIMINATION.name, 'Single Elimination'),
-        (TournamentFormat.DOUBLE_ELIMINATION.name, 'Double Elimination'),
-        (TournamentFormat.ROUND_ROBIN.name, 'Round Robin'),
-        (TournamentFormat.GROUP_KNOCKOUT.name, 'Group Stage + Knockout')
-    ])
-    prize_pool = FloatField('Prize Pool ($)', validators=[DataRequired(), NumberRange(min=0)])
+    
+    start_date = DateTimeField('Start Date', format='%Y-%m-%dT%H:%M', validators=[DataRequired()])
+    end_date = DateTimeField('End Date', format='%Y-%m-%dT%H:%M', validators=[DataRequired()])
+    registration_deadline = DateTimeField('Registration Deadline', format='%Y-%m-%dT%H:%M', validators=[DataRequired()])
+    
+    tier = SelectField('Tournament Tier', 
+                      choices=[(tier.name, tier.value) for tier in TournamentTier], 
+                      validators=[DataRequired()])
+    
+    format = SelectField('Tournament Format', 
+                        choices=[(fmt.name, fmt.value) for fmt in TournamentFormat], 
+                        validators=[DataRequired()])
+    
+    status = SelectField('Tournament Status', 
+                        choices=[(status.name, status.value) for status in TournamentStatus], 
+                        validators=[DataRequired()])
+    
+    prize_pool = FloatField('Prize Pool (RM)', validators=[Optional(), NumberRange(min=0)])
+    
+    # Upload fields
     logo = FileField('Tournament Logo', validators=[
         FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
     ])
     banner = FileField('Tournament Banner', validators=[
         FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
     ])
-    status = SelectField('Tournament Status', validators=[DataRequired()], choices=[
-        (TournamentStatus.UPCOMING.name, 'Upcoming'),
-        (TournamentStatus.ONGOING.name, 'Ongoing'),
-        (TournamentStatus.COMPLETED.name, 'Completed')
+    
+    # Payment details
+    payment_bank_name = StringField('Bank Name', validators=[Optional(), Length(max=100)])
+    payment_account_number = StringField('Account Number', validators=[Optional(), Length(max=50)])
+    payment_account_name = StringField('Account Name', validators=[Optional(), Length(max=100)])
+    payment_reference_prefix = StringField('Payment Reference Prefix', validators=[Optional(), Length(max=20)])
+    payment_qr_code = FileField('Payment QR Code', validators=[
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
     ])
-    submit = SubmitField('Save Tournament')
+    payment_instructions = TextAreaField('Payment Instructions', validators=[Optional()])
+    
+    # Door gifts
+    door_gifts = TextAreaField('Door Gifts', validators=[Optional()])
+    door_gifts_image = FileField('Door Gifts Image', validators=[
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+    ])
+    
+    # Prize details
+    prize_structure_description = TextAreaField('Prize Structure Description', validators=[Optional()])
+    
+    # Venue selection (would need to be populated with choices)
+    venue_id = SelectField('Venue', coerce=int, validators=[Optional()])
+
+    submit = SubmitField('Save Tournament Details')
     
     def validate_end_date(self, end_date):
         if end_date.data < self.start_date.data:
@@ -48,6 +69,14 @@ class TournamentForm(FlaskForm):
         if registration_deadline.data > self.start_date.data:
             raise ValidationError('Registration deadline must be before the start date.')
 
+    def __init__(self, *args, **kwargs):
+        super(TournamentForm, self).__init__(*args, **kwargs)
+        # Now populate choices here, when the form is instantiated
+   
+        venues = Venue.query.order_by(Venue.name).all()
+        self.venue_id.choices = [(0, 'Select Venue')] + [
+            (venue.id, venue.name) for venue in venues
+        ]
 
 # class CategoryForm(FlaskForm):
 #     category_type = SelectField('Category', validators=[DataRequired()], choices=[

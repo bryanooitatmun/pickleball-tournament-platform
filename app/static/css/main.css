@@ -226,3 +226,32 @@
     50% { opacity: 1; }
     100% { opacity: 0.4; }
 }
+
+.modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 50;
+}
+
+.modal-container {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 51;
+    max-width: 500px;
+    width: 100%;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+}
+  
+.modal-backdrop.active, .modal-container.active {
+    display: block;
+}

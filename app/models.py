@@ -2,6 +2,7 @@ from datetime import datetime
 from flask_login import UserMixin
 from flask import current_app
 from werkzeug.security import generate_password_hash, check_password_hash
+from app.helpers.registration import calculate_age
 from app import db, login
 import enum
 from sqlalchemy import Enum, Table, Column, Integer, ForeignKey
@@ -89,7 +90,7 @@ def load_user(id):
 class PlayerProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    full_name = db.Column(db.String(100), nullable=False)
+    full_name = db.Column(db.String(100))
     country = db.Column(db.String(100))
     city = db.Column(db.String(100))
     age = db.Column(db.Integer)
@@ -347,7 +348,8 @@ class TournamentCategory(db.Model):
             self.prize_money = self.tournament.prize_pool * (self.prize_percentage / 100)
         
         # Create default cash prizes if none exist but there's prize money
-        if self.prize_money > 0 and not self.prizes.filter_by(prize_type=PrizeType.CASH).count():
+        cash_prizes = [prize for prize in self.prizes if prize.prize_type == PrizeType.CASH]
+        if self.prize_money > 0 and not cash_prizes:
             if self.prize_distribution:
                 # Create prizes based on distribution
                 for placement, percentage in self.prize_distribution.items():
@@ -369,11 +371,12 @@ class TournamentCategory(db.Model):
         self.total_prize_value = total
         
         # Update flags
-        self.has_merchandise = self.prizes.filter(Prize.prize_type.in_([
-            PrizeType.MERCHANDISE, PrizeType.VOUCHER, PrizeType.SPONSORED_PRODUCT
-        ])).count() > 0
+        self.has_merchandise = any(
+            prize.prize_type in [PrizeType.MERCHANDISE] 
+            for prize in self.prizes
+        )
         
-        self.has_trophies = self.prizes.filter_by(prize_type=PrizeType.TROPHY).count() > 0
+        self.has_trophies = False
         
         # Update tournament totals
         self.tournament.total_cash_prize = sum(cat.prize_money for cat in self.tournament.categories)
@@ -393,21 +396,6 @@ class TournamentCategory(db.Model):
         )
         db.session.add(prize)
         self.has_merchandise = True
-        return prize
-
-    def add_trophy(self, placement, title="Trophy", description=None, image=None):
-        """Add a trophy to this category"""
-        prize = Prize(
-            category_id=self.id,
-            placement=placement,
-            prize_type=PrizeType.TROPHY,
-            title=title,
-            description=description,
-            image=image,
-            monetary_value=0.0  # Typically not counted in monetary value
-        )
-        db.session.add(prize)
-        self.has_trophies = True
         return prize
 
     def _is_in_place_range(self, place, place_range):
@@ -454,48 +442,48 @@ class TournamentCategory(db.Model):
             result[prize.placement].append(prize)
         return result
 
-class Registration(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'))
-    category_id = db.Column(db.Integer, db.ForeignKey('tournament_category.id'))
-    partner_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=True)  # For doubles
-    registration_date = db.Column(db.DateTime, default=datetime.utcnow)
-    is_approved = db.Column(db.Boolean, default=False)
-    seed = db.Column(db.Integer, nullable=True)  # For tournament seeding
+# class Registration(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'))
+#     category_id = db.Column(db.Integer, db.ForeignKey('tournament_category.id'))
+#     partner_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=True)  # For doubles
+#     registration_date = db.Column(db.DateTime, default=datetime.utcnow)
+#     is_approved = db.Column(db.Boolean, default=False)
+#     seed = db.Column(db.Integer, nullable=True)  # For tournament seeding
     
-    PAYMENT_STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('paid', 'Paid'),
-        ('refunded', 'Refunded')
-    ]
-    payment_status = db.Column(db.String(20), default='pending')
-    payment_date = db.Column(db.DateTime, nullable=True)
-    payment_reference = db.Column(db.String(100), nullable=True)
+#     PAYMENT_STATUS_CHOICES = [
+#         ('pending', 'Pending'),
+#         ('paid', 'Paid'),
+#         ('refunded', 'Refunded')
+#     ]
+#     payment_status = db.Column(db.String(20), default='pending')
+#     payment_date = db.Column(db.DateTime, nullable=True)
+#     payment_reference = db.Column(db.String(100), nullable=True)
 
-    # Add payment proof fields
-    payment_proof = db.Column(db.String(255), nullable=True)
-    payment_proof_uploaded_at = db.Column(db.DateTime, nullable=True)
-    payment_notes = db.Column(db.Text, nullable=True)
+#     # Add payment proof fields
+#     payment_proof = db.Column(db.String(255), nullable=True)
+#     payment_proof_uploaded_at = db.Column(db.DateTime, nullable=True)
+#     payment_notes = db.Column(db.Text, nullable=True)
 
-    # Add payment verification
-    payment_verified = db.Column(db.Boolean, default=False)
-    payment_verified_at = db.Column(db.DateTime, nullable=True)
-    payment_verified_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    payment_rejection_reason = db.Column(db.Text, nullable=True)
+#     # Add payment verification
+#     payment_verified = db.Column(db.Boolean, default=False)
+#     payment_verified_at = db.Column(db.DateTime, nullable=True)
+#     payment_verified_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+#     payment_rejection_reason = db.Column(db.Text, nullable=True)
 
 
-    def create_team(self, partner_registration):
-        """Create a team from this registration and a partner registration"""
-        if not partner_registration:
-            return None
+#     def create_team(self, partner_registration):
+#         """Create a team from this registration and a partner registration"""
+#         if not partner_registration:
+#             return None
             
-        team = Team(
-            player1_id=self.player_id,
-            player2_id=partner_registration.player_id,
-            category_id=self.category_id
-        )
-        db.session.add(team)
-        return team
+#         team = Team(
+#             player1_id=self.player_id,
+#             player2_id=partner_registration.player_id,
+#             category_id=self.category_id
+#         )
+#         db.session.add(team)
+#         return team
 
 
 class Team(db.Model):
@@ -723,10 +711,6 @@ class Advertisement(db.Model):
 class PrizeType(enum.Enum):
     CASH = "cash"
     MERCHANDISE = "merchandise" 
-    VOUCHER = "voucher"
-    TROPHY = "trophy"
-    MEDAL = "medal"
-    SPONSORED_PRODUCT = "sponsored_product"
 
 class Prize(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -755,65 +739,91 @@ class Prize(db.Model):
     category = db.relationship('TournamentCategory', backref='prizes')
     sponsor = db.relationship('PlatformSponsor', backref='sponsored_prizes')
 
-class TeamRegistration(db.Model):
-    """Model for team registrations without requiring accounts"""
+class Registration(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    tournament_id = db.Column(db.Integer, db.ForeignKey('tournament.id'))
-    category_id = db.Column(db.Integer, db.ForeignKey('tournament_category.id'))
-    registration_date = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Payment info
+    # Tournament relationship (existing)
+    category_id = db.Column(db.Integer, db.ForeignKey('tournament_category.id'))
+    
+    # Links to player profiles when they exist (existing)
+    player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=True)
+    partner_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=True)
+    
+    # Pre-profile player information (new)
+    player1_name = db.Column(db.String(100), nullable=True)
+    player1_email = db.Column(db.String(120), nullable=True)
+    player1_phone = db.Column(db.String(20), nullable=True)
+    player1_dupr_id = db.Column(db.String(50), nullable=True)
+    player1_dupr_rating = db.Column(db.Float, nullable=True)
+    player1_date_of_birth = db.Column(db.Date, nullable=True)
+    player1_nationality = db.Column(db.String(50), nullable=True)
+    player1_account_created = db.Column(db.Boolean, default=False)
+    player1_temp_password = db.Column(db.String(20), nullable=True)
+    
+    # Pre-profile partner information (new)
+    player2_name = db.Column(db.String(100), nullable=True)
+    player2_email = db.Column(db.String(120), nullable=True)
+    player2_phone = db.Column(db.String(20), nullable=True)
+    player2_dupr_id = db.Column(db.String(50), nullable=True)
+    player2_dupr_rating = db.Column(db.Float, nullable=True)
+    player2_date_of_birth = db.Column(db.Date, nullable=True)
+    player2_nationality = db.Column(db.String(50), nullable=True)
+    player2_account_created = db.Column(db.Boolean, default=False)
+    player2_temp_password = db.Column(db.String(20), nullable=True)
+    
+    # Registration logistics (existing & enhanced)
+    registration_date = db.Column(db.DateTime, default=datetime.utcnow)
+    is_approved = db.Column(db.Boolean, default=False)
     registration_fee = db.Column(db.Float, default=0.0)
-    payment_status = db.Column(db.String(20), default='pending')  # pending, paid, refunded
+    seed = db.Column(db.Integer, nullable=True)
+    
+    # Payment tracking (existing & enhanced)
+    payment_status = db.Column(db.String(20), default='pending')
     payment_date = db.Column(db.DateTime, nullable=True)
     payment_reference = db.Column(db.String(100), nullable=True)
     payment_proof = db.Column(db.String(255), nullable=True)
+    payment_proof_uploaded_at = db.Column(db.DateTime, nullable=True)
+    payment_notes = db.Column(db.Text, nullable=True)
+    payment_verified = db.Column(db.Boolean, default=False)
+    payment_verified_at = db.Column(db.DateTime, nullable=True)
+    payment_verified_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    payment_rejection_reason = db.Column(db.Text, nullable=True)
     
-    # Additional details
-    special_requests = db.Column(db.Text, nullable=True)
-    
-    # Agreements
+    # Agreement tracking (new)
     terms_agreement = db.Column(db.Boolean, default=False)
     liability_waiver = db.Column(db.Boolean, default=False)
     media_release = db.Column(db.Boolean, default=False)
     pdpa_consent = db.Column(db.Boolean, default=False)
     
-    # Player 1 details
-    player1_name = db.Column(db.String(100), nullable=False)
-    player1_email = db.Column(db.String(120), nullable=False)
-    player1_phone = db.Column(db.String(20), nullable=False)
-    player1_dupr_id = db.Column(db.String(50), nullable=False)
-    player1_dupr_rating = db.Column(db.Float, nullable=True)  # Retrieved from API
-    player1_date_of_birth = db.Column(db.Date, nullable=False)
-    player1_nationality = db.Column(db.String(50), nullable=False)
-    player1_account_created = db.Column(db.Boolean, default=False)
-    player1_temp_password = db.Column(db.String(20), nullable=True)
+    # Additional info (new)
+    special_requests = db.Column(db.Text, nullable=True)
     
-    # Player 2 details
-    player2_name = db.Column(db.String(100), nullable=False)
-    player2_email = db.Column(db.String(120), nullable=False)
-    player2_phone = db.Column(db.String(20), nullable=False)
-    player2_dupr_id = db.Column(db.String(50), nullable=False)
-    player2_dupr_rating = db.Column(db.Float, nullable=True)  # Retrieved from API
-    player2_date_of_birth = db.Column(db.Date, nullable=False)
-    player2_nationality = db.Column(db.String(50), nullable=False)
-    player2_account_created = db.Column(db.Boolean, default=False)
-    player2_temp_password = db.Column(db.String(20), nullable=True)
+    # Registration type flag (new)
+    is_team_registration = db.Column(db.Boolean, default=True)
     
     # Admin fields
     admin_notes = db.Column(db.Text, nullable=True)
-    is_approved = db.Column(db.Boolean, default=False)
-    
-    # Relationships
-    tournament = db.relationship('Tournament', backref=db.backref('team_registrations', lazy='dynamic'))
-    category = db.relationship('TournamentCategory', backref=db.backref('team_registrations', lazy='dynamic'))
-    
-    def __repr__(self):
-        return f'<TeamRegistration {self.player1_name}/{self.player2_name} - {self.category.name}>'
-    
+
+    @property
+    def tournament(self):
+        """Get the tournament through the category relationship"""
+        if self.category:
+            return self.category.tournament
+        return None
+
     @property
     def team_name(self):
-        return f"{self.player1_name} / {self.player2_name}"
+        """Return team name or player name for single registrations"""
+        if self.is_team_registration:
+            if self.player_id and self.partner_id:
+                return f"{self.player.full_name} / {self.partner.full_name}"
+            else:
+                return f"{self.player1_name} / {self.player2_name}"
+        else:
+            if self.player_id:
+                return self.player.full_name
+            else:
+                return self.player1_name
     
     @property
     def team_dupr(self):
@@ -867,131 +877,210 @@ class TeamRegistration(db.Model):
         from app.models import User
         from app.helpers.registration import generate_temp_password
         
-        # Check if accounts already exist
-        user1 = User.query.filter_by(email=self.player1_email).first()
-        user2 = User.query.filter_by(email=self.player2_email).first()
-        
-        # Create account for player 1 if needed
-        if not user1:
-            self.player1_temp_password = generate_temp_password()
-            print(self.player1_email)
-            print(self.player1_temp_password)
-            user1 = User(
-                username=self.player1_email,  # Use part before @ as username
-                email=self.player1_email,
-                full_name=self.player1_name,
-                role=UserRole.PLAYER
-            )
-            user1.set_password(self.player1_temp_password)
-            db.session.add(user1)
-            self.player1_account_created = True
+        if self.player1_email:
+            # Check if accounts already exist
+            user1 = User.query.filter_by(email=self.player1_email).first()
+            # Create account for player 1 if needed
+            if not user1:
+                self.player1_temp_password = generate_temp_password()
+                print(self.player1_email)
+                print(self.player1_temp_password)
+                user1 = User(
+                    username=self.player1_email,  # Use part before @ as username
+                    email=self.player1_email,
+                    full_name=self.player1_name,
+                    role=UserRole.PLAYER
+                )
+                user1.set_password(self.player1_temp_password)
+                db.session.add(user1)
+                self.player1_account_created = True
+                
+                # Flush to get user ID
+                db.session.flush()
+
+                profile1 = PlayerProfile(
+                    user_id=user1.id,
+                    full_name=self.player1_name,
+                    country=self.player1_nationality,
+                    age=calculate_age(self.player1_date_of_birth),
+                )
+                db.session.add(profile1)
+                db.session.flush()
             
-        # Create account for player 2 if needed
-        if not user2:
-            self.player2_temp_password = generate_temp_password()
-            print(self.player2_email)
-            print(self.player2_temp_password)
-            user2 = User(
-                username=self.player2_email,  # Use part before @ as username
-                email=self.player2_email, 
-                full_name=self.player2_name,
-                role=UserRole.PLAYER
-            )
-            user2.set_password(self.player2_temp_password)
-            db.session.add(user2)
-            self.player2_account_created = True
-            
+                self.player_id = profile1.id
+            else:
+                if user1.player_profile:
+                    self.player_id = user1.player_profile.id
+
+
+
+        if self.is_team_registration and self.player2_email:
+            user2 = User.query.filter_by(email=self.player2_email).first()
+            # Create account for player 2 if needed
+            if not user2:
+                self.player2_temp_password = generate_temp_password()
+                print(self.player2_email)
+                print(self.player2_temp_password)
+                user2 = User(
+                    username=self.player2_email,  # Use part before @ as username
+                    email=self.player2_email, 
+                    full_name=self.player2_name,
+                    role=UserRole.PLAYER
+                )
+                user2.set_password(self.player2_temp_password)
+                db.session.add(user2)
+                self.player2_account_created = True
+                
+                # Flush to get user ID
+                db.session.flush()
+                
+                # Create player profile for user 2
+                profile2 = PlayerProfile(
+                    user_id=user2.id,
+                    full_name=self.player2_name,
+                    country=self.player2_nationality,
+                    age=calculate_age(self.player2_date_of_birth),
+                )
+                db.session.add(profile2)
+                db.session.flush()
+
+                self.partner_id = profile2.id
+            else:
+                if user2.player_profile:
+                    self.partner_id = user2.player_profile.id
+
         db.session.commit()
         
     def send_confirmation_emails(self):
         """Send confirmation emails to both players"""
         from app.helpers.email_utils import send_email
         
+        # Common HTML template parts
+        html_header = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { color: #2c3e50; font-size: 24px; margin-bottom: 20px; }
+                .content { margin-bottom: 20px; }
+                .details { background-color: #f9f9f9; padding: 15px; border-left: 4px solid #3498db; margin: 15px 0; }
+                .footer { margin-top: 30px; font-size: 14px; color: #7f8c8d; }
+                .button { display: inline-block; padding: 10px 20px; background-color: #3498db; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0; }
+            </style>
+        </head>
+        <body>
+        """
+        
+        html_footer = """
+            <div class="footer">
+                <p>If you have any questions, please contact us.</p>
+                <p>Best regards,<br>SportsSync Team</p>
+            </div>
+        </body>
+        </html>
+        """
+        
         # Send email to player 1
         subject = f"Registration Confirmation - {self.tournament.name}"
         if self.player1_account_created:
             body = f"""
-            Dear {self.player1_name},
+            {html_header}
+            <div class="header">Registration Confirmation</div>
+            <div class="content">
+                <p>Dear {self.player1_name},</p>
+                <p>Thank you for registering for {self.tournament.name}. Your registration has been received.</p>
+            </div>
             
-            Thank you for registering for {self.tournament.name}. Your registration has been received.
+            <div class="details">
+                <p><strong>Registration Details:</strong></p>
+                <ul>
+                    <li><strong>Team:</strong> {self.team_name}</li>
+                    <li><strong>Category:</strong> {self.category.name}</li>
+                    <li><strong>Registration Fee:</strong> RM{self.registration_fee:.2f}</li>
+                    <li><strong>Payment Status:</strong> {self.payment_status.capitalize()}</li>
+                </ul>
+                
+                <p><strong>Your temporary account has been created:</strong></p>
+                <ul>
+                    <li><strong>Email:</strong> {self.player1_email}</li>
+                    <li><strong>Temporary Password:</strong> {self.player1_temp_password}</li>
+                </ul>
+            </div>
             
-            Registration Details:
-            - Team: {self.team_name}
-            - Category: {self.category.name}
-            - Registration Fee: RM{self.registration_fee:.2f}
-            - Payment Status: {self.payment_status.capitalize()}
-            
-            Your temporary account has been created:
-            - Email: {self.player1_email}
-            - Temporary Password: {self.player1_temp_password}
-            
-            Please login to your account and change your password as soon as possible.
-            
-            If you have any questions, please contact us.
-            
-            Best regards,
-            The Tournament Team
+
+            {html_footer}
             """
         else:
             body = f"""
-            Dear {self.player1_name},
+            {html_header}
+            <div class="header">Registration Confirmation</div>
+            <div class="content">
+                <p>Dear {self.player1_name},</p>
+                <p>Thank you for registering for {self.tournament.name}. Your registration has been received.</p>
+            </div>
             
-            Thank you for registering for {self.tournament.name}. Your registration has been received.
-            
-            Registration Details:
-            - Team: {self.team_name}
-            - Category: {self.category.name}
-            - Registration Fee: RM{self.registration_fee:.2f}
-            - Payment Status: {self.payment_status.capitalize()}
-            
-            If you have any questions, please contact us.
-            
-            Best regards,
-            The Tournament Team
+            <div class="details">
+                <p><strong>Registration Details:</strong></p>
+                <ul>
+                    <li><strong>Team:</strong> {self.team_name}</li>
+                    <li><strong>Category:</strong> {self.category.name}</li>
+                    <li><strong>Registration Fee:</strong> RM{self.registration_fee:.2f}</li>
+                    <li><strong>Payment Status:</strong> {self.payment_status.capitalize()}</li>
+                </ul>
+            </div>
+            {html_footer}
             """
             
-        send_email(subject, body, [self.player1_email])
+        send_email(subject, [self.player1_email], body)
         
         # Send email to player 2
         if self.player2_account_created:
             body = f"""
-            Dear {self.player2_name},
+            {html_header}
+            <div class="header">Registration Confirmation</div>
+            <div class="content">
+                <p>Dear {self.player2_name},</p>
+                <p>Thank you for registering for {self.tournament.name}. Your registration has been received.</p>
+            </div>
             
-            Thank you for registering for {self.tournament.name}. Your registration has been received.
-            
-            Registration Details:
-            - Team: {self.team_name}
-            - Category: {self.category.name}
-            - Registration Fee: RM{self.registration_fee:.2f}
-            - Payment Status: {self.payment_status.capitalize()}
-            
-            Your temporary account has been created:
-            - Email: {self.player2_email}
-            - Temporary Password: {self.player2_temp_password}
-            
-            Please login to your account and change your password as soon as possible.
-            
-            If you have any questions, please contact us.
-            
-            Best regards,
-            The Tournament Team
+            <div class="details">
+                <p><strong>Registration Details:</strong></p>
+                <ul>
+                    <li><strong>Team:</strong> {self.team_name}</li>
+                    <li><strong>Category:</strong> {self.category.name}</li>
+                    <li><strong>Registration Fee:</strong> RM{self.registration_fee:.2f}</li>
+                    <li><strong>Payment Status:</strong> {self.payment_status.capitalize()}</li>
+                </ul>
+                
+                <p><strong>Your temporary account has been created:</strong></p>
+                <ul>
+                    <li><strong>Email:</strong> {self.player2_email}</li>
+                    <li><strong>Temporary Password:</strong> {self.player2_temp_password}</li>
+                </ul>
+            </div>
+            {html_footer}
             """
         else:
             body = f"""
-            Dear {self.player2_name},
+            {html_header}
+            <div class="header">Registration Confirmation</div>
+            <div class="content">
+                <p>Dear {self.player2_name},</p>
+                <p>Thank you for registering for {self.tournament.name}. Your registration has been received.</p>
+            </div>
             
-            Thank you for registering for {self.tournament.name}. Your registration has been received.
-            
-            Registration Details:
-            - Team: {self.team_name}
-            - Category: {self.category.name}
-            - Registration Fee: RM{self.registration_fee:.2f}
-            - Payment Status: {self.payment_status.capitalize()}
-            
-            If you have any questions, please contact us.
-            
-            Best regards,
-            The Tournament Team
+            <div class="details">
+                <p><strong>Registration Details:</strong></p>
+                <ul>
+                    <li><strong>Team:</strong> {self.team_name}</li>
+                    <li><strong>Category:</strong> {self.category.name}</li>
+                    <li><strong>Registration Fee:</strong> RM{self.registration_fee:.2f}</li>
+                    <li><strong>Payment Status:</strong> {self.payment_status.capitalize()}</li>
+                </ul>
+            </div>
+            {html_footer}
             """
             
-        send_email(subject, body, [self.player2_email])
+        send_email(subject, [self.player2_email], body)

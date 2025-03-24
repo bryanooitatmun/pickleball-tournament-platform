@@ -13,7 +13,7 @@ from app.organizer.forms import (TournamentForm, CategoryForm, SeedingForm,
                                 CompleteMatchForm)
 from app.models import (Tournament, TournamentCategory, Match, MatchScore, 
                        Registration, PlayerProfile, User, TournamentStatus,
-                       TournamentTier, TournamentFormat, CategoryType)
+                       TournamentTier, TournamentFormat, CategoryType, Prize, PrizeType)
 from app.services import BracketService, PlacingService, PrizeService, RegistrationService
 
 from app.decorators import organizer_required
@@ -25,6 +25,8 @@ from app.helpers.tournament import (
     _generate_single_elimination,
     _create_knockout_matches
 )
+
+from app.helpers.registration import save_picture
 
 @bp.route('/registrations')
 @login_required
@@ -70,7 +72,7 @@ def view_registrations():
 @organizer_required
 def view_registration(id):
     registration = Registration.query.get_or_404(id)
-    
+    registration.send_confirmation_emails()
     # Ensure the tournament belongs to this organizer
     tournament = registration.category.tournament
     if tournament.organizer_id != current_user.id and not current_user.is_admin():
@@ -113,6 +115,34 @@ def verify_registration(id):
     db.session.commit()
     
     flash('Registration payment verified and approved!', 'success')
+    return redirect(url_for('organizer.view_registration', id=id))
+
+@bp.route('/registration/<int:id>/reject', methods=['POST'])
+@login_required
+@organizer_required
+def reject_registration(id):
+    registration = Registration.query.get_or_404(id)
+    
+    # Ensure the tournament belongs to this organizer
+    tournament = registration.category.tournament
+    if tournament.organizer_id != current_user.id and not current_user.is_admin():
+        flash('You do not have permission to verify this registration.', 'danger')
+        return redirect(url_for('organizer.view_registrations'))
+    
+    # Get the rejection reason from form
+    rejection_reason = request.form.get('rejection_reason', '')
+
+    # Verify payment
+    registration.payment_verified = False
+    registration.payment_verified_at = datetime.utcnow()
+    registration.payment_verified_by = current_user.id
+    registration.payment_status = 'rejected'
+    registration.is_approved = False
+    registration.payment_rejection_reason = rejection_reason
+    
+    db.session.commit()
+    
+    flash(f'Registration for {registration.team_name} has been rejected.', 'warning')
     return redirect(url_for('organizer.view_registration', id=id))
 
 @bp.route('/tournament/<int:id>/payment_settings', methods=['GET', 'POST'])
@@ -620,121 +650,356 @@ def calculate_placings(id, category_id):
 #                            title='Create Tournament',
 #                            form=form)
 
-# @bp.route('/tournament/<int:id>')
-# @login_required
-# @organizer_required
-# def tournament_detail(id):
-#     tournament = Tournament.query.get_or_404(id)
+@bp.route('/tournament/<int:id>')
+@login_required
+@organizer_required
+def tournament_detail(id):
+    tournament = Tournament.query.get_or_404(id)
     
-#     # Check if this tournament belongs to the current user
-#     if tournament.organizer_id != current_user.id and not current_user.is_admin():
-#         flash('You do not have permission to view this tournament.', 'danger')
-#         return redirect(url_for('organizer.dashboard'))
+    # Check if this tournament belongs to the current user
+    if tournament.organizer_id != current_user.id and not current_user.is_admin():
+        flash('You do not have permission to view this tournament.', 'danger')
+        return redirect(url_for('organizer.dashboard'))
     
-#     # Get categories for this tournament
-#     categories = tournament.categories.all()
+    # Get categories for this tournament
+    categories = tournament.categories.all()
     
-#     # Get registrations by category
-#     registrations = {}
-#     for category in categories:
-#         registrations[category.id] = Registration.query.filter_by(category_id=category.id).all()
+    # Get registrations by category
+    registrations = {}
+    registration_counts = {}
+    for category in categories:
+        registrations[category.id] = Registration.query.filter_by(category_id=category.id).all()
+        
+        # Count registrations and payment status
+        registration_counts[category.id] = len(registrations[category.id])
     
-#     return render_template('organizer/tournament_detail.html',
-#                            title=f'Manage: {tournament.name}',
-#                            tournament=tournament,
-#                            categories=categories,
-#                            registrations=registrations)
+    return render_template('organizer/tournament_detail.html',
+                           title=f'Manage: {tournament.name}',
+                           tournament=tournament,
+                           categories=categories,
+                           registrations=registrations,
+                           registration_counts=registration_counts)
 
-# @bp.route('/tournament/<int:id>/edit', methods=['GET', 'POST'])
-# @login_required
-# @organizer_required
-# def edit_tournament(id):
-#     tournament = Tournament.query.get_or_404(id)
-    
-#     # Check if this tournament belongs to the current user
-#     if tournament.organizer_id != current_user.id and not current_user.is_admin():
-#         flash('You do not have permission to edit this tournament.', 'danger')
-#         return redirect(url_for('organizer.dashboard'))
-    
-#     form = TournamentForm(obj=tournament)
-    
-#     if form.validate_on_submit():
-#         tournament.name = form.name.data
-#         tournament.location = form.location.data
-#         tournament.description = form.description.data
-#         tournament.start_date = form.start_date.data
-#         tournament.end_date = form.end_date.data
-#         tournament.registration_deadline = form.registration_deadline.data
-#         tournament.tier = TournamentTier[form.tier.data]
-#         tournament.format = TournamentFormat[form.format.data]
-#         tournament.status = TournamentStatus[form.status.data]
-#         tournament.prize_pool = form.prize_pool.data
-#         tournament.registration_fee = form.registration_fee.data
+def string_to_tournament_format(format_string):
+    """Convert a format string to the corresponding TournamentFormat enum"""
+    for format_enum in TournamentFormat:
+        if format_enum.value == format_string:
+            return format_enum
+    # If no match is found, return a default or raise an error
+    return TournamentFormat.SINGLE_ELIMINATION  # Default value
 
-#         # Handle logo upload
-#         if form.logo.data:
-#             tournament.logo = save_picture(form.logo.data, 'tournament_logos')
-        
-#         # Handle banner upload
-#         if form.banner.data:
-#             tournament.banner = save_picture(form.banner.data, 'tournament_banners')
-        
-#         db.session.commit()
-        
-#         flash('Tournament updated successfully!', 'success')
-#         return redirect(url_for('organizer.tournament_detail', id=tournament.id))
+@bp.route('/tournament/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+@organizer_required
+def edit_tournament(id):
+    # Get tournament or return 404
+    tournament = Tournament.query.get_or_404(id)
     
-#     # Pre-populate form with enum names
-#     form.tier.data = tournament.tier.name
-#     form.format.data = tournament.format.name
-#     form.status.data = tournament.status.name
+    # Check if current user is the organizer or an admin
+    if tournament.organizer_id != current_user.id and not current_user.is_admin():
+        flash('You do not have permission to edit this tournament.', 'danger')
+        return redirect(url_for('organizer.tournament_detail', id=tournament.id))
     
-#     return render_template('organizer/edit_tournament.html',
-#                            title=f'Edit: {tournament.name}',
-#                            form=form,
-#                            tournament=tournament)
+    # Get all categories for this tournament
+    categories = tournament.categories.order_by(TournamentCategory.display_order).all()
+    
+    form = TournamentForm()
 
-# @bp.route('/tournament/<int:id>/add_category', methods=['GET', 'POST'])
-# @login_required
-# @organizer_required
-# def add_category(id):
-#     tournament = Tournament.query.get_or_404(id)
-    
-#     # Check if this tournament belongs to the current user
-#     if tournament.organizer_id != current_user.id and not current_user.is_admin():
-#         flash('You do not have permission to edit this tournament.', 'danger')
-#         return redirect(url_for('organizer.dashboard'))
-    
-#     form = CategoryForm()
-    
-#     if form.validate_on_submit():
-#         # Check if category already exists
-#         existing_category = TournamentCategory.query.filter_by(
-#             tournament_id=id,
-#             category_type=CategoryType[form.category_type.data]
-#         ).first()
-        
-#         if existing_category:
-#             flash(f'This tournament already has a {form.category_type.data} category.', 'warning')
-#         else:
-#             category = TournamentCategory(
-#                 tournament_id=id,
-#                 category_type=CategoryType[form.category_type.data],
-#                 max_participants=form.max_participants.data,
-#                 points_awarded=form.points_awarded.data
-#             )
+
+    if request.method == 'POST':
+        # Handle form submission
+        if form.validate_on_submit():
+
+            # Update tournament details
+            form.populate_obj(tournament)
             
-#             db.session.add(category)
-#             db.session.commit()
+            # Convert string values to enums properly
+            tournament.tier = TournamentTier[form.tier.data]
+            tournament.format = TournamentFormat[form.format.data]
+            tournament.status = TournamentStatus[form.status.data]
+
+            print('post')
+            print(tournament.tier)
+            print(tournament.format)
+            print(tournament.status)
+
+            # Handle logo upload
+            if form.logo.data:
+                tournament.logo = save_picture(form.logo.data, 'tournament_logos')
             
-#             flash('Category added successfully!', 'success')
-        
-#         return redirect(url_for('organizer.tournament_detail', id=id))
+            # Handle banner upload
+            if form.banner.data:
+                tournament.banner = save_picture(form.banner.data, 'tournament_banners')
+            
+            # Handle payment QR code upload
+            if form.payment_qr_code.data:
+                tournament.payment_qr_code = save_picture(form.payment_qr_code.data, 'payment_qr_codes')
+            
+            # Handle door gifts image upload
+            if form.door_gifts_image.data:
+                tournament.door_gifts_image = save_picture(form.door_gifts_image.data, 'door_gifts_images')
+            
+            # Save changes to the database
+            db.session.commit()
+            
+            flash('Tournament details updated successfully!', 'success')
+            return redirect(url_for('organizer.edit_categories', id=tournament.id))
+
+        else:
+            flash(f"Field {field} has errors: {errors}", 'danger')
+            return redirect(url_for('organizer.edit_tournament', id=tournament.id))           
     
-#     return render_template('organizer/add_category.html',
-#                            title=f'Add Category to {tournament.name}',
-#                            form=form,
-#                            tournament=tournament)
+    # For GET requests, populate form with existing data
+
+    if request.method == 'GET' or not form.validate_on_submit():
+        # Initialize the form
+        form.process(obj=tournament)
+
+        if tournament.tier:
+            form.tier.data = tournament.tier.name 
+        if tournament.format:
+            form.format.data = tournament.format.name  
+        if tournament.status:
+            form.status.data = tournament.status.name  
+
+        return render_template(
+            'organizer/edit_tournament.html',
+            title=f'Edit Tournament - {tournament.name}',
+            tournament=tournament,
+            categories=categories,
+            form=form
+        )
+
+@bp.route('/tournament/<int:id>/edit/categories', methods=['GET', 'POST'])
+@login_required
+@organizer_required
+def edit_categories(id):
+    # Get tournament or return 404
+    tournament = Tournament.query.get_or_404(id)
+    
+    # Check if current user is the organizer or an admin
+    if tournament.organizer_id != current_user.id and not current_user.is_admin():
+        flash('You do not have permission to edit this tournament.', 'danger')
+        return redirect(url_for('organizer.tournament_detail', id=tournament.id))
+    
+    # Get all categories for this tournament
+    categories = tournament.categories.order_by(TournamentCategory.display_order).all()
+    
+    # Handle form submission
+    if request.method == 'POST':
+        # Process category updates
+        updated_categories = []
+        for category_id in request.form.getlist('category_id'):
+            category = TournamentCategory.query.get(category_id)
+            if category and category.tournament_id == tournament.id:
+                # Update category details
+                category.name = request.form.get(f'name_{category_id}')
+                category.category_type = CategoryType(request.form.get(f'category_type_{category_id}'))
+                category.max_participants = int(request.form.get(f'max_participants_{category_id}', 0))
+                category.points_awarded = int(request.form.get(f'points_awarded_{category_id}', 0))
+                category.format = TournamentFormat(request.form.get(f'format_{category_id}'))
+                category.registration_fee = float(request.form.get(f'registration_fee_{category_id}', 0))
+                category.description = request.form.get(f'description_{category_id}', '')
+                category.display_order = int(request.form.get(f'display_order_{category_id}', 999))
+                category.prize_percentage = float(request.form.get(f'prize_percentage_{category_id}', 0))
+                category.prize_money = float(request.form.get(f'prize_money_{category_id}', 0))
+                
+                # Optional fields
+                min_dupr = request.form.get(f'min_dupr_rating_{category_id}', '')
+                max_dupr = request.form.get(f'max_dupr_rating_{category_id}', '')
+                min_age = request.form.get(f'min_age_{category_id}', '')
+                max_age = request.form.get(f'max_age_{category_id}', '')
+                
+                category.min_dupr_rating = float(min_dupr) if min_dupr else None
+                category.max_dupr_rating = float(max_dupr) if max_dupr else None
+                category.min_age = int(min_age) if min_age else None
+                category.max_age = int(max_age) if max_age else None
+                category.gender_restriction = request.form.get(f'gender_restriction_{category_id}', None)
+                
+                # Add to list of updated categories
+                updated_categories.append(category)
+        
+        # Process new categories
+        new_category_names = request.form.getlist('new_category_name')
+        for i, name in enumerate(new_category_names):
+            if name.strip():  # Only process if name is not empty
+                new_cat = TournamentCategory(
+                    tournament_id=tournament.id,
+                    name=name,
+                    category_type=CategoryType(request.form.getlist('new_category_type')[i]),
+                    max_participants=int(request.form.getlist('new_max_participants')[i] or 0),
+                    points_awarded=int(request.form.getlist('new_points_awarded')[i] or 0),
+                    format=TournamentFormat(request.form.getlist('new_format')[i]),
+                    registration_fee=float(request.form.getlist('new_registration_fee')[i] or 0),
+                    description=request.form.getlist('new_description')[i] or '',
+                    display_order=int(request.form.getlist('new_display_order')[i] or 999),
+                    prize_percentage=float(request.form.getlist('new_prize_percentage')[i] or 0),
+                    prize_money=float(request.form.getlist('new_prize_money')[i] or 0)
+                )
+                
+                # Optional fields
+                min_dupr = request.form.getlist('new_min_dupr_rating')[i]
+                max_dupr = request.form.getlist('new_max_dupr_rating')[i]
+                min_age = request.form.getlist('new_min_age')[i]
+                max_age = request.form.getlist('new_max_age')[i]
+                
+                new_cat.min_dupr_rating = float(min_dupr) if min_dupr else None
+                new_cat.max_dupr_rating = float(max_dupr) if max_dupr else None
+                new_cat.min_age = int(min_age) if min_age else None
+                new_cat.max_age = int(max_age) if max_age else None
+                new_cat.gender_restriction = request.form.getlist('new_gender_restriction')[i] or None
+                
+                db.session.add(new_cat)
+        
+        # Process category deletions
+        for category_id in request.form.getlist('delete_category'):
+            category = TournamentCategory.query.get(category_id)
+            if category and category.tournament_id == tournament.id:
+                # Check if registrations exist for this category
+                if category.registrations.count() > 0:
+                    flash(f'Cannot delete category "{category.name}" because it has registrations.', 'warning')
+                else:
+                    db.session.delete(category)
+        
+        # Save changes
+        db.session.commit()
+        
+        # Recalculate prize distribution
+        for category in updated_categories:
+            category.calculate_prize_values()
+        
+        # Update tournament totals
+        tournament.total_cash_prize = sum(cat.prize_money for cat in tournament.categories)
+        tournament.total_prize_value = sum(cat.total_prize_value for cat in tournament.categories)
+        db.session.commit()
+        
+        flash('Tournament categories updated successfully!', 'success')
+        return redirect(url_for('organizer.edit_prizes', id=tournament.id))
+    
+    # For GET requests, prepare the form
+    return render_template(
+        'organizer/edit_categories.html',
+        title=f'Edit Categories - {tournament.name}',
+        tournament=tournament,
+        categories=categories,
+        category_types=[(ct.value, ct.value) for ct in CategoryType],
+        tournament_formats=[(tf.value, tf.value) for tf in TournamentFormat]
+    )
+
+@bp.route('/tournament/<int:id>/edit/prizes', methods=['GET', 'POST'])
+@login_required
+@organizer_required
+def edit_prizes(id):
+    # Get tournament or return 404
+    tournament = Tournament.query.get_or_404(id)
+    
+    # Check if current user is the organizer or an admin
+    if tournament.organizer_id != current_user.id and not current_user.is_admin():
+        flash('You do not have permission to edit this tournament.', 'danger')
+        return redirect(url_for('organizer.tournament_detail', id=tournament.id))
+    
+    # Get all categories for this tournament
+    categories = tournament.categories.order_by(TournamentCategory.display_order).all()
+    
+    # Handle form submission
+    if request.method == 'POST':
+        # Process prize updates for each category
+        for category in categories:
+            # Get all prizes for this category
+            prizes = Prize.query.filter_by(category_id=category.id).all()
+            
+            # Update existing prizes
+            for prize in prizes:
+                prize_id = str(prize.id)
+                if f'prize_type_{prize_id}' in request.form:
+                    prize.prize_type = PrizeType(request.form.get(f'prize_type_{prize_id}'))
+                    prize.placement = request.form.get(f'placement_{prize_id}')
+                    
+                    # Set fields based on prize type
+                    if prize.prize_type == PrizeType.CASH:
+                        prize.cash_amount = float(request.form.get(f'cash_amount_{prize_id}', 0))
+                    elif prize.prize_type in [PrizeType.MERCHANDISE]:
+                        prize.title = request.form.get(f'title_{prize_id}', '')
+                        prize.description = request.form.get(f'description_{prize_id}', '')
+                        prize.monetary_value = float(request.form.get(f'monetary_value_{prize_id}', 0))
+                        prize.quantity = int(request.form.get(f'quantity_{prize_id}', 1))
+            
+            # Process new prizes
+            new_prize_placements = request.form.getlist(f'new_placement_{category.id}')
+            for i, placement in enumerate(new_prize_placements):
+                if placement.strip():  # Only process if placement is not empty
+                    prize_type = PrizeType(request.form.getlist(f'new_prize_type_{category.id}')[i])
+                    new_prize = Prize(
+                        category_id=category.id,
+                        placement=placement,
+                        prize_type=prize_type
+                    )
+                    
+                    # Set fields based on prize type
+                    if prize_type == PrizeType.CASH:
+                        new_prize.cash_amount = float(request.form.getlist(f'new_cash_amount_{category.id}')[i] or 0)
+                    elif prize_type in [PrizeType.MERCHANDISE]:
+                        new_prize.title = request.form.getlist(f'new_title_{category.id}')[i] or ''
+                        new_prize.description = request.form.getlist(f'new_description_{category.id}')[i] or ''
+                        new_prize.monetary_value = float(request.form.getlist(f'new_monetary_value_{category.id}')[i] or 0)
+                        new_prize.quantity = int(request.form.getlist(f'new_quantity_{category.id}')[i] or 1)
+                    
+                    db.session.add(new_prize)
+            
+            # Process prize deletions
+            for prize_id in request.form.getlist(f'delete_prize_{category.id}'):
+                prize = Prize.query.get(prize_id)
+                if prize and prize.category_id == category.id:
+                    db.session.delete(prize)
+        
+        # Save changes
+        db.session.commit()
+        
+        # Update category flags and totals
+        for category in categories:
+            # Update flags
+            category.has_merchandise = Prize.query.filter(
+                Prize.category_id == category.id,
+                Prize.prize_type.in_([PrizeType.MERCHANDISE])
+            ).count() > 0
+            
+            # Update total prize values
+            category.prize_money = Prize.query.filter_by(
+                category_id=category.id,
+                prize_type=PrizeType.CASH
+            ).with_entities(db.func.sum(Prize.cash_amount)).scalar() or 0
+            
+            merchandise_value = db.session.query(
+                db.func.sum(Prize.monetary_value * Prize.quantity)
+            ).filter(
+                Prize.category_id == category.id,
+                Prize.prize_type.in_([PrizeType.MERCHANDISE])
+            ).scalar() or 0
+            
+            category.total_prize_value = category.prize_money + merchandise_value
+        
+        # Update tournament totals
+        tournament.total_cash_prize = sum(cat.prize_money for cat in categories)
+        tournament.total_prize_value = sum(cat.total_prize_value for cat in categories)
+        
+        db.session.commit()
+        
+        flash('Tournament prizes updated successfully!', 'success')
+        return redirect(url_for('organizer.tournament_detail', id=tournament.id))
+    
+    # For GET requests, gather prize data
+    prize_data = {}
+    for category in categories:
+        prize_data[category.id] = Prize.query.filter_by(category_id=category.id).all()
+    
+    return render_template(
+        'organizer/edit_prizes.html',
+        title=f'Edit Prizes - {tournament.name}',
+        tournament=tournament,
+        categories=categories,
+        prize_data=prize_data,
+        prize_types=[(pt.value, pt.name) for pt in PrizeType]
+    )
 
 # @bp.route('/tournament/<int:id>/category/<int:category_id>/manage')
 # @login_required
@@ -792,41 +1057,49 @@ def calculate_placings(id, category_id):
 #                            category=category,
 #                            registrations=registrations)
 
-# @bp.route('/tournament/<int:id>/category/<int:category_id>/approve_registration/<int:registration_id>', methods=['POST'])
+# @bp.route('/tournament/<int:id>/approve_registration/<int:registration_id>', methods=['POST'])
 # @login_required
 # @organizer_required
-# def approve_registration(id, category_id, registration_id):
+# def approve_registration(id, registration_id):
+#     """Approve a tournament registration and verify payment"""
+#     # Get tournament and registration
 #     tournament = Tournament.query.get_or_404(id)
-    
-#     # Check if this tournament belongs to the current user
-#     if tournament.organizer_id != current_user.id and not current_user.is_admin():
-#         flash('You do not have permission to manage this tournament.', 'danger')
-#         return redirect(url_for('organizer.dashboard'))
-    
 #     registration = Registration.query.get_or_404(registration_id)
     
-#     # Check if registration belongs to this category
-#     if registration.category_id != category_id:
-#         flash('Registration not found in this category.', 'danger')
-#         return redirect(url_for('organizer.manage_registrations', id=id, category_id=category_id))
+#     # Ensure the registration belongs to this tournament
+#     if registration.category.tournament_id != tournament.id:
+#         flash('Invalid registration for this tournament.', 'danger')
+#         return redirect(url_for('organizer.tournament_registrations', id=id))
     
-#     # Only approve if payment is completed or tournament is free
-#     tournament = Tournament.query.get_or_404(id)
-#     if tournament.registration_fee > 0 and registration.payment_status != 'paid':
-#         flash('Cannot approve registration until payment is completed.', 'warning')
-#         return redirect(url_for('organizer.manage_registrations', id=id, category_id=category_id))
+#     # Verify organizer has permission
+#     if tournament.organizer_id != current_user.id and not current_user.is_admin():
+#         flash('You do not have permission to approve registrations for this tournament.', 'danger')
+#         return redirect(url_for('organizer.dashboard'))
     
-#     # Approve registration
+#     # Update registration status
 #     registration.is_approved = True
+#     registration.payment_status = 'paid'  # Mark as paid
+#     registration.payment_verified = True
+#     registration.payment_verified_at = datetime.utcnow()
+#     registration.payment_verified_by = current_user.id
+    
+#     # If there's a payment date field, update it
+#     if hasattr(registration, 'payment_date') and not registration.payment_date:
+#         registration.payment_date = datetime.utcnow()
+    
+#     # Save changes
 #     db.session.commit()
     
-#     flash('Registration approved successfully!', 'success')
-#     return redirect(url_for('organizer.manage_registrations', id=id, category_id=category_id))
+#     # Notify the players (could be implemented with email)
+#     # Placeholder for email notification logic
+    
+#     flash(f'Registration for {registration.team_name} has been approved successfully.', 'success')
+#     return redirect(url_for('organizer.tournament_registrations', id=id))
 
-# @bp.route('/tournament/<int:id>/category/<int:category_id>/reject_registration/<int:registration_id>', methods=['POST'])
+# @bp.route('/tournament/<int:id>/reject_registration/<int:registration_id>', methods=['POST'])
 # @login_required
 # @organizer_required
-# def reject_registration(id, category_id, registration_id):
+# def reject_registration(id, registration_id):
 #     tournament = Tournament.query.get_or_404(id)
     
 #     # Check if this tournament belongs to the current user
