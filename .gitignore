@@ -7,3 +7,4 @@
 /migrations
 *.db
 /app/static/uploads
+.env
