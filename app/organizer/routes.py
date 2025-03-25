@@ -72,7 +72,7 @@ def view_registrations():
 @organizer_required
 def view_registration(id):
     registration = Registration.query.get_or_404(id)
-    registration.send_confirmation_emails()
+    #registration.send_confirmation_emails()
     # Ensure the tournament belongs to this organizer
     tournament = registration.category.tournament
     if tournament.organizer_id != current_user.id and not current_user.is_admin():
