@@ -114,15 +114,21 @@ The platform has three different types of users:
 
 7. sudo systemctl daemon-reload
 
-8. systemctl enable pickleball
+8. sudo systemctl enable pickleball
 
-9. systemctl start pickleball
+9. sudo systemctl start pickleball
+
+9. sudo systemctl restart pickleball
+
+9. sudo systemctl status pickleball
 
 10. sudo journalctl -u pickleball
 
-11. cd /var/www
+11. cd /var/www/pickleball-tournament-platform
 
-12. source new-venv/bin/activate
+12. source new_venv/bin/activate
+
+13. sudo chown www-data:www-data /var/www/pickleball-tournament-platform/app.db
 
 ## Default Accounts
 
