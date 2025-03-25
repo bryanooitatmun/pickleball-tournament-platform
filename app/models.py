@@ -913,7 +913,6 @@ class Registration(db.Model):
                     self.player_id = user1.player_profile.id
 
 
-
         if self.is_team_registration and self.player2_email:
             user2 = User.query.filter_by(email=self.player2_email).first()
             # Create account for player 2 if needed
@@ -950,6 +949,7 @@ class Registration(db.Model):
                     self.partner_id = user2.player_profile.id
 
         db.session.commit()
+        self.send_confirmation_emails()
         
     def send_confirmation_emails(self):
         """Send confirmation emails to both players"""

@@ -363,14 +363,14 @@ def payment(registration_id):
                 registration.create_user_accounts()
             except Exception as e:
                 current_app.logger.error(f"Error creating user accounts: {e}")
-                flash("Could not create user accounts. Please contact support.", "warning")
+                flash(f"Could not create user accounts. Error creating user accounts: {e}. Please contact support.", "warning")
             
-            # Send confirmation emails
-            try:
-                registration.send_confirmation_emails()
-            except Exception as e:
-                current_app.logger.error(f"Error sending confirmation emails: {e}")
-                flash("Could not send confirmation emails. Please contact support.", "warning")
+            # # Send confirmation emails
+            # try:
+            #     registration.send_confirmation_emails()
+            # except Exception as e:
+            #     current_app.logger.error(f"Error sending confirmation emails: {e}")
+            #     flash("Could not send confirmation emails. Please contact support.", "warning")
             
             db.session.commit()
             

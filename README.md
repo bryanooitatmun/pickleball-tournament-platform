@@ -112,10 +112,17 @@ The platform has three different types of users:
 
 6. nano /etc/systemd/system/pickleball.service
 
-7. systemctl enable pickleball
+7. sudo systemctl daemon-reload
 
-8. systemctl start pickleball
+8. systemctl enable pickleball
 
+9. systemctl start pickleball
+
+10. sudo journalctl -u pickleball
+
+11. cd /var/www
+
+12. source new-venv/bin/activate
 
 ## Default Accounts
 
