@@ -91,15 +91,6 @@
                             Player
                         </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Tournament
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Category
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Partner
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Date
                         </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -107,6 +98,15 @@
                         </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Actions
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Tournament
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Category
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Partner
                         </th>
                     </tr>
                 </thead>
@@ -149,35 +149,6 @@
                                         {% endif %}
                                     </div>
                                 </div>
-                            </div>
-                        </td>
-                        
-                        <!-- Tournament -->
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">{{ reg.category.tournament.name }}</div>
-                            <div class="text-xs text-gray-500">
-                                {{ reg.category.tournament.start_date.strftime('%b %d') }}-{{ reg.category.tournament.end_date.strftime('%d, %Y') }}
-                            </div>
-                        </td>
-                        
-                        <!-- Category -->
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">{{ reg.category.name }}</div>
-                            <div class="text-xs text-gray-500">{{ reg.category.category_type.value }}</div>
-                        </td>
-                        
-                        <!-- Partner -->
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">
-                                {% if reg.partner %}
-                                    {{ reg.partner.full_name }}
-                                {% elif reg.player2_name %}
-                                    {{ reg.player2_name }}
-                                {% elif reg.category.is_doubles() %}
-                                    <span class="text-yellow-600">No Partner</span>
-                                {% else %}
-                                    <span class="text-gray-400">N/A</span>
-                                {% endif %}
                             </div>
                         </td>
                         
@@ -229,6 +200,35 @@
                                 Reject
                             </button>
                             {% endif %} #}
+                        </td>
+                        
+                        <!-- Tournament -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ reg.category.tournament.name }}</div>
+                            <div class="text-xs text-gray-500">
+                                {{ reg.category.tournament.start_date.strftime('%b %d') }}-{{ reg.category.tournament.end_date.strftime('%d, %Y') }}
+                            </div>
+                        </td>
+                        
+                        <!-- Category -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ reg.category.name }}</div>
+                            <div class="text-xs text-gray-500">{{ reg.category.category_type.value }}</div>
+                        </td>
+                        
+                        <!-- Partner -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">
+                                {% if reg.partner %}
+                                    {{ reg.partner.full_name }}
+                                {% elif reg.player2_name %}
+                                    {{ reg.player2_name }}
+                                {% elif reg.category.is_doubles() %}
+                                    <span class="text-yellow-600">No Partner</span>
+                                {% else %}
+                                    <span class="text-gray-400">N/A</span>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

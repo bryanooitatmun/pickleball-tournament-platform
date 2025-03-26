@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, flash, redirect, url_for, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
@@ -62,4 +62,9 @@ def create_app(config_class=Config):
             return ""
         return text.replace('\n', '<br>')
     
+    @app.errorhandler(413)
+    def request_entity_too_large(error):
+        flash("File too large! Please upload an image smaller than 5MB.", "danger")
+        return redirect(request.referrer)
+
     return app

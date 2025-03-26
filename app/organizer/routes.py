@@ -111,6 +111,7 @@ def verify_registration(id):
     registration.payment_verified_by = current_user.id
     registration.payment_status = 'paid'
     registration.is_approved = True
+    registration.payment_rejection_reason = ''
     
     db.session.commit()
     
@@ -263,26 +264,6 @@ def payment_dashboard():
                           free_count=free_count,
                           tournament_revenue=tournament_revenue,
                           recent_payments=recent_payments)
-
-
-def save_picture(picture, subfolder='tournament_pics'):
-    # Generate a secure filename
-    filename = secure_filename(picture.filename)
-    
-    # Generate a unique filename with timestamp
-    unique_filename = f"{subfolder}_{int(datetime.utcnow().timestamp())}_{filename}"
-    
-    # Create full path
-    file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], subfolder, unique_filename)
-    
-    # Ensure directory exists
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    
-    # Save the file
-    picture.save(file_path)
-    
-    # Return the relative path for the database
-    return os.path.join('uploads', subfolder, unique_filename)
 
 @bp.route('/dashboard')
 @login_required
@@ -668,10 +649,13 @@ def tournament_detail(id):
     registrations = {}
     registration_counts = {}
     for category in categories:
-        registrations[category.id] = Registration.query.filter_by(category_id=category.id).all()
+        registrations[category.id] = Registration.query.filter_by(category_id=category.id, payment_status='paid').all()
         
         # Count registrations and payment status
-        registration_counts[category.id] = len(registrations[category.id])
+        if category.is_doubles():
+            registration_counts[category.id] = len(registrations[category.id]) * 2
+        else:
+            registration_counts[category.id] = len(registrations[category.id])
     
     return render_template('organizer/tournament_detail.html',
                            title=f'Manage: {tournament.name}',

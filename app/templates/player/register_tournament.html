@@ -93,7 +93,7 @@
             <div class="lg:col-span-2">
                 <div class="bg-white p-8 rounded-xl shadow-md mb-8">
                     <h2 class="section-title text-2xl">Team Registration</h2>
-                    
+
                     <form method="POST" enctype="multipart/form-data">
                         {{ form.hidden_tag() }}
                         {{ form.tournament_id() }}
@@ -111,13 +111,17 @@
                                         {% endfor %}
                                     </div>
                                 {% endif %}
-                                <p class="text-xs text-gray-500 mt-1" id="category-description"></p>
+                                <div class="text-xs text-gray-500 mt-1" id="category-description"></div>
+                                <div class="text-xs mt-1" id="category-availability">
+                                    <!-- This will be updated by JavaScript -->
+                                </div>
                             </div>
+
                         </div>
                         
                         <!-- Player 1 Information -->
                         <div class="mb-8 border-t border-gray-200 pt-6">
-                            <h3 class="text-lg font-semibold mb-4 text-blue-700">Player 1 Details</h3>
+                            <h3 class="text-lg font-semibold mb-4 text-blue-700">Your Details</h3>
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="form-group">
@@ -129,18 +133,24 @@
                                     <label for="player1_email" class="block text-sm font-medium text-gray-700 mb-1 required-field">Email</label>
                                     <input type="email" id="player1_email" name="player1_email" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label for="player1_phone" class="block text-sm font-medium text-gray-700 mb-1 required-field">Phone Number</label>
-                                    <input type="tel" id="player1_phone" name="player1_phone" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                </div>
-                                
+                                                   
                                 <div class="form-group">
                                     <label for="player1_email_confirm" class="block text-sm font-medium text-gray-700 mb-1 required-field">Confirm Email</label>
                                     <input type="email" id="player1_email_confirm" name="player1_email_confirm" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
                                     <p class="text-xs text-red-500 mt-1">Please confirm your email carefully. Registration confirmation and temporary password will be sent to this email.</p>
                                 </div>
                                 
+                                <div class="form-group">
+                                    <label for="player1_phone" class="block text-sm font-medium text-gray-700 mb-1 required-field">Phone Number</label>
+                                    <input type="tel" id="player1_phone" name="player1_phone" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="player1_ic_number" class="block text-sm font-medium text-gray-700 mb-1 required-field">IC/Passport Number</label>
+                                    <input type="text" id="player1_ic_number" name="player1_ic_number" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                                    <p class="text-xs text-gray-500 mt-1">Enter your National ID or Passport number (no spaces or special characters)</p>
+                                </div>
+
                                 <div class="form-group">
                                     <label for="player1_dupr_id" class="block text-sm font-medium text-gray-700 mb-1 required-field">DUPR ID</label>
                                     <input type="text" id="player1_dupr_id" name="player1_dupr_id" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Enter your DUPR ID" required>
@@ -161,8 +171,9 @@
                         
                         <!-- Player 2 Information -->
                         <div class="mb-8 border-t border-gray-200 pt-6">
-                            <h3 class="text-lg font-semibold mb-4 text-blue-700">Player 2 Details</h3>
+                            <h3 class="text-lg font-semibold mb-4 text-blue-700">Partner Details</h3>
                             
+
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="form-group">
                                     <label for="player2_name" class="block text-sm font-medium text-gray-700 mb-1 required-field">Full Name</label>
@@ -175,14 +186,33 @@
                                 </div>
                                 
                                 <div class="form-group">
+                                    <label for="player2_email_confirm" class="block text-sm font-medium text-gray-700 mb-1 required-field">Confirm Email</label>
+                                    <input type="email" id="player2_email_confirm" name="player2_email_confirm" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                                    <p class="text-xs text-red-500 mt-1">Please confirm your email carefully. Registration confirmation and temporary password will be sent to this email.</p>
+                                </div>
+
+                                <div class="form-group">
                                     <label for="player2_phone" class="block text-sm font-medium text-gray-700 mb-1 required-field">Phone Number</label>
                                     <input type="tel" id="player2_phone" name="player2_phone" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
                                 </div>
                                 
-                                <div class="form-group">
-                                    <label for="player2_email_confirm" class="block text-sm font-medium text-gray-700 mb-1 required-field">Confirm Email</label>
-                                    <input type="email" id="player2_email_confirm" name="player2_email_confirm" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                    <p class="text-xs text-red-500 mt-1">Please confirm your email carefully. Registration confirmation and temporary password will be sent to this email.</p>
+                                {# <div class="form-group">
+                                    <label for="player2_ic_number" class="block text-sm font-medium text-gray-700 mb-1 required-field">IC/Passport Number</label>
+                                    <input type="text" id="player2_ic_number" name="player2_ic_number" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                                    <p class="text-xs text-gray-500 mt-1">Enter your partner's National ID or Passport number (no spaces or special characters)</p>
+                                </div> #}
+
+                                <!-- Add the "Find User" button next to player2_ic_number -->
+                                <div class="form-group relative">
+                                    <label for="player2_ic_number" class="block text-sm font-medium text-gray-700 mb-1 required-field">IC/Passport Number</label>
+                                    <div class="flex">
+                                        <input type="text" id="player2_ic_number" name="player2_ic_number" class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                                        <button type="button" id="find-player2" class="ml-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                            Find
+                                        </button>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">Enter your partner's National ID or Passport number (no spaces or special characters)</p>
+                                    <div id="player2-search-results" class="hidden mt-2 p-3 bg-gray-50 rounded-md border border-gray-200"></div>
                                 </div>
                                 
                                 <div class="form-group">
@@ -210,27 +240,70 @@
                             <div class="mb-4 bg-gray-50 p-4 rounded-lg text-sm text-gray-700 max-h-64 overflow-y-auto">
                                 <h4 class="font-bold mb-2">Intermediate Category Eligibility Rules:</h4>
                                 <ol class="list-decimal pl-5 space-y-2">
-                                    <li>We will conduct thorough due diligence on every player.</li>
+                                    <li>We will conduct thorough due diligence on every participant.</li>
                                     <li>DUPR serves as an initial guideline but does not solely determine eligibility for the Intermediate category.</li>
-                                    <li>We reserve the right to move players to the Open category if their skill level exceeds their current DUPR rating.</li>
-                                    <li>Participants may report players they believe should be in the Open category. We will conduct due diligence, and the final decision will be made by management.</li>
-                                    <li>Players who win any tournament, whether on Reclub or elsewhere, will be reviewed to determine their eligibility to compete in the Intermediate category.</li>
-                                    <li>No refunds will be given if a player is moved from the Intermediate to the Open category.</li>
-                                    <li>Players without a DUPR rating are welcome to participate in the Intermediate tournament, but due diligence will be conducted to assess their eligibility.</li>
-                                    <li>If one player is deemed eligible for the Open category while their partner remains in the Intermediate category, the Intermediate player must find a replacement. Otherwise, the entire team will be moved to the Open category.</li>
+                                    <li>Participants without a DUPR rating are welcome to participate in the Intermediate tournament, but due diligence will be conducted to assess their eligibility.</li>
+                                    <li>Any participant found to have multiple accounts with DUPR ratings will be disqualified.</li>
+                                    <li>Participants who have won any major tournament, whether on Reclub or elsewhere, will be reviewed to determine their eligibility to compete in the Intermediate category and will be moved to Open category if their skill level exceeds their current DUPR rating.</li>
+                                    <li>If one participant is deemed eligible for the Open category while their partner remains in the Intermediate category, the Intermediate participant must find a replacement. Otherwise, the entire team will be moved to the Open category.</li>
+                                    <li>Participants may report other participants they believe should be in the Open category. We will conduct due diligence, and the final decision will be made by committee.</li>
+                                    <li>No refunds will be given if a participant is moved from the Intermediate to the Open category.</li>
                                     <li>If, during the tournament, we identify a team that was mistakenly placed in the Intermediate category but should be in the Open category, they may continue playing. However, if they finish in first place, their points will not be counted in the ranking system. They will still receive the prize and medals.</li>
                                 </ol>
                                 
-                                <h4 class="font-bold mt-4 mb-2">Terms & Conditions:</h4>
+                                <h4 class="font-bold mt-4 mb-2">Tournament General Rules & Regulations:</h4>
                                 <ol class="list-decimal pl-5 space-y-2">
-                                    <li>Each participant carefully verifies the supplied information, ensures its correctness, and agrees to its use.</li>
-                                    <li>Registering for an event indicates acceptance of the event's rules and agreement to participate in accordance with the regulations.</li>
-                                    <li>The organizers have the right to alter, amend, or modify regulations as determined by event management.</li>
-                                    <li>The organizers reserve the right to use photographs, videos, and other media from the event for non-commercial purposes.</li>
-                                    <li>Participants must be present at the venue at least 1 hour before their match starts.</li>
+                                    <li>The tournament rules will be based on the USA Pickleball Official Rulebook. However, the Tournament Committee reserves the right to alter, amend or modify regulations and make the final decision on any dispute or other matters that may arise.</li>
+                                    <li>Substitution or change in doubles partner will not be permitted after the draw has been finalised.</li>
+                                    <li>All scores will be recorded and uploaded on DUPR.</li>
+                                    <li>Teams arriving more than 10 minutes late or failing to show up for their matches will forfeit their matches, with the score recorded as 0-15.</li>
+                                    <li>The tournament committee reserves the right to close registration once spots are filled, even if it's before the official closing date.</li>
+                                    <li>The tournament committee reserves the right to modify, postpone, or cancel the tournament due to unforeseen circumstances. In such cases, registration fees will be refunded.</li>
+                                </ol>
+
+                                <h4 class="font-bold mt-4 mb-2">Registration:</h4>
+                                <ol class="list-decimal pl-5 space-y-2">
+                                    <li>All participants must complete the registration process, including payment, with a partner before the registration deadline. Late registrations or incomplete entries will not be accepted.</li>
+                                    <li>Participants are allowed to join multiple categories provided there are no scheduling conflicts.</li>
+                                    <li>Registration fees are strictly non-refundable unless the event is cancelled by the organizer.</li>
+                                    <li>Should the tournament be cancelled for any unforeseen circumstances, the registration fees will be refunded to participants, after deduction of administrative charges of RM 10.00.</li>
                                     <li>No refunds will be provided in case of cancellation by the participant.</li>
-                                    <li>Participants are responsible for their health, well-being, and personal belongings.</li>
-                                    <li>All participants agree to follow code of conduct as set by the event hosts.</li>
+                                    <li>Prize values are subject to change if the registration falls below 50% of the intended capacity for a category.</li>
+                                    <li>The organizer reserves the right to reassign players to appropriate categories if their skill levels are found to exceed the category's threshold.</li>
+                                    <li>Participants are responsible for their travel and accommodation arrangements; we will not be held liable for any costs incurred.</li>
+                                    <li>Each participant carefully verifies the supplied information and ensures its correctness.</li>
+                                </ol>
+
+                                <h4 class="font-bold mt-4 mb-2">Check In:</h4>
+                                <ol class="list-decimal pl-5 space-y-2">
+                                    <li>All participants are required to register at the registration desk on the day of the event, at least 1 hour before the scheduled event.</li>
+                                    <li>Identification document (i.e. NRIC or Passport) must be presented to the organizing team members upon check-in for verification purposes.</li>
+                                </ol>
+                                
+                                <h4 class="font-bold mt-4 mb-2">Code of Conduct:</h4>
+                                <ol class="list-decimal pl-5 space-y-2">
+                                    <li>All participants are expected to demonstrate good sportsmanship and abide by the tournament rules. Misconduct, unsportsmanlike behavior may result in disqualification.</li>
+                                </ol>
+                                
+                                <h4 class="font-bold mt-4 mb-2">Health and Safety:</h4>
+                                <ol class="list-decimal pl-5 space-y-2">
+                                    <li>The organizer will ensure a safe and well-organised environment, participants are expected to be responsible for their own health and fitness to compete in the tournament.</li>
+                                    <li>By participating, participants acknowledge and accept the risks associated with pickleball and agree not to hold Courtsite or its organising committee liable for any injuries sustained during the event.</li>
+                                    <li>Participants will need to acknowledge to the waiver and liabilities during registration as stated in Liability Waiver & Informed Consent.</li>
+                                </ol>
+                                
+                                <h4 class="font-bold mt-4 mb-2">Dress Code, Personal Belongings and Media Release:</h4>
+                                <ol class="list-decimal pl-5 space-y-2">
+                                    <li>Participants must wear proper athletic attire and non marking court shoes.</li>
+                                    <li>The organizers reserve the right to use photographs, videos, and other media from the event for non-commercial purposes.</li>
+                                    <li>Participants are advised to bring minimal valuables to the venue.</li>
+                                    <li>It is the participant's responsibility to keep their own belongings safe and secure while at the tournament venue. The organizer will not be held liable or responsible for any loss of personal belongings.</li>
+                                </ol>
+                                
+                                <h4 class="font-bold mt-4 mb-2">Dispute Resolution:</h4>
+                                <ol class="list-decimal pl-5 space-y-2">
+                                    <li>Any disputes must be raised immediately with the referee or tournament director during the match.</li>
+                                    <li>Only valid disputes regarding score discrepancies or rule violations will be considered, and no retrospective challenges will be entertained.</li>
                                     <li>In the event of a dispute, the Tournament Director's decision will be final.</li>
                                 </ol>
                             </div>
@@ -252,7 +325,7 @@
                                     </div>
                                     <div class="ml-3">
                                         <label for="liability_waiver" class="text-sm font-medium text-gray-700 required-field">Liability Waiver & Informed Consent</label>
-                                        <p class="text-xs text-gray-500">I acknowledge that pickleball involves risks of serious bodily injury, including permanent disability, paralysis, and death. I voluntarily accept these risks and waive liability against the organizers, sponsors, and venue. I certify that I am physically fit to participate in this event.</p>
+                                        <p class="text-xs text-gray-500">I acknowledge that pickleball involves risks of serious bodily injury, including permanent disability, paralysis, and death. I agree to release and hold harmless the organizer and its agents, volunteers, committee members, sponsors and affiliates from liability for bodily injury, property damage or death arising from my participation in activities of the club program. I give this release and indemnification in exchange for the opportunity for me to participate in the tournament.</p>
                                     </div>
                                 </div>
                                 
@@ -272,7 +345,7 @@
                                     </div>
                                     <div class="ml-3">
                                         <label for="pdpa_consent" class="text-sm font-medium text-gray-700 required-field">Personal Data Protection Act (PDPA) Consent</label>
-                                        <p class="text-xs text-gray-500">I consent to the collection, use, and processing of my personal data for this event and future communications related to pickleball tournaments. The tournament organizers will collect and process my personal details such as full name, contact details, DUPR rating, and emergency contacts in accordance with the Personal Data Protection Act 2010.</p>
+                                        <p class="text-xs text-gray-500">I acknowledge and agree that the organizer may collect, store, and process my personal data for this event and future communications related to pickleball tournaments. The tournament organizers will collect and process my personal details such as full name, contact details, email address, DUPR rating, and emergency contacts in accordance with the Personal Data Protection Act 2010. My personal data will not be sold or shared with third parties beyond these stated purposes.</p>
                                     </div>
                                 </div>
                             </div>
@@ -336,11 +409,168 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const categorySelect = document.getElementById('{{ form.category_id.id }}');
+        const categoryAvailability = document.getElementById('category-availability');
         const feeDisplay = document.getElementById('summary-fee');
         const categoryDisplay = document.getElementById('summary-category');
         const categoryDescription = document.getElementById('category-description');
         const form = document.querySelector('form');
-        
+        const findPlayer2Button = document.getElementById('find-player2');
+        const player2IcInput = document.getElementById('player2_ic_number');
+        const player2SearchResults = document.getElementById('player2-search-results');
+
+
+        if (findPlayer2Button && player2IcInput) {
+            findPlayer2Button.addEventListener('click', function() {
+                const icNumber = player2IcInput.value.trim();
+                if (!icNumber) {
+                    alert('Please enter an IC/Passport number');
+                    return;
+                }
+                
+                // Show loading indicator
+                player2SearchResults.innerHTML = 'Searching...';
+                player2SearchResults.classList.remove('hidden');
+                
+                // Send request to find user
+                const formData = new FormData();
+                formData.append('ic_number', icNumber);
+                
+                const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+                fetch('{{ url_for("player.find_user_by_ic") }}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': csrfToken  // Add the CSRF token in a header
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // User found, populate fields
+                        player2SearchResults.innerHTML = `
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <div class="font-medium">${data.user.name}</div>
+                                    <div class="text-sm text-gray-600">${data.user.email || ''}</div>
+                                </div>
+                                <button type="button" id="select-player2" class="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">
+                                    Select as Partner
+                                </button>
+                            </div>
+                        `;
+                        
+                        // Add event listener for select button
+                        document.getElementById('select-player2').addEventListener('click', function() {
+                            document.getElementById('player2_name').value = data.user.name;
+                            document.getElementById('player2_email').value = data.user.email || '';
+                            document.getElementById('player2_email_confirm').value = data.user.email || '';
+                            document.getElementById('player2_date_of_birth').value = data.user.date_of_birth || '';
+                            if (data.user.phone && document.getElementById('player2_phone')) {
+                                document.getElementById('player2_phone').value = data.user.phone;
+                            }
+                            if (data.user.nationality && document.getElementById('player2_nationality')) {
+                                document.getElementById('player2_nationality').value = data.user.nationality;
+                            }
+                            if (data.user.dupr_id && document.getElementById('player2_dupr_id')) {
+                                document.getElementById('player2_dupr_id').value = data.user.dupr_id;
+                            }
+                            
+                            // Store the selected partner ID
+                            const hiddenField = document.createElement('input');
+                            hiddenField.type = 'hidden';
+                            hiddenField.name = 'player2_profile_id';
+                            hiddenField.id = 'player2_profile_id';
+                            hiddenField.value = data.user.id;
+                            document.querySelector('form').appendChild(hiddenField);
+                            
+                            // Hide search results
+                            player2SearchResults.classList.add('hidden');
+                            
+                            // Disable fields
+                            document.getElementById('player2_name').readOnly = true;
+                            document.getElementById('player2_email').readOnly = true;
+                            document.getElementById('player2_email_confirm').readOnly = true;
+                            document.getElementById('player2_date_of_birth').readOnly = true;
+                            if (document.getElementById('player2_phone')) {
+                                document.getElementById('player2_phone').readOnly = true;
+                            }
+                            if (document.getElementById('player2_nationality')) {
+                                document.getElementById('player2_nationality').readOnly = true;
+                            }
+                            if (document.getElementById('player2_dupr_id')) {
+                                document.getElementById('player2_dupr_id').readOnly = true;
+                            }
+                            
+                            // Show clear button
+                            const clearButton = document.createElement('button');
+                            clearButton.type = 'button';
+                            clearButton.id = 'clear-player2';
+                            clearButton.className = 'px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 mt-2';
+                            clearButton.textContent = 'Clear Partner Selection';
+                            player2SearchResults.innerHTML = '';
+                            player2SearchResults.appendChild(clearButton);
+                            player2SearchResults.classList.remove('hidden');
+                            
+                            // Add event listener for clear button
+                            document.getElementById('clear-player2').addEventListener('click', function() {
+                                document.getElementById('player2_name').value = '';
+                                document.getElementById('player2_email').value = '';
+                                document.getElementById('player2_email_confirm').value = '';
+                                document.getElementById('player2_date_of_birth').value = '';
+                                if (document.getElementById('player2_phone')) {
+                                    document.getElementById('player2_phone').value = '';
+                                }
+                                if (document.getElementById('player2_nationality')) {
+                                    document.getElementById('player2_nationality').value = '';
+                                }
+                                if (document.getElementById('player2_dupr_id')) {
+                                    document.getElementById('player2_dupr_id').value = '';
+                                }
+                                
+                                // Remove hidden field
+                                const hiddenField = document.getElementById('player2_profile_id');
+                                if (hiddenField) {
+                                    hiddenField.remove();
+                                }
+                                
+                                // Enable fields
+                                document.getElementById('player2_name').readOnly = false;
+                                document.getElementById('player2_email').readOnly = false;
+                                document.getElementById('player2_email_confirm').readOnly = false;
+                                document.getElementById('player2_date_of_birth').readOnly = false;
+                                if (document.getElementById('player2_phone')) {
+                                    document.getElementById('player2_phone').readOnly = false;
+                                }
+                                if (document.getElementById('player2_nationality')) {
+                                    document.getElementById('player2_nationality').readOnly = false;
+                                }
+                                if (document.getElementById('player2_dupr_id')) {
+                                    document.getElementById('player2_dupr_id').readOnly = false;
+                                }
+                                
+                                // Hide search results
+                                player2SearchResults.classList.add('hidden');
+                            });
+                        });
+                    } else {
+                        // User not found
+                        player2SearchResults.innerHTML = `
+                            <div class="text-yellow-700">
+                                ${data.message || 'No user found with this IC number.'}
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    player2SearchResults.innerHTML = 'An error occurred. Please try again.';
+                });
+            });
+        }
+
+
         // Save form data when submitting
         form.addEventListener('submit', function() {
             // Collect all form field values
@@ -456,6 +686,41 @@
             }
         }
         
+        // Category availability information
+        const categoryAvailabilityInfo = {
+            {% for category in categories %}
+                {{ category.id }}: {
+                    current: {{ category_counts[category.id]['current'] }},
+                    max: {{ category_counts[category.id]['max'] or 'null' }},
+                    available: {{ category_counts[category.id]['available'] or 'null' }}
+                },
+            {% endfor %}
+        };
+        
+        // Function to update availability display
+        function updateAvailabilityDisplay() {
+            const categoryId = parseInt(categorySelect.value);
+            if (categoryId && categoryAvailabilityInfo[categoryId]) {
+                const info = categoryAvailabilityInfo[categoryId];
+                
+                if (info.max !== null) {
+                    const remainingText = info.available <= 5 ? 
+                        `<span class="text-red-600 font-medium">Only ${info.available} slots left!</span>` : 
+                        `<span class="text-green-600">${info.available} slots available</span>`;
+                    
+                    categoryAvailability.innerHTML = `Registrations: ${info.current}/${info.max} - ${remainingText}`;
+                } else {
+                    categoryAvailability.innerHTML = 'Unlimited slots available';
+                }
+            } else {
+                categoryAvailability.innerHTML = '';
+            }
+        }
+        
+        // Update on load and when category changes
+        categorySelect.addEventListener('change', updateAvailabilityDisplay);
+        updateAvailabilityDisplay();
+
         // Add test data button
         const formContainer = document.querySelector('form').parentNode;
         const testButton = document.createElement('div');
@@ -482,6 +747,7 @@
             player1_phone: "0123456789",
             player1_dupr_id: "X2KO9X", 
             player1_date_of_birth: "1990-01-15",
+            player1_ic_number: "900115125129",
             player1_nationality: "Malaysian",
             
             player2_name: "Jane Doe",
@@ -490,6 +756,7 @@
             player2_phone: "0198765432",
             player2_dupr_id: "4Z5JW2",
             player2_date_of_birth: "1992-05-20",
+            player2_ic_number: "920520012014",
             player2_nationality: "Malaysian",
             
             terms_agreement: true,

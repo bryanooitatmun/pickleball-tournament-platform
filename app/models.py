@@ -59,6 +59,8 @@ class User(UserMixin, db.Model):
     full_name = db.Column(db.String(100))
     username = db.Column(db.String(64), index=True, unique=True, nullable=False)
     email = db.Column(db.String(120), index=True, unique=True, nullable=False)
+    ic_number = db.Column(db.String(50), unique=True, nullable=True)
+    phone = db.Column(db.String(20), nullable=True)
     password_hash = db.Column(db.String(128))
     role = db.Column(Enum(UserRole), default=UserRole.PLAYER)
     is_active = db.Column(db.Boolean, default=True)
@@ -90,6 +92,8 @@ def load_user(id):
 class PlayerProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    dupr_id = db.Column(db.String(50), nullable=True)
+    date_of_birth = db.Column(db.Date, nullable=True)
     full_name = db.Column(db.String(100))
     country = db.Column(db.String(100))
     city = db.Column(db.String(100))
@@ -759,6 +763,7 @@ class Registration(db.Model):
     player1_nationality = db.Column(db.String(50), nullable=True)
     player1_account_created = db.Column(db.Boolean, default=False)
     player1_temp_password = db.Column(db.String(20), nullable=True)
+    player1_ic_number = db.Column(db.String(50), nullable=True)
     
     # Pre-profile partner information (new)
     player2_name = db.Column(db.String(100), nullable=True)
@@ -770,7 +775,8 @@ class Registration(db.Model):
     player2_nationality = db.Column(db.String(50), nullable=True)
     player2_account_created = db.Column(db.Boolean, default=False)
     player2_temp_password = db.Column(db.String(20), nullable=True)
-    
+    player2_ic_number = db.Column(db.String(50), nullable=True)
+
     # Registration logistics (existing & enhanced)
     registration_date = db.Column(db.DateTime, default=datetime.utcnow)
     is_approved = db.Column(db.Boolean, default=False)
@@ -889,7 +895,9 @@ class Registration(db.Model):
                     username=self.player1_email,  # Use part before @ as username
                     email=self.player1_email,
                     full_name=self.player1_name,
-                    role=UserRole.PLAYER
+                    phone=self.player1_phone,
+                    role=UserRole.PLAYER,
+                    ic_number=self.player1_ic_number
                 )
                 user1.set_password(self.player1_temp_password)
                 db.session.add(user1)
@@ -903,6 +911,8 @@ class Registration(db.Model):
                     full_name=self.player1_name,
                     country=self.player1_nationality,
                     age=calculate_age(self.player1_date_of_birth),
+                    dupr_id = self.player1_dupr_id,
+                    date_of_birth = self.player1_date_of_birth,
                 )
                 db.session.add(profile1)
                 db.session.flush()
@@ -924,7 +934,9 @@ class Registration(db.Model):
                     username=self.player2_email,  # Use part before @ as username
                     email=self.player2_email, 
                     full_name=self.player2_name,
-                    role=UserRole.PLAYER
+                    phone=self.player2_phone,
+                    role=UserRole.PLAYER,
+                    ic_number=self.player2_ic_number
                 )
                 user2.set_password(self.player2_temp_password)
                 db.session.add(user2)
@@ -939,6 +951,8 @@ class Registration(db.Model):
                     full_name=self.player2_name,
                     country=self.player2_nationality,
                     age=calculate_age(self.player2_date_of_birth),
+                    dupr_id = self.player2_dupr_id,
+                    date_of_birth = self.player2_date_of_birth,
                 )
                 db.session.add(profile2)
                 db.session.flush()

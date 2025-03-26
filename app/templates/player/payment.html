@@ -35,6 +35,11 @@
         height: 3px;
         background-color: #3B82F6;
     }
+    .file-error {
+        color: #EF4444;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
 </style>
 {% endblock %}
 
@@ -137,21 +142,33 @@
                     <div class="border-t border-gray-200 pt-6">
                         <h3 class="text-lg font-semibold mb-4 text-blue-700">Upload Payment Proof</h3>
                         
-                        <form method="POST" enctype="multipart/form-data">
+                        <!-- Flash Messages -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="p-4 mb-4 {% if category == 'success' %}bg-green-100 text-green-700{% elif category == 'danger' %}bg-red-100 text-red-700{% elif category == 'warning' %}bg-yellow-100 text-yellow-700{% else %}bg-blue-100 text-blue-700{% endif %} rounded-lg">
+                                        {{ message }}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+                        
+                        <form method="POST" enctype="multipart/form-data" id="payment-form">
                             <!-- Use form.hidden_tag() for Flask-WTF CSRF protection -->
                             {{ form.hidden_tag() }}
                             
                             <div class="mb-6">
                                 <label for="{{ form.payment_proof.id }}" class="block text-sm font-medium text-gray-700 mb-1">Payment Screenshot/Receipt</label>
                                 {{ form.payment_proof(class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer") }}
-                                {% if form.payment_proof.errors %}
+                                {# {% if form.payment_proof.errors %}
                                     <div class="text-red-500 text-sm mt-1">
                                         {% for error in form.payment_proof.errors %}
                                             {{ error }}
                                         {% endfor %}
                                     </div>
-                                {% endif %}
-                                <p class="text-xs text-gray-500 mt-1">Upload a screenshot or photo of your payment confirmation (max 5MB)</p>
+                                {% endif %} #}
+                                <div id="file-error" class="file-error hidden"></div>
+                                <p class="text-xs text-gray-500 mt-1">Upload a screenshot or photo of your payment confirmation (JPG, JPEG, PNG only, max 5MB)</p>
                             </div>
                             
                             <div class="flex justify-between items-center">
@@ -206,4 +223,74 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('payment-form');
+        const fileInput = document.getElementById('{{ form.payment_proof.id }}');
+        const fileError = document.getElementById('file-error');
+        
+        // Maximum file size - 5MB in bytes
+        const MAX_FILE_SIZE = 5 * 1024 * 1024;
+        
+        // Allowed file types
+        const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+        
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            fileError.classList.add('hidden');
+            fileError.textContent = '';
+            
+            if (file) {
+                // Check file type
+                if (!ALLOWED_TYPES.includes(file.type)) {
+                    fileError.textContent = 'Only JPG, JPEG and PNG files are allowed.';
+                    fileError.classList.remove('hidden');
+                    this.value = ''; // Clear the file input
+                    return;
+                }
+                
+                // Check file size
+                if (file.size > MAX_FILE_SIZE) {
+                    const sizeInMB = (file.size / 1024 / 1024).toFixed(2);
+                    fileError.textContent = `File size too large. Maximum allowed size is 5MB. Your file is ${sizeInMB}MB.`;
+                    fileError.classList.remove('hidden');
+                    this.value = ''; // Clear the file input
+                    return;
+                }
+            }
+        });
+        
+        form.addEventListener('submit', function(event) {
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                fileError.textContent = 'Please select a file to upload.';
+                fileError.classList.remove('hidden');
+                event.preventDefault();
+                return;
+            }
+            
+            // Check file type again
+            if (!ALLOWED_TYPES.includes(file.type)) {
+                fileError.textContent = 'Only JPG, JPEG and PNG files are allowed.';
+                fileError.classList.remove('hidden');
+                event.preventDefault();
+                return;
+            }
+            
+            // Check file size again
+            if (file.size > MAX_FILE_SIZE) {
+                const sizeInMB = (file.size / 1024 / 1024).toFixed(2);
+                fileError.textContent = `File size too large. Maximum allowed size is 5MB. Your file is ${sizeInMB}MB.`;
+                fileError.classList.remove('hidden');
+                event.preventDefault();
+                return;
+            }
+        });
+    });
+</script>
 {% endblock %}
