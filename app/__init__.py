@@ -51,6 +51,9 @@ def create_app(config_class=Config):
     from app.admin import bp as admin_bp
     app.register_blueprint(admin_bp, url_prefix='/admin')
     
+    from app.support import bp as support_bp
+    app.register_blueprint(support_bp, url_prefix='/support')
+    
     # Register error handlers
     from app.errors import register_error_handlers
     register_error_handlers(app)

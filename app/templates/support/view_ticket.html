@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Ticket: {{ ticket.subject }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex items-center gap-2 text-gray-500 text-sm mb-4">
+        <a href="{{ url_for('main.index') }}" class="hover:text-blue-600">Home</a>
+        <span>/</span>
+        {% if current_user.id == ticket.tournament.organizer_id or current_user.is_admin() %}
+        <a href="{{ url_for('support.tournament_tickets', tournament_id=ticket.tournament.id) }}" class="hover:text-blue-600">{{ ticket.tournament.name }} Tickets</a>
+        {% else %}
+        <a href="{{ url_for('support.my_tickets') }}" class="hover:text-blue-600">My Tickets</a>
+        {% endif %}
+        <span>/</span>
+        <span class="text-gray-700">Ticket #{{ ticket.id }}</span>
+    </div>
+    
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">{{ ticket.subject }}</h1>
+        
+        {% if is_organizer %}
+        <form method="POST" action="{{ url_for('support.update_ticket_status', ticket_id=ticket.id) }}" class="flex items-center">
+            {{ status_form.csrf_token }}
+            <div class="mr-2">
+                {{ status_form.status(class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+            </div>
+            {{ status_form.submit(class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm") }}
+        </form>
+        {% else %}
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+            {% if ticket.status.name == 'OPEN' %}bg-blue-100 text-blue-800
+            {% elif ticket.status.name == 'IN_PROGRESS' %}bg-yellow-100 text-yellow-800
+            {% elif ticket.status.name == 'RESOLVED' %}bg-green-100 text-green-800
+            {% else %}bg-gray-100 text-gray-800{% endif %}">
+            {{ ticket.status.value }}
+        </span>
+        {% endif %}
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Ticket Info -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <!-- Original ticket -->
+                <div class="border-b border-gray-200">
+                    <div class="bg-gray-50 px-6 py-4 flex justify-between items-center">
+                        <div>
+                            <div class="font-medium">{{ ticket.submitter.full_name }}</div>
+                            <div class="text-sm text-gray-500">{{ ticket.created_at.strftime('%d %b %Y, %I:%M %p') }}</div>
+                        </div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {{ ticket.ticket_type.value }}
+                        </span>
+                    </div>
+                    <div class="px-6 py-4">
+                        <div class="prose max-w-none">
+                            {{ ticket.description|replace('\n', '<br>')|safe }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Responses -->
+                {% for response in responses %}
+                <div class="border-b border-gray-200 {% if response.user_id == ticket.submitter_id %}bg-blue-50{% endif %}">
+                    <div class="px-6 py-4 flex justify-between items-center {% if response.user_id == ticket.submitter_id %}bg-blue-100/30{% else %}bg-gray-50{% endif %}">
+                        <div>
+                            <div class="font-medium">
+                                {{ response.user.full_name }}
+                                {% if response.user_id == ticket.tournament.organizer_id %}
+                                <span class="inline-flex items-center ml-2 px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                    Organizer
+                                </span>
+                                {% elif response.user.is_admin() %}
+                                <span class="inline-flex items-center ml-2 px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                    Admin
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="text-sm text-gray-500">{{ response.created_at.strftime('%d %b %Y, %I:%M %p') }}</div>
+                        </div>
+                    </div>
+                    <div class="px-6 py-4">
+                        <div class="prose max-w-none">
+                            {{ response.message|replace('\n', '<br>')|safe }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <!-- Reply Form -->
+                {% if ticket.status.name != 'CLOSED' %}
+                <div class="px-6 py-4">
+                    <h3 class="text-lg font-medium text-gray-900 mb-3">Reply</h3>
+                    <form method="POST" action="">
+                        {{ response_form.csrf_token }}
+                        <div class="mb-4">
+                            {{ response_form.message(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500", rows=4, placeholder="Type your response...") }}
+                            {% if response_form.message.errors %}
+                            <div class="text-red-600 text-sm mt-1">
+                                {% for error in response_form.message.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {{ response_form.submit(class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700") }}
+                    </form>
+                </div>
+                {% else %}
+                <div class="px-6 py-4 bg-gray-50 text-center text-gray-500">
+                    This ticket is closed. No further responses can be added.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Ticket Sidebar -->
+        <div>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Ticket Information</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Tournament</h4>
+                        <p class="mt-1">
+                            <a href="{{ url_for('main.tournament_detail', id=ticket.tournament.id) }}" class="text-blue-600 hover:text-blue-800">
+                                {{ ticket.tournament.name }}
+                            </a>
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Submitted By</h4>
+                        <p class="mt-1">{{ ticket.submitter.full_name }}</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Status</h4>
+                        <p class="mt-1">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if ticket.status.name == 'OPEN' %}bg-blue-100 text-blue-800
+                                {% elif ticket.status.name == 'IN_PROGRESS' %}bg-yellow-100 text-yellow-800
+                                {% elif ticket.status.name == 'RESOLVED' %}bg-green-100 text-green-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ ticket.status.value }}
+                            </span>
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Created</h4>
+                        <p class="mt-1">{{ ticket.created_at.strftime('%B %d, %Y') }}</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Last Updated</h4>
+                        <p class="mt-1">{{ ticket.updated_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                    </div>
+                    
+                    {% if ticket.reported_player %}
+                    <div class="border-t border-gray-200 pt-4 mt-4">
+                        <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Reported Player</h4>
+                        <div class="mt-2 flex items-center">
+                            <div class="flex-shrink-0">
+                                {% if ticket.reported_player.profile_image %}
+                                <img src="{{ url_for('static', filename=ticket.reported_player.profile_image) }}" class="h-10 w-10 rounded-full" alt="{{ ticket.reported_player.full_name }}">
+                                {% else %}
+                                <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <span class="text-blue-600 font-bold">{{ ticket.reported_player.full_name[:1] }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="ml-3">
+                                <a href="{{ url_for('main.player_detail', id=ticket.reported_player.id) }}" class="text-sm font-medium text-gray-900 hover:text-blue-600">
+                                    {{ ticket.reported_player.full_name }}
+                                </a>
+                                <p class="text-xs text-gray-500">{{ ticket.reported_player.country }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

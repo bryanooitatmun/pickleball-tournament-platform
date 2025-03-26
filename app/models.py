@@ -1164,3 +1164,46 @@ class Registration(db.Model):
             """
             
         send_email(subject, [self.player2_email], body)
+
+# Add these models to app/models.py
+
+class TicketType(enum.Enum):
+    PLAYER_REPORT = "Player Report"
+    GENERAL_SUPPORT = "General Support"
+    TECHNICAL_ISSUE = "Technical Issue"
+    PAYMENT_ISSUE = "Payment Issue"
+    OTHER = "Other"
+
+class TicketStatus(enum.Enum):
+    OPEN = "Open"
+    IN_PROGRESS = "In Progress"
+    RESOLVED = "Resolved"
+    CLOSED = "Closed"
+
+class SupportTicket(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    tournament_id = db.Column(db.Integer, db.ForeignKey('tournament.id'))
+    submitter_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    reported_player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=True)
+    ticket_type = db.Column(Enum(TicketType), default=TicketType.GENERAL_SUPPORT)
+    status = db.Column(Enum(TicketStatus), default=TicketStatus.OPEN)
+    subject = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    tournament = db.relationship('Tournament', backref='support_tickets')
+    submitter = db.relationship('User', foreign_keys=[submitter_id], backref='submitted_tickets')
+    reported_player = db.relationship('PlayerProfile', backref='player_reports')
+    responses = db.relationship('TicketResponse', backref='ticket', lazy='dynamic', cascade='all, delete-orphan')
+
+class TicketResponse(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.Integer, db.ForeignKey('support_ticket.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='ticket_responses')

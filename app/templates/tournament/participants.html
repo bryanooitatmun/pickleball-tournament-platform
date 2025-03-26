@@ -74,7 +74,7 @@
                 {% for team_key, team in teams.items() %}
                     <div class="px-6 py-4">
                         <div class="flex items-center justify-between">
-                            {# Team info with seed #}
+                            <!-- Team info with seed -->
                             <div class="flex items-center">
                                 {% if team.seed %}
                                     <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold mr-4">
@@ -83,7 +83,7 @@
                                 {% endif %}
                                 
                                 <div class="flex flex-col sm:flex-row sm:items-center">
-                                    {# First player #}
+                                    <!-- First player -->
                                     <div class="flex items-center mb-2 sm:mb-0 sm:mr-6">
                                         <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                                             {% if team.player1.profile_image %}
@@ -100,12 +100,35 @@
                                             </a>
                                             <div class="text-xs text-gray-500">{{ team.player1.country }}</div>
                                         </div>
+                                        
+                                        <!-- Add Report Button for player 1 -->
+                                        {% if current_user.is_authenticated %}
+                                        <div class="dropdown relative ml-2">
+                                            <button class="text-gray-400 hover:text-gray-600 focus:outline-none" type="button" id="dropdownMenuButton{{ team.player1.id }}" onclick="toggleDropdown('dropdown{{ team.player1.id }}')">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                                </svg>
+                                            </button>
+                                            <ul id="dropdown{{ team.player1.id }}" class="dropdown-menu hidden fixed z-50 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu">
+                                                <li>
+                                                    <a href="{{ url_for('support.create_ticket', tournament_id=tournament.id, report_player=team.player1.id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">
+                                                        <div class="flex items-center">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                            </svg>
+                                                            Report Player
+                                                        </div>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        {% endif %}
                                     </div>
                                     
-                                    {# Team separator on larger screens #}
+                                    <!-- Team separator on larger screens -->
                                     <div class="hidden sm:block text-gray-400 mx-2">/</div>
                                     
-                                    {# Second player #}
+                                    <!-- Second player -->
                                     <div class="flex items-center">
                                         <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                                             {% if team.player2.profile_image %}
@@ -122,18 +145,32 @@
                                             </a>
                                             <div class="text-xs text-gray-500">{{ team.player2.country }}</div>
                                         </div>
+                                        
+                                        <!-- Add Report Button for player 2 -->
+                                        {% if current_user.is_authenticated %}
+                                        <div class="dropdown relative ml-2">
+                                            <button class="text-gray-400 hover:text-gray-600 focus:outline-none" type="button" id="dropdownMenuButton{{ team.player2.id }}" onclick="toggleDropdown('dropdown{{ team.player2.id }}')">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                                </svg>
+                                            </button>
+                                            <ul id="dropdown{{ team.player2.id }}" class="dropdown-menu hidden fixed z-50 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu">
+                                                <li>
+                                                    <a href="{{ url_for('support.create_ticket', tournament_id=tournament.id, report_player=team.player2.id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">
+                                                        <div class="flex items-center">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                            </svg>
+                                                            Report Player
+                                                        </div>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
-                            
-                            {# Add DUPR rating if available #}
-                            {# {% if team.player1_dupr is defined or team.player2_dupr is defined %}
-                                <div class="text-sm text-gray-500">
-                                    <span class="font-medium">DUPR:</span> 
-                                    {% if team.player1_dupr is defined %}{{ team.player1_dupr }}{% else %}--{% endif %} / 
-                                    {% if team.player2_dupr is defined %}{{ team.player2_dupr }}{% else %}--{% endif %}
-                                </div>
-                            {% endif %} #}
                         </div>
                     </div>
                 {% endfor %}
@@ -142,11 +179,11 @@
                 {% for entry in participants %}
                     <div class="px-6 py-4 flex items-center justify-between">
                         <div class="flex items-center">
-                            {# {% if entry.seed %}
+                            {% if entry.seed %}
                                 <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold mr-4">
                                     {{ entry.seed }}
                                 </div>
-                            {% endif %} #}
+                            {% endif %}
                             
                             <div class="flex items-center">
                                 <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
@@ -167,12 +204,28 @@
                             </div>
                         </div>
                         
-                        {# Display DUPR rating if available #}
-                        {# {% if entry.player_dupr is defined %}
-                            <div class="text-sm text-gray-500">
-                                <span class="font-medium">DUPR:</span> {{ entry.player_dupr }}
-                            </div>
-                        {% endif %} #}
+                        <!-- Add Report Button -->
+                        {% if current_user.is_authenticated %}
+                        <div class="dropdown relative">
+                            <button class="text-gray-400 hover:text-gray-600 focus:outline-none" type="button" id="dropdownMenuButton{{ entry.player.id }}" onclick="toggleDropdown('dropdown{{ entry.player.id }}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                </svg>
+                            </button>
+                            <ul id="dropdown{{ entry.player.id }}" class="dropdown-menu hidden absolute right-0 z-10 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu">
+                                <li>
+                                    <a href="{{ url_for('support.create_ticket', tournament_id=tournament.id, report_player=entry.player.id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">
+                                        <div class="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            Report Player
+                                        </div>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        {% endif %}
                     </div>
                 {% endfor %}
             {% endif %}
@@ -206,3 +259,32 @@
     </a>
 </div>
 {% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleDropdown(id) {
+        const dropdown = document.getElementById(id);
+        if (dropdown.classList.contains('hidden')) {
+            // Close all other dropdowns first
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                if (menu.id !== id) {
+                    menu.classList.add('hidden');
+                }
+            });
+            // Open this dropdown
+            dropdown.classList.remove('hidden');
+        } else {
+            dropdown.classList.add('hidden');
+        }
+    }
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.dropdown')) {
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+        }
+    });
+</script>
+{% endblock  %}

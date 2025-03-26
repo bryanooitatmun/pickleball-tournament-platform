@@ -26,6 +26,7 @@
                         <a href="{{ url_for('main.index') }}" class="font-medium hover:text-blue-600">Home</a>
                         <a href="{{ url_for('main.events') }}" class="hidden font-medium hover:text-blue-600">Events</a>
                         <a href="{{ url_for('main.rankings') }}" class="hidden font-medium hover:text-blue-600">Rankings</a>
+                        <a href="{{ url_for('support.my_tickets') }}" class="font-medium hover:text-blue-600">Support</a>
                         {% if current_user.is_authenticated %}
                             {% if current_user.is_player() %}
                                 <a href="{{ url_for('player.dashboard') }}" class="font-medium hover:text-blue-600">My Profile</a>
@@ -64,6 +65,7 @@
             <a href="{{ url_for('main.index') }}" class="text-gray-600 hover:text-blue-600">Home</a>
             <a href="{{ url_for('main.events') }}" class="hidden text-gray-600 hover:text-blue-600">Events</a>
             <a href="{{ url_for('main.rankings') }}" class="hidden text-gray-600 hover:text-blue-600">Rankings</a>
+            <a href="{{ url_for('support.my_tickets') }}" class="text-gray-600 hover:text-blue-600">Support</a>
             {% if current_user.is_authenticated %}
                 {% if current_user.is_player() %}
                     <a href="{{ url_for('player.dashboard') }}" class="text-gray-600 hover:text-blue-600">My Profile</a>
