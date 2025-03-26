@@ -133,6 +133,23 @@
                 <div class="badge-{{ tournament.tier.value }} px-3 py-1 rounded-full text-sm font-semibold inline-flex items-center">
                     {{ tournament.tier.value }}
                 </div>
+                <!-- Add ranked/unranked indicator badge -->
+                {% if tournament.is_ranked %}
+                <div class="ml-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold inline-flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Ranked
+                </div>
+                {% else %}
+                <div class="ml-2 bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-semibold inline-flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Unranked
+                </div>
+                {% endif %}
+
                 <div class="ml-3 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-sm text-white inline-flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />

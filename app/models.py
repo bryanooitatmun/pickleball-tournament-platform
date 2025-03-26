@@ -162,6 +162,8 @@ class Tournament(db.Model):
     is_featured = db.Column(db.Boolean, default=False)
     featured_image = db.Column(db.String(255))
 
+    is_ranked = db.Column(db.Boolean, default=False)
+
     total_cash_prize = db.Column(db.Float, default=0.0)  # Total cash across all categories
     total_prize_value = db.Column(db.Float, default=0.0)  # Including merchandise value
     prize_structure_description = db.Column(db.Text, nullable=True)  # Tournament-wide description

@@ -14,10 +14,12 @@ class TournamentForm(FlaskForm):
     start_date = DateTimeField('Start Date', format='%Y-%m-%dT%H:%M', validators=[DataRequired()])
     end_date = DateTimeField('End Date', format='%Y-%m-%dT%H:%M', validators=[DataRequired()])
     registration_deadline = DateTimeField('Registration Deadline', format='%Y-%m-%dT%H:%M', validators=[DataRequired()])
-    
+
     tier = SelectField('Tournament Tier', 
                       choices=[(tier.name, tier.value) for tier in TournamentTier], 
                       validators=[DataRequired()])
+    
+    is_ranked = BooleanField('Ranked Tournament (contributes to player rankings)', default=True)
     
     format = SelectField('Tournament Format', 
                         choices=[(fmt.name, fmt.value) for fmt in TournamentFormat], 
