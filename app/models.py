@@ -13,6 +13,7 @@ class UserRole(enum.Enum):
     ADMIN = "admin"
     PLAYER = "player"
     ORGANIZER = "organizer"
+    REFEREE = "referee"
 
 class TournamentTier(enum.Enum):
     SLATE = "SLATE"
