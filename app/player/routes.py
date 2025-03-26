@@ -267,11 +267,11 @@ def find_user_by_ic():
     
     # Find player profile with this IC number
     user = User.query.filter_by(ic_number=ic_number).first()
-    profile = PlayerProfile.query.filter_by(user_id=user.id).first()
-
+    
     if not user:
         return jsonify({'success': False, 'message': 'No user found with this IC number'})
-    
+        
+    profile = PlayerProfile.query.filter_by(user_id=user.id).first()
     # If current user is authenticated, check if this is their own profile
     if current_user.is_authenticated and current_user.ic_number == ic_number:
         return jsonify({
