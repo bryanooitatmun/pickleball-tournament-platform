@@ -100,6 +100,9 @@ def save_picture(picture, subfolder='tournament_pics', additional_text=''):
         The path to the saved file
     """
     try:
+        if isinstance(picture, str):
+            return picture
+
         # Read file data
         file_data = picture.read()
         

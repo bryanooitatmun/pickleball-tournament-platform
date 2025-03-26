@@ -10,10 +10,12 @@ from app import db
 from app.organizer import bp
 from app.organizer.forms import (TournamentForm, CategoryForm, SeedingForm, 
                                 MatchForm, ScoreForm, BracketGenerationForm,
-                                CompleteMatchForm)
+                                CompleteMatchForm, VenueForm, VenueImageForm, SponsorForm, 
+                                TournamentSponsorForm, TournamentVenueForm)
 from app.models import (Tournament, TournamentCategory, Match, MatchScore, 
                        Registration, PlayerProfile, User, TournamentStatus,
-                       TournamentTier, TournamentFormat, CategoryType, Prize, PrizeType)
+                       TournamentTier, TournamentFormat, CategoryType, Prize, PrizeType,
+                       Venue, VenueImage, PlatformSponsor, SponsorTier)
 from app.services import BracketService, PlacingService, PrizeService, RegistrationService
 
 from app.decorators import organizer_required
@@ -969,7 +971,7 @@ def edit_prizes(id):
         db.session.commit()
         
         flash('Tournament prizes updated successfully!', 'success')
-        return redirect(url_for('organizer.tournament_detail', id=tournament.id))
+        return redirect(url_for('organizer.edit_tournament', id=tournament.id))
     
     # For GET requests, gather prize data
     prize_data = {}
@@ -984,6 +986,487 @@ def edit_prizes(id):
         prize_data=prize_data,
         prize_types=[(pt.value, pt.name) for pt in PrizeType]
     )
+
+@bp.route('/tournament/<int:id>/venue', methods=['GET', 'POST'])
+@login_required
+@organizer_required
+def edit_venue(id):
+    """Edit venue for a tournament"""
+    tournament = Tournament.query.get_or_404(id)
+    
+    # Ensure the tournament belongs to this organizer
+    if tournament.organizer_id != current_user.id and not current_user.is_admin():
+        flash('You do not have permission to edit this tournament.', 'danger')
+        return redirect(url_for('organizer.dashboard'))
+    
+    form = TournamentVenueForm()
+    
+    if form.validate_on_submit():
+        venue_id = form.venue_id.data
+        if venue_id:
+            venue = Venue.query.get(venue_id)
+            if venue:
+                tournament.venue_id = venue_id
+            else:
+                flash('Selected venue not found.', 'danger')
+        else:
+            tournament.venue_id = None
+            
+        db.session.commit()
+        flash('Tournament venue updated successfully.', 'success')
+        return redirect(url_for('organizer.edit_tournament', id=id))
+    
+    # Get all venues for dropdown
+    venues = Venue.query.order_by(Venue.name).all()
+    
+    # Get venue images if there's a venue assigned
+    venue_images = []
+    if tournament.venue_id:
+        venue_images = VenueImage.query.filter_by(venue_id=tournament.venue_id).order_by(VenueImage.display_order).all()
+    
+    return render_template('organizer/edit_venue.html',
+                          title='Edit Venue',
+                          tournament=tournament,
+                          venues=venues,
+                          venue_images=venue_images,
+                          form=form)
+
+
+@bp.route('/venues')
+@login_required
+@organizer_required
+def venues():
+    """List all venues"""
+    venues = Venue.query.order_by(Venue.name).all()
+    return render_template('organizer/edit_tournament/venues.html',
+                          title='Venues',
+                          venues=venues)
+
+
+@bp.route('/venue/create', methods=['GET', 'POST'])
+@login_required
+@organizer_required
+def create_venue():
+    """Create a new venue"""
+    form = VenueForm()
+    
+    if form.validate_on_submit():
+        venue = Venue(
+            name=form.name.data,
+            address=form.address.data,
+            city=form.city.data,
+            state=form.state.data,
+            country=form.country.data,
+            postal_code=form.postal_code.data,
+            description=form.description.data,
+            website=form.website.data,
+            court_count=form.court_count.data,
+            is_featured=form.is_featured.data,
+            display_order=form.display_order.data or 999,
+            contact_email=form.contact_email.data,
+            contact_phone=form.contact_phone.data,
+            facilities=form.facilities.data,
+            amenities=form.amenities.data,
+            parking_info=form.parking_info.data,
+            google_maps_url=form.google_maps_url.data
+        )
+        
+        if form.image.data:
+            venue.image = save_picture(form.image.data, 'venue_images')
+        
+        db.session.add(venue)
+        db.session.commit()
+        
+        flash('Venue created successfully!', 'success')
+        return redirect(url_for('organizer.venues'))
+    
+    return render_template('organizer/edit_tournament/create_venue.html',
+                          title='Create Venue',
+                          form=form)
+
+
+@bp.route('/venue/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+@organizer_required
+def edit_venue_details(id):
+    """Edit venue details"""
+    venue = Venue.query.get_or_404(id)
+    form = VenueForm(obj=venue)
+    
+    if form.validate_on_submit():
+        venue.name = form.name.data
+        venue.address = form.address.data
+        venue.city = form.city.data
+        venue.state = form.state.data
+        venue.country = form.country.data
+        venue.postal_code = form.postal_code.data
+        venue.description = form.description.data
+        venue.website = form.website.data
+        venue.court_count = form.court_count.data
+        venue.is_featured = form.is_featured.data
+        venue.display_order = form.display_order.data or 999
+        venue.contact_email = form.contact_email.data
+        venue.contact_phone = form.contact_phone.data
+        venue.facilities = form.facilities.data
+        venue.amenities = form.amenities.data
+        venue.parking_info = form.parking_info.data
+        venue.google_maps_url = form.google_maps_url.data
+        
+        if form.image.data:
+            venue.image = save_picture(form.image.data, 'venue_images')
+        
+        db.session.commit()
+        
+        flash('Venue updated successfully!', 'success')
+        return redirect(url_for('organizer.venues'))
+    
+    # Get venue images for gallery section
+    venue_images = VenueImage.query.filter_by(venue_id=id).order_by(VenueImage.display_order).all()
+    
+    return render_template('organizer/edit_tournament/edit_venue_details.html',
+                          title=f'Edit {venue.name}',
+                          venue=venue,
+                          venue_images=venue_images,
+                          form=form)
+
+
+@bp.route('/venue/<int:id>/add_image', methods=['GET', 'POST'])
+@login_required
+@organizer_required
+def add_venue_image(id):
+    """Add an image to venue gallery"""
+    venue = Venue.query.get_or_404(id)
+    form = VenueImageForm()
+    
+    if form.validate_on_submit():
+        # If setting this as primary, unset all other primary images
+        if form.is_primary.data:
+            primary_images = VenueImage.query.filter_by(venue_id=id, is_primary=True).all()
+            for image in primary_images:
+                image.is_primary = False
+        
+        # Save the new image
+        image_path = save_picture(form.image.data, 'venue_images')
+        
+        # Get max display order + 1 if not specified
+        if not form.display_order.data:
+            max_order = db.session.query(db.func.max(VenueImage.display_order)).filter_by(venue_id=id).scalar() or 0
+            display_order = max_order + 1
+        else:
+            display_order = form.display_order.data
+        
+        venue_image = VenueImage(
+            venue_id=id,
+            image_path=image_path,
+            caption=form.caption.data,
+            is_primary=form.is_primary.data,
+            display_order=display_order
+        )
+        
+        db.session.add(venue_image)
+        db.session.commit()
+        
+        flash('Image added to venue gallery.', 'success')
+        return redirect(url_for('organizer.edit_venue_details', id=id))
+    
+    return render_template('organizer/edit_tournament/add_venue_image.html',
+                          title=f'Add Image to {venue.name}',
+                          venue=venue,
+                          form=form)
+
+
+@bp.route('/venue/image/<int:id>/delete', methods=['POST'])
+@login_required
+@organizer_required
+def delete_venue_image(id):
+    """Delete a venue image"""
+    image = VenueImage.query.get_or_404(id)
+    venue_id = image.venue_id
+    
+    # Delete the file if it exists
+    if image.image_path:
+        try:
+            image_path = os.path.join(current_app.root_path, 'static', image.image_path)
+            if os.path.exists(image_path):
+                os.remove(image_path)
+        except Exception as e:
+            current_app.logger.error(f"Error deleting file: {e}")
+    
+    db.session.delete(image)
+    db.session.commit()
+    
+    flash('Image deleted from gallery.', 'success')
+    return redirect(url_for('organizer.edit_venue_details', id=venue_id))
+
+
+@bp.route('/venue/image/<int:id>/set_primary', methods=['POST'])
+@login_required
+@organizer_required
+def set_primary_venue_image(id):
+    """Set a venue image as primary"""
+    image = VenueImage.query.get_or_404(id)
+    venue_id = image.venue_id
+    
+    # Unset all other primary images for this venue
+    primary_images = VenueImage.query.filter_by(venue_id=venue_id, is_primary=True).all()
+    for img in primary_images:
+        img.is_primary = False
+    
+    # Set the selected image as primary
+    image.is_primary = True
+    db.session.commit()
+    
+    flash('Primary image updated.', 'success')
+    return redirect(url_for('organizer.edit_venue_details', id=venue_id))
+
+
+@bp.route('/venue/image/<int:id>/reorder', methods=['POST'])
+@login_required
+@organizer_required
+def reorder_venue_image(id):
+    """Change the display order of a venue image"""
+    image = VenueImage.query.get_or_404(id)
+    venue_id = image.venue_id
+    
+    new_order = request.form.get('order', type=int)
+    if new_order and new_order > 0:
+        image.display_order = new_order
+        db.session.commit()
+        flash('Image order updated.', 'success')
+    
+    return redirect(url_for('organizer.edit_venue_details', id=venue_id))
+
+
+@bp.route('/tournament/<int:id>/sponsors', methods=['GET', 'POST'])
+@login_required
+@organizer_required
+def edit_sponsors(id):
+    """Edit sponsors for a tournament"""
+    tournament = Tournament.query.get_or_404(id)
+    
+    # Ensure the tournament belongs to this organizer
+    if tournament.organizer_id != current_user.id and not current_user.is_admin():
+        flash('You do not have permission to edit this tournament.', 'danger')
+        return redirect(url_for('organizer.dashboard'))
+    
+    form = TournamentSponsorForm()
+    
+    if form.validate_on_submit():
+        # Get selected sponsor IDs and order
+        sponsor_ids = request.form.getlist('selected_sponsors')
+        sponsor_order = request.form.getlist('sponsor_order[]')
+        
+        # Clear existing sponsors
+        tournament.platform_sponsors = []
+        
+        # Add selected sponsors in order
+        if sponsor_ids:
+            # First process sponsors with defined order
+            for sponsor_id in sponsor_order:
+                if sponsor_id in sponsor_ids:
+                    sponsor = PlatformSponsor.query.get(sponsor_id)
+                    if sponsor:
+                        tournament.platform_sponsors.append(sponsor)
+            
+            # Then add any remaining sponsors that were checked but not in the order list
+            for sponsor_id in sponsor_ids:
+                if sponsor_id not in sponsor_order:
+                    sponsor = PlatformSponsor.query.get(sponsor_id)
+                    if sponsor:
+                        tournament.platform_sponsors.append(sponsor)
+        
+        db.session.commit()
+        flash('Tournament sponsors updated successfully.', 'success')
+        return redirect(url_for('organizer.edit_tournament', id=id))
+    
+    # Get all sponsors for selection
+    all_sponsors = PlatformSponsor.query.order_by(
+        # Order by tier first (Premier > Official > Featured > Supporting)
+        db.case(
+            {
+                'PREMIER': 1,
+                'OFFICIAL': 2,
+                'FEATURED': 3,
+                'SUPPORTING': 4
+            },
+            value=PlatformSponsor.tier.name,
+            else_=5
+        ),
+        # Then by display order within tier
+        PlatformSponsor.display_order
+    ).all()
+    
+    # Get currently selected sponsor IDs
+    selected_sponsor_ids = [sponsor.id for sponsor in tournament.platform_sponsors]
+    
+    # Get tournament sponsors in their current order
+    tournament_sponsors = tournament.platform_sponsors
+
+    print(tournament_sponsors)
+
+    # Sort the sponsors by tier first, then by display_order
+    tournament_sponsors = sorted(tournament_sponsors, 
+        key=lambda x: (
+            # Order by tier priority (Premier > Official > Featured > Supporting)
+            {'PREMIER': 1, 'OFFICIAL': 2, 'FEATURED': 3, 'SUPPORTING': 4}.get(x.tier.name if x.tier else 'SUPPORTING', 5),
+            # Then by display order within tier
+            x.display_order or 999
+        )
+    )
+    print(tournament_sponsors)
+    # Available sponsors (excluding already selected)
+    available_sponsors = all_sponsors
+    
+    return render_template('organizer/edit_sponsors.html',
+                          title='Edit Sponsors',
+                          tournament=tournament,
+                          available_sponsors=available_sponsors,
+                          selected_sponsor_ids=selected_sponsor_ids,
+                          tournament_sponsors=tournament_sponsors,
+                          form=form)
+
+
+@bp.route('/sponsors')
+@login_required
+@organizer_required
+def manage_sponsors():
+    """List all sponsors"""
+    sponsors = PlatformSponsor.query.order_by(
+        # Order by tier first (Premier > Official > Featured > Supporting)
+        db.case(
+            {
+                'PREMIER': 1,
+                'OFFICIAL': 2,
+                'FEATURED': 3,
+                'SUPPORTING': 4
+            },
+            value=PlatformSponsor.tier.name,
+            else_=5
+        ),
+        # Then by display order within tier
+        PlatformSponsor.display_order
+    ).all()
+    
+    return render_template('organizer/edit_tournament/manage_sponsors.html',
+                          title='Sponsors',
+                          sponsors=sponsors)
+
+
+@bp.route('/sponsor/create', methods=['GET', 'POST'])
+@login_required
+@organizer_required
+def create_sponsor():
+    """Create a new sponsor"""
+    form = SponsorForm()
+    
+    if form.validate_on_submit():
+        # Convert tier string to enum
+        tier = SponsorTier[form.tier.data] if form.tier.data else SponsorTier.SUPPORTING
+        
+        sponsor = PlatformSponsor(
+            name=form.name.data,
+            tier=tier,
+            description=form.description.data,
+            website=form.website.data,
+            is_featured=form.is_featured.data,
+            display_order=form.display_order.data or 999,
+            contact_name=form.contact_name.data,
+            contact_email=form.contact_email.data,
+            contact_phone=form.contact_phone.data
+        )
+        
+        if form.logo.data:
+            sponsor.logo = save_picture(form.logo.data, 'sponsor_logos')
+        
+        if form.banner_image.data:
+            sponsor.banner_image = save_picture(form.banner_image.data, 'sponsor_banners')
+        
+        db.session.add(sponsor)
+        db.session.commit()
+        
+        flash('Sponsor created successfully!', 'success')
+        return redirect(url_for('organizer.manage_sponsors'))
+    
+    return render_template('organizer/edit_tournament/create_sponsor.html',
+                          title='Create Sponsor',
+                          form=form)
+
+
+@bp.route('/sponsor/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+@organizer_required
+def edit_sponsor(id):
+    """Edit sponsor details"""
+    sponsor = PlatformSponsor.query.get_or_404(id)
+    form = SponsorForm(obj=sponsor)
+    
+    # Set current tier
+    if sponsor.tier:
+        form.tier.data = sponsor.tier.name
+    
+    if form.validate_on_submit():
+        sponsor.name = form.name.data
+        sponsor.tier = SponsorTier[form.tier.data] if form.tier.data else SponsorTier.SUPPORTING
+        sponsor.description = form.description.data
+        sponsor.website = form.website.data
+        sponsor.is_featured = form.is_featured.data
+        sponsor.display_order = form.display_order.data or 999
+        sponsor.contact_name = form.contact_name.data
+        sponsor.contact_email = form.contact_email.data
+        sponsor.contact_phone = form.contact_phone.data
+        
+        #only update the logo if a new file is submitted
+        if form.logo.data and hasattr(form.logo.data, 'filename'):
+            sponsor.logo = save_picture(form.logo.data, 'sponsor_logos')
+        
+        if form.banner_image.data and hasattr(form.banner_image.data, 'filename'):
+            sponsor.banner_image = save_picture(form.banner_image.data, 'sponsor_banners')
+        
+        db.session.commit()
+        
+        flash('Sponsor updated successfully!', 'success')
+        return redirect(url_for('organizer.manage_sponsors'))
+    
+    return render_template('organizer/edit_tournament/edit_sponsor.html',
+                          title=f'Edit {sponsor.name}',
+                          sponsor=sponsor,
+                          form=form)
+
+
+@bp.route('/sponsor/<int:id>/delete', methods=['POST'])
+@login_required
+@organizer_required
+def delete_sponsor(id):
+    """Delete a sponsor"""
+    sponsor = PlatformSponsor.query.get_or_404(id)
+    
+    # Remove sponsor from all tournaments
+    for tournament in sponsor.tournaments:
+        tournament.platform_sponsors.remove(sponsor)
+    
+    # Delete the logo file if it exists
+    if sponsor.logo:
+        try:
+            logo_path = os.path.join(current_app.root_path, 'static', sponsor.logo)
+            if os.path.exists(logo_path):
+                os.remove(logo_path)
+        except Exception as e:
+            current_app.logger.error(f"Error deleting logo file: {e}")
+    
+    # Delete the banner file if it exists
+    if sponsor.banner_image:
+        try:
+            banner_path = os.path.join(current_app.root_path, 'static', sponsor.banner_image)
+            if os.path.exists(banner_path):
+                os.remove(banner_path)
+        except Exception as e:
+            current_app.logger.error(f"Error deleting banner file: {e}")
+    
+    db.session.delete(sponsor)
+    db.session.commit()
+    
+    flash('Sponsor deleted successfully.', 'success')
+    return redirect(url_for('organizer.manage_sponsors'))
 
 # @bp.route('/tournament/<int:id>/category/<int:category_id>/manage')
 # @login_required

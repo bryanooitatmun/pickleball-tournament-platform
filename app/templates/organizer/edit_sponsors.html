@@ -1,0 +1,388 @@
+<!-- edit_sponsors.html -->
+{% extends "base.html" %}
+
+{% block title %}Edit Sponsors - {{ tournament.name }}{% endblock %}
+
+{% block styles %}
+<style>
+    .edit-tabs {
+        display: flex;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .edit-tab {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        border-bottom: 2px solid transparent;
+        margin-right: 1rem;
+    }
+    
+    .edit-tab.active {
+        border-bottom-color: #3b82f6;
+        color: #3b82f6;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background-color: #f9fafb;
+        border-radius: 0.5rem;
+    }
+    
+    .form-section h3 {
+        margin-top: 0;
+        margin-bottom: 1.25rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    .sponsor-item {
+        position: relative;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+    }
+    
+    .sponsor-item:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .sponsor-logo {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.25rem;
+        padding: 0.25rem;
+    }
+    
+    .sponsor-actions {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        display: flex;
+    }
+    
+    .tier-badge {
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .tier-badge.premier {
+        background-color: #FEF3C7;
+        color: #92400E;
+    }
+    
+    .tier-badge.official {
+        background-color: #E0E7FF;
+        color: #4338CA;
+    }
+    
+    .tier-badge.featured {
+        background-color: #DBEAFE;
+        color: #1E40AF;
+    }
+    
+    .tier-badge.supporting {
+        background-color: #F3F4F6;
+        color: #4B5563;
+    }
+    
+    .sortable-ghost {
+        opacity: 0.5;
+        background-color: #f3f4f6;
+    }
+    
+    .drag-handle {
+        cursor: move;
+        color: #9ca3af;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold">Edit Tournament Sponsors</h1>
+        <div>
+            <a href="{{ url_for('organizer.edit_tournament', id=tournament.id) }}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Tournament
+            </a>
+        </div>
+    </div>
+    
+    <!-- Edit Tabs -->
+    <div class="edit-tabs">
+        <a href="{{ url_for('organizer.edit_tournament', id=tournament.id) }}" class="edit-tab">
+            Tournament Details
+        </a>
+        <a href="{{ url_for('organizer.edit_categories', id=tournament.id) }}" class="edit-tab">
+            Categories
+        </a>
+        <a href="{{ url_for('organizer.edit_prizes', id=tournament.id) }}" class="edit-tab">
+            Prizes
+        </a>
+        <a href="{{ url_for('organizer.edit_venue', id=tournament.id) }}" class="edit-tab">
+            Venue
+        </a>
+        <a href="{{ url_for('organizer.edit_sponsors', id=tournament.id) }}" class="edit-tab active">
+            Sponsors
+        </a>
+    </div>
+    
+    <form method="POST" enctype="multipart/form-data" class="space-y-6">
+        {{ form.csrf_token }}
+        
+        <!-- Available Sponsors Section -->
+        <div class="form-section">
+            <h3>Available Sponsors</h3>
+            
+            <div class="mb-6">
+                <p class="text-gray-600 mb-4">Select sponsors to add to your tournament from the list below.</p>
+                
+                <!-- Search and Filter -->
+                <div class="mb-4 flex flex-col md:flex-row gap-4">
+                    <div class="md:w-1/2">
+                        <label for="sponsor_search" class="block text-sm font-medium text-gray-700 mb-1">Search Sponsors</label>
+                        <input type="text" id="sponsor_search" name="sponsor_search" placeholder="Search by name..." class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <div class="md:w-1/2">
+                        <label for="sponsor_tier_filter" class="block text-sm font-medium text-gray-700 mb-1">Filter by Tier</label>
+                        <select id="sponsor_tier_filter" name="sponsor_tier_filter" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">All Tiers</option>
+                            <option value="PREMIER">Premier</option>
+                            <option value="OFFICIAL">Official</option>
+                            <option value="FEATURED">Featured</option>
+                            <option value="SUPPORTING">Supporting</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Available Sponsors List -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sponsors-list">
+                    {% for sponsor in available_sponsors %}
+                    <div class="sponsor-item available-sponsor" data-id="{{ sponsor.id }}" data-tier="{{ sponsor.tier.name if sponsor.tier else 'SUPPORTING' }}">
+                        <input type="checkbox" name="selected_sponsors" value="{{ sponsor.id }}" id="sponsor_{{ sponsor.id }}" class="hidden" {% if sponsor.id in selected_sponsor_ids %}checked{% endif %}>
+                        
+                        <label for="sponsor_{{ sponsor.id }}" class="flex items-start cursor-pointer">
+                            <div class="flex-shrink-0 mr-4">
+                                {% if sponsor.logo %}
+                                <img src="/static/{{ sponsor.logo }}" alt="{{ sponsor.name }}" class="sponsor-logo">
+                                {% else %}
+                                <div class="sponsor-logo bg-gray-100 flex items-center justify-center text-gray-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex-grow">
+                                <div class="flex items-center">
+                                    <h4 class="font-medium text-lg text-gray-900">{{ sponsor.name }}</h4>
+                                    <span class="tier-badge {{ sponsor.tier.name.lower() if sponsor.tier else 'supporting' }} ml-2">
+                                        {{ sponsor.tier.value if sponsor.tier else 'Supporting' }}
+                                    </span>
+                                </div>
+                                
+                                {% if sponsor.description %}
+                                <p class="text-gray-600 text-sm mt-1 line-clamp-2">{{ sponsor.description }}</p>
+                                {% endif %}
+                                
+                                {% if sponsor.website %}
+                                <a href="{{ sponsor.website }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm mt-2 inline-flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                    Website
+                                </a>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="ml-2 flex-shrink-0">
+                                <div class="w-6 h-6 border border-gray-300 rounded-md flex items-center justify-center {% if sponsor.id in selected_sponsor_ids %}bg-blue-500 border-blue-500{% endif %}">
+                                    {% if sponsor.id in selected_sponsor_ids %}
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="mt-4 flex justify-between items-center">
+                    <a href="{{ url_for('organizer.create_sponsor') }}" class="inline-flex items-center text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Create New Sponsor
+                    </a>
+                    
+                    <a href="{{ url_for('organizer.manage_sponsors') }}" class="inline-flex items-center text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Manage All Sponsors
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        {# <!-- Featured Sponsors Section -->
+        <div class="form-section">
+            <h3>Tournament Sponsor Order</h3>
+            
+            <div class="mb-6">
+                <p class="text-gray-600 mb-4">Drag and drop to reorder sponsors. Sponsors will be displayed in this order on the tournament page.</p>
+                
+                <div id="sortable-sponsors" class="space-y-4">
+                    {% for sponsor in tournament_sponsors %}
+                    <div class="sponsor-item" data-id="{{ sponsor.id }}">
+                        <div class="flex items-center">
+                            <div class="drag-handle mr-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            </div>
+                            
+                            <div class="flex-shrink-0 mr-4">
+                                {% if sponsor.logo %}
+                                <img src="/static/{{ sponsor.logo }}" alt="{{ sponsor.name }}" class="sponsor-logo">
+                                {% else %}
+                                <div class="sponsor-logo bg-gray-100 flex items-center justify-center text-gray-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-medium text-lg text-gray-900">{{ sponsor.name }}</h4>
+                                <div class="flex items-center mt-1">
+                                    <span class="tier-badge {{ sponsor.tier.name.lower() if sponsor.tier else 'supporting' }}">
+                                        {{ sponsor.tier.value if sponsor.tier else 'Supporting' }}
+                                    </span>
+                                    
+                                    <input type="hidden" name="sponsor_order[]" value="{{ sponsor.id }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div> #}
+        
+        <!-- Submit Button -->
+        <div class="flex justify-between">
+            <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                Cancel
+            </a>
+            
+            <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                Save Sponsor Settings
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Sortable for sponsor ordering
+        if (document.getElementById('sortable-sponsors')) {
+            new Sortable(document.getElementById('sortable-sponsors'), {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'sortable-ghost',
+                onEnd: function() {
+                    // Update hidden input values with new order
+                    const sponsorItems = document.querySelectorAll('#sortable-sponsors .sponsor-item');
+                    sponsorItems.forEach((item, index) => {
+                        const sponsorId = item.getAttribute('data-id');
+                        const input = item.querySelector('input[name="sponsor_order[]"]');
+                        if (input) {
+                            input.value = sponsorId;
+                        }
+                    });
+                }
+            });
+        }
+        
+        // Sponsor search functionality
+        const sponsorSearch = document.getElementById('sponsor_search');
+        if (sponsorSearch) {
+            sponsorSearch.addEventListener('input', filterSponsors);
+        }
+        
+        // Sponsor tier filter functionality
+        const tierFilter = document.getElementById('sponsor_tier_filter');
+        if (tierFilter) {
+            tierFilter.addEventListener('change', filterSponsors);
+        }
+        
+        function filterSponsors() {
+            const searchValue = sponsorSearch.value.toLowerCase();
+            const tierValue = tierFilter.value;
+            
+            const sponsors = document.querySelectorAll('.available-sponsor');
+            sponsors.forEach(sponsor => {
+                const name = sponsor.querySelector('h4').textContent.toLowerCase();
+                const tier = sponsor.getAttribute('data-tier');
+                
+                let showSponsor = true;
+                
+                // Filter by search term
+                if (searchValue && !name.includes(searchValue)) {
+                    showSponsor = false;
+                }
+                
+                // Filter by tier
+                if (tierValue && tier !== tierValue) {
+                    showSponsor = false;
+                }
+                
+                sponsor.style.display = showSponsor ? 'block' : 'none';
+            });
+        }
+        
+        // Toggle sponsor selection
+        const sponsorCheckboxes = document.querySelectorAll('input[name="selected_sponsors"]');
+        sponsorCheckboxes.forEach(checkbox => {
+            const label = checkbox.nextElementSibling;
+            const checkIndicator = label.querySelector('.border');
+            
+            label.addEventListener('click', function(e) {
+                const isChecked = checkbox.checked;
+                checkbox.checked = !isChecked;
+                
+                if (!isChecked) {
+                    checkIndicator.classList.add('bg-blue-500', 'border-blue-500');
+                    checkIndicator.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>';
+                } else {
+                    checkIndicator.classList.remove('bg-blue-500', 'border-blue-500');
+                    checkIndicator.innerHTML = '';
+                }
+                
+                e.preventDefault();
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -47,6 +47,106 @@
         color: #6b7280;
         margin-top: 0.25rem;
     }
+    
+    .sponsor-item {
+        position: relative;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+    }
+    
+    .sponsor-item:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .sponsor-logo {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.25rem;
+        padding: 0.25rem;
+    }
+    
+    .sponsor-actions {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        display: flex;
+    }
+    
+    .venue-image-preview {
+        position: relative;
+        display: inline-block;
+        margin-right: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .venue-image-preview img {
+        width: 150px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 0.25rem;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .venue-image-actions {
+        position: absolute;
+        top: 0.25rem;
+        right: 0.25rem;
+        display: flex;
+    }
+    
+    .delete-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(239, 68, 68, 0.8);
+        color: white;
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 9999px;
+        cursor: pointer;
+    }
+    
+    .primary-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(59, 130, 246, 0.8);
+        color: white;
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 9999px;
+        cursor: pointer;
+        margin-right: 0.25rem;
+    }
+    
+    .is-primary-badge {
+        position: absolute;
+        bottom: 0.25rem;
+        left: 0.25rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(16, 185, 129, 0.8);
+        color: white;
+        font-size: 0.75rem;
+        padding: 0.1rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+    
+    .drag-handle {
+        cursor: move;
+        color: #9ca3af;
+    }
+    
+    .sortable-ghost {
+        opacity: 0.5;
+        background-color: #f3f4f6;
+    }
 </style>
 {% endblock %}
 
@@ -74,6 +174,12 @@
         </a>
         <a href="{{ url_for('organizer.edit_prizes', id=tournament.id) }}" class="edit-tab">
             Prizes
+        </a>
+        <a href="{{ url_for('organizer.edit_venue', id=tournament.id) }}" class="edit-tab">
+            Venue
+        </a>
+        <a href="{{ url_for('organizer.edit_sponsors', id=tournament.id) }}" class="edit-tab">
+            Sponsors
         </a>
     </div>
     
@@ -125,6 +231,25 @@
                         {% endfor %}
                     </div>
                     {% endif %}
+                    <div class="mt-2 flex items-center">
+                        <a href="{{ url_for('organizer.venues') }}" class="text-sm text-blue-600 hover:text-blue-800">
+                            <span class="inline-flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                Manage Venues
+                            </span>
+                        </a>
+                        <span class="mx-2 text-gray-300">|</span>
+                        <a href="{{ url_for('organizer.create_venue') }}" class="text-sm text-blue-600 hover:text-blue-800">
+                            <span class="inline-flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                Create New Venue
+                            </span>
+                        </a>
+                    </div>
                 </div>
                 
                 <div>

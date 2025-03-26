@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+
+{% block title %}Sponsors{% endblock %}
+
+{% block styles %}
+<style>
+    .sponsor-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+    
+    .sponsor-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .sponsor-logo {
+        height: 6rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        background-color: #f9fafb;
+    }
+    
+    .sponsor-logo img {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+    }
+    
+    .featured-badge {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background-color: rgba(59, 130, 246, 0.9);
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+    
+    .tier-badge {
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .tier-badge.premier {
+        background-color: #FEF3C7;
+        color: #92400E;
+    }
+    
+    .tier-badge.official {
+        background-color: #E0E7FF;
+        color: #4338CA;
+    }
+    
+    .tier-badge.featured {
+        background-color: #DBEAFE;
+        color: #1E40AF;
+    }
+    
+    .tier-badge.supporting {
+        background-color: #F3F4F6;
+        color: #4B5563;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold">Sponsors</h1>
+        
+        <a href="{{ url_for('organizer.create_sponsor') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Add New Sponsor
+        </a>
+    </div>
+    
+    <!-- Filter controls -->
+    <div class="mb-6 bg-white p-4 rounded-lg shadow-sm">
+        <div class="flex flex-col md:flex-row gap-4">
+            <div class="md:w-1/3">
+                <label for="sponsor-search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <input type="text" id="sponsor-search" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Search by name...">
+            </div>
+            
+            <div class="md:w-1/3">
+                <label for="tier-filter" class="block text-sm font-medium text-gray-700 mb-1">Filter by Tier</label>
+                <select id="tier-filter" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <option value="all">All Tiers</option>
+                    <option value="premier">Premier</option>
+                    <option value="official">Official</option>
+                    <option value="featured">Featured</option>
+                    <option value="supporting">Supporting</option>
+                </select>
+            </div>
+            
+            <div class="md:w-1/3">
+                <label for="featured-filter" class="block text-sm font-medium text-gray-700 mb-1">Featured Status</label>
+                <select id="featured-filter" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <option value="all">All Sponsors</option>
+                    <option value="featured">Featured Only</option>
+                    <option value="not-featured">Not Featured</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Premier Sponsors -->
+    {% set premier_sponsors = sponsors|selectattr('tier.name', 'equalto', 'PREMIER')|list %}
+    {% if premier_sponsors %}
+    <h2 class="text-2xl font-bold mb-4">Premier Sponsors</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {% for sponsor in premier_sponsors %}
+        <div class="sponsor-card" data-tier="premier" data-featured="{{ 'true' if sponsor.is_featured else 'false' }}">
+            <div class="relative sponsor-logo border-b border-gray-200">
+                {% if sponsor.logo %}
+                <img src="/static/{{ sponsor.logo }}" alt="{{ sponsor.name }}" class="max-h-24">
+                {% else %}
+                <div class="text-xl font-bold text-gray-400">{{ sponsor.name }}</div>
+                {% endif %}
+                
+                {% if sponsor.is_featured %}
+                <div class="featured-badge">Featured</div>
+                {% endif %}
+            </div>
+            
+            <div class="p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xl font-bold text-gray-900">{{ sponsor.name }}</h2>
+                    <span class="tier-badge premier">Premier</span>
+                </div>
+                
+                {% if sponsor.description %}
+                <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ sponsor.description }}</p>
+                {% endif %}
+                
+                {% if sponsor.website %}
+                <a href="{{ sponsor.website }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm inline-flex items-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    Visit Website
+                </a>
+                {% endif %}
+                
+                <div class="flex items-center justify-between mt-2">
+                    <a href="{{ url_for('organizer.edit_sponsor', id=sponsor.id) }}" class="inline-flex items-center text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit
+                    </a>
+                    
+                    <form action="{{ url_for('organizer.delete_sponsor', id=sponsor.id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this sponsor?');">
+                        <button type="submit" class="inline-flex items-center text-red-600 hover:text-red-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Official Sponsors -->
+    {% set official_sponsors = sponsors|selectattr('tier.name', 'equalto', 'OFFICIAL')|list %}
+    {% if official_sponsors %}
+    <h2 class="text-2xl font-bold mb-4">Official Sponsors</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {% for sponsor in official_sponsors %}
+        <div class="sponsor-card" data-tier="official" data-featured="{{ 'true' if sponsor.is_featured else 'false' }}">
+            <div class="relative sponsor-logo border-b border-gray-200">
+                {% if sponsor.logo %}
+                <img src="/static/{{ sponsor.logo }}" alt="{{ sponsor.name }}" class="max-h-24">
+                {% else %}
+                <div class="text-xl font-bold text-gray-400">{{ sponsor.name }}</div>
+                {% endif %}
+                
+                {% if sponsor.is_featured %}
+                <div class="featured-badge">Featured</div>
+                {% endif %}
+            </div>
+            
+            <div class="p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xl font-bold text-gray-900">{{ sponsor.name }}</h2>
+                    <span class="tier-badge official">Official</span>
+                </div>
+                
+                {% if sponsor.description %}
+                <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ sponsor.description }}</p>
+                {% endif %}
+                
+                {% if sponsor.website %}
+                <a href="{{ sponsor.website }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm inline-flex items-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    Visit Website
+                </a>
+                {% endif %}
+                
+                <div class="flex items-center justify-between mt-2">
+                    <a href="{{ url_for('organizer.edit_sponsor', id=sponsor.id) }}" class="inline-flex items-center text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit
+                    </a>
+                    
+                    <form action="{{ url_for('organizer.delete_sponsor', id=sponsor.id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this sponsor?');">
+                        <button type="submit" class="inline-flex items-center text-red-600 hover:text-red-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Featured Sponsors -->
+    {% set featured_sponsors = sponsors|selectattr('tier.name', 'equalto', 'FEATURED')|list %}
+    {% if featured_sponsors %}
+    <h2 class="text-2xl font-bold mb-4">Featured Sponsors</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
+        {% for sponsor in featured_sponsors %}
+        <div class="sponsor-card" data-tier="featured" data-featured="{{ 'true' if sponsor.is_featured else 'false' }}">
+            <div class="relative sponsor-logo border-b border-gray-200">
+                {% if sponsor.logo %}
+                <img src="/static/{{ sponsor.logo }}" alt="{{ sponsor.name }}" class="max-h-20">
+                {% else %}
+                <div class="text-lg font-bold text-gray-400">{{ sponsor.name }}</div>
+                {% endif %}
+                
+                {% if sponsor.is_featured %}
+                <div class="featured-badge">Featured</div>
+                {% endif %}
+            </div>
+            
+            <div class="p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-lg font-bold text-gray-900">{{ sponsor.name }}</h2>
+                    <span class="tier-badge featured">Featured</span>
+                </div>
+                
+                {% if sponsor.website %}
+                <a href="{{ sponsor.website }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm inline-flex items-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    Website
+                </a>
+                {% endif %}
+                
+                <div class="flex items-center justify-between mt-2">
+                    <a href="{{ url_for('organizer.edit_sponsor', id=sponsor.id) }}" class="inline-flex items-center text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit
+                    </a>
+                    
+                    <form action="{{ url_for('organizer.delete_sponsor', id=sponsor.id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this sponsor?');">
+                        <button type="submit" class="inline-flex items-center text-red-600 hover:text-red-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Supporting Sponsors -->
+    {% set supporting_sponsors = sponsors|selectattr('tier.name', 'equalto', 'SUPPORTING')|list %}
+    {% if supporting_sponsors %}
+    <h2 class="text-2xl font-bold mb-4">Supporting Sponsors</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
+        {% for sponsor in supporting_sponsors %}
+        <div class="sponsor-card" data-tier="supporting" data-featured="{{ 'true' if sponsor.is_featured else 'false' }}">
+            <div class="relative sponsor-logo border-b border-gray-200">
+                {% if sponsor.logo %}
+                <img src="/static/{{ sponsor.logo }}" alt="{{ sponsor.name }}" class="max-h-16">
+                {% else %}
+                <div class="text-base font-bold text-gray-400">{{ sponsor.name }}</div>
+                {% endif %}
+                
+                {% if sponsor.is_featured %}
+                <div class="featured-badge">Featured</div>
+                {% endif %}
+            </div>
+            
+            <div class="p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-base font-bold text-gray-900">{{ sponsor.name }}</h2>
+                    <span class="tier-badge supporting">Supporting</span>
+                </div>
+                
+                <div class="flex items-center justify-between mt-2">
+                    <a href="{{ url_for('organizer.edit_sponsor', id=sponsor.id) }}" class="inline-flex items-center text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit
+                    </a>
+                    
+                    <form action="{{ url_for('organizer.delete_sponsor', id=sponsor.id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this sponsor?');">
+                        <button type="submit" class="inline-flex items-center text-red-600 hover:text-red-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Empty state -->
+    {% if sponsors|length == 0 %}
+    <div class="text-center py-16 bg-white rounded-lg shadow-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        <p class="text-xl text-gray-600">No sponsors created yet</p>
+        <p class="text-gray-500 mb-6">Create your first sponsor to start featuring them in tournaments</p>
+        <a href="{{ url_for('organizer.create_sponsor') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Add New Sponsor
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('sponsor-search');
+        const tierFilter = document.getElementById('tier-filter');
+        const featuredFilter = document.getElementById('featured-filter');
+        const sponsorCards = document.querySelectorAll('.sponsor-card');
+        
+        // Filter function
+        function filterSponsors() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const tierValue = tierFilter.value;
+            const featuredValue = featuredFilter.value;
+            
+            sponsorCards.forEach(card => {
+                const name = card.querySelector('h2').textContent.toLowerCase();
+                const tier = card.getAttribute('data-tier');
+                const featured = card.getAttribute('data-featured');
+                
+                let showCard = true;
+                
+                // Filter by search term
+                if (searchTerm && !name.includes(searchTerm)) {
+                    showCard = false;
+                }
+                
+                // Filter by tier
+                if (tierValue !== 'all' && tier !== tierValue) {
+                    showCard = false;
+                }
+                
+                // Filter by featured status
+                if (featuredValue === 'featured' && featured !== 'true') {
+                    showCard = false;
+                } else if (featuredValue === 'not-featured' && featured === 'true') {
+                    showCard = false;
+                }
+                
+                // Show or hide card
+                card.style.display = showCard ? 'block' : 'none';
+            });
+            
+            // Show/hide section headers based on visible cards
+            const sections = document.querySelectorAll('h2.text-2xl');
+            sections.forEach(section => {
+                const nextSection = section.nextElementSibling;
+                const cards = nextSection.querySelectorAll('.sponsor-card');
+                const visibleCards = Array.from(cards).filter(card => card.style.display !== 'none');
+                
+                section.style.display = visibleCards.length > 0 ? 'block' : 'none';
+                nextSection.style.display = visibleCards.length > 0 ? 'grid' : 'none';
+            });
+        }
+        
+        // Add event listeners
+        searchInput.addEventListener('input', filterSponsors);
+        tierFilter.addEventListener('change', filterSponsors);
+        featuredFilter.addEventListener('change', filterSponsors);
+    });
+</script>
+{% endblock %}

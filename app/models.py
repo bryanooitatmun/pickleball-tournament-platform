@@ -666,23 +666,19 @@ class PlayerSponsor(db.Model):
     
     player = db.relationship('PlayerProfile', backref=db.backref('player_sponsors', lazy='dynamic'))
     
-class PlatformSponsor(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    logo = db.Column(db.String(255))
-    website = db.Column(db.String(255))
-    is_featured = db.Column(db.Boolean, default=False)
-    tier = db.Column(db.String(50))  # 'Premier', 'Official', 'Featured', etc.
-    description = db.Column(db.Text)
-    
-    # Relationships
-    tournaments = db.relationship('Tournament', secondary='tournament_sponsors', backref='platform_sponsors')
 
-# Association table for tournament sponsors
-tournament_sponsors = db.Table('tournament_sponsors',
-    db.Column('tournament_id', db.Integer, db.ForeignKey('tournament.id'), primary_key=True),
-    db.Column('sponsor_id', db.Integer, db.ForeignKey('platform_sponsor.id'), primary_key=True)
-)
+
+class VenueImage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False)
+    image_path = db.Column(db.String(255), nullable=False)
+    caption = db.Column(db.String(255))
+    display_order = db.Column(db.Integer, default=999)
+    is_primary = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationship with venue
+    venue = db.relationship('Venue', backref=db.backref('images', lazy='dynamic', cascade='all, delete-orphan'))
 
 class Venue(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -692,14 +688,81 @@ class Venue(db.Model):
     state = db.Column(db.String(100))
     country = db.Column(db.String(100))
     description = db.Column(db.Text)
-    image = db.Column(db.String(255))
+    image = db.Column(db.String(255))  # Keep for backwards compatibility
     website = db.Column(db.String(255))
     postal_code = db.Column(db.String(20))
     is_featured = db.Column(db.Boolean, default=False)
     court_count = db.Column(db.Integer, default=0)
     
+    # New fields
+    contact_email = db.Column(db.String(100))
+    contact_phone = db.Column(db.String(50))
+    facilities = db.Column(db.Text)  # JSON or comma-separated list of available facilities
+    amenities = db.Column(db.Text)  # JSON or comma-separated list of amenities
+    parking_info = db.Column(db.Text)
+    google_maps_url = db.Column(db.String(255))
+    display_order = db.Column(db.Integer, default=999)
+    
     # Relationship with tournaments
     tournaments = db.relationship('Tournament', backref='venue', lazy='dynamic')
+    
+    @property
+    def primary_image(self):
+        """Return the primary image for this venue"""
+        primary = self.images.filter_by(is_primary=True).first()
+        if primary:
+            return primary.image_path
+        # Fallback to the first image if no primary is set
+        first_image = self.images.order_by(VenueImage.display_order).first()
+        if first_image:
+            return first_image.image_path
+        # Fallback to the old image field if no images in the new relationship
+        return self.image
+    
+    @property
+    def gallery_images(self):
+        """Return all images for gallery display, ordered by display_order"""
+        return self.images.order_by(VenueImage.display_order).all()
+    
+    def __repr__(self):
+        return f'<Venue {self.name}>'
+
+
+class SponsorTier(enum.Enum):
+    PREMIER = "Premier"
+    OFFICIAL = "Official" 
+    FEATURED = "Featured"
+    SUPPORTING = "Supporting"
+
+
+class PlatformSponsor(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    logo = db.Column(db.String(255))
+    website = db.Column(db.String(255))
+    is_featured = db.Column(db.Boolean, default=False)
+    tier = db.Column(Enum(SponsorTier), default=SponsorTier.SUPPORTING)  # Updated to use enum
+    description = db.Column(db.Text)
+    display_order = db.Column(db.Integer, default=999)  # Add ordering within tier
+    
+    # Additional fields
+    contact_name = db.Column(db.String(100))
+    contact_email = db.Column(db.String(100))
+    contact_phone = db.Column(db.String(50))
+    banner_image = db.Column(db.String(255))  # For larger banner display if needed
+    
+    # Relationships
+    tournaments = db.relationship('Tournament', secondary='tournament_sponsors', backref='platform_sponsors')
+    
+    def __repr__(self):
+        return f'<PlatformSponsor {self.name} - {self.tier.value if self.tier else "No Tier"}>'
+
+# Association table for tournament sponsors
+tournament_sponsors = db.Table('tournament_sponsors',
+    db.Column('tournament_id', db.Integer, db.ForeignKey('tournament.id'), primary_key=True),
+    db.Column('sponsor_id', db.Integer, db.ForeignKey('platform_sponsor.id'), primary_key=True)
+)
+
 
 class Advertisement(db.Model):
     id = db.Column(db.Integer, primary_key=True)

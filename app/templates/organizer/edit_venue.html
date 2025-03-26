@@ -1,0 +1,275 @@
+<!-- edit_venue.html -->
+{% extends "base.html" %}
+
+{% block title %}Edit Venue - {{ tournament.name }}{% endblock %}
+
+{% block styles %}
+<style>
+    .edit-tabs {
+        display: flex;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .edit-tab {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        border-bottom: 2px solid transparent;
+        margin-right: 1rem;
+    }
+    
+    .edit-tab.active {
+        border-bottom-color: #3b82f6;
+        color: #3b82f6;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background-color: #f9fafb;
+        border-radius: 0.5rem;
+    }
+    
+    .form-section h3 {
+        margin-top: 0;
+        margin-bottom: 1.25rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    .venue-image-preview {
+        position: relative;
+        display: inline-block;
+        margin-right: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .venue-image-preview img {
+        width: 150px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 0.25rem;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .venue-image-actions {
+        position: absolute;
+        top: 0.25rem;
+        right: 0.25rem;
+        display: flex;
+    }
+    
+    .delete-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(239, 68, 68, 0.8);
+        color: white;
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 9999px;
+        cursor: pointer;
+    }
+    
+    .primary-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(59, 130, 246, 0.8);
+        color: white;
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 9999px;
+        cursor: pointer;
+        margin-right: 0.25rem;
+    }
+    
+    .is-primary-badge {
+        position: absolute;
+        bottom: 0.25rem;
+        left: 0.25rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(16, 185, 129, 0.8);
+        color: white;
+        font-size: 0.75rem;
+        padding: 0.1rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+    
+    .sortable-ghost {
+        opacity: 0.5;
+        background-color: #f3f4f6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold">Edit Venue Details</h1>
+        <div>
+            <a href="{{ url_for('organizer.edit_tournament', id=tournament.id) }}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Tournament
+            </a>
+        </div>
+    </div>
+    
+    <!-- Edit Tabs -->
+    <div class="edit-tabs">
+        <a href="{{ url_for('organizer.edit_tournament', id=tournament.id) }}" class="edit-tab">
+            Tournament Details
+        </a>
+        <a href="{{ url_for('organizer.edit_categories', id=tournament.id) }}" class="edit-tab">
+            Categories
+        </a>
+        <a href="{{ url_for('organizer.edit_prizes', id=tournament.id) }}" class="edit-tab">
+            Prizes
+        </a>
+        <a href="{{ url_for('organizer.edit_venue', id=tournament.id) }}" class="edit-tab active">
+            Venue
+        </a>
+        <a href="{{ url_for('organizer.edit_sponsors', id=tournament.id) }}" class="edit-tab">
+            Sponsors
+        </a>
+    </div>
+    
+    <form method="POST" enctype="multipart/form-data" class="space-y-6">
+        {{ form.csrf_token }}
+        
+        <!-- Venue Selection Section -->
+        <div class="form-section">
+            <h3>Venue Selection</h3>
+            
+            <div class="mb-6">
+                <label for="venue_id" class="block text-sm font-medium text-gray-700 mb-1">
+                    Tournament Venue
+                </label>
+                <select name="venue_id" id="venue_id" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">Select a venue</option>
+                    {% for venue in venues %}
+                    <option value="{{ venue.id }}" {% if tournament.venue_id == venue.id %}selected{% endif %}>
+                        {{ venue.name }} - {{ venue.city }}
+                    </option>
+                    {% endfor %}
+                </select>
+                
+                <div class="mt-4 flex items-center justify-between">
+                    <a href="{{ url_for('organizer.create_venue') }}" class="inline-flex items-center text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Create New Venue
+                    </a>
+                    
+                    {% if tournament.venue %}
+                    <a href="{{ url_for('organizer.edit_venue_details', id=tournament.venue.id) }}" class="inline-flex items-center text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit Current Venue Details
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Current Venue Details Section -->
+        {% if tournament.venue %}
+        <div class="form-section">
+            <h3>Current Venue Details</h3>
+            
+            <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+                <div class="flex flex-col md:flex-row">
+                    <div class="md:w-2/5 p-0">
+                        {% if tournament.venue.image %}
+                        <img src="/static/{{ tournament.venue.image }}" alt="{{ tournament.venue.name }}" class="w-full h-full object-cover">
+                        {% else %}
+                        <div class="bg-gray-200 h-full w-full flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="md:w-3/5 p-6">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ tournament.venue.name }}</h2>
+                        <p class="text-gray-600">{{ tournament.venue.address }}</p>
+                        <p class="text-gray-600">{{ tournament.venue.city }}, {{ tournament.venue.state }} {{ tournament.venue.postal_code }}</p>
+                        {% if tournament.venue.country %}
+                        <p class="text-gray-600">{{ tournament.venue.country }}</p>
+                        {% endif %}
+                        
+                        <div class="mt-4 space-y-3">
+                            {% if tournament.venue.website %}
+                            <div class="flex items-start">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 mt-0.5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                                </svg>
+                                <a href="{{ tournament.venue.website }}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                                    {{ tournament.venue.website }}
+                                </a>
+                            </div>
+                            {% endif %}
+                            
+                            {% if tournament.venue.court_count %}
+                            <div class="flex items-start">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 mt-0.5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <span>{{ tournament.venue.court_count }} courts available</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mt-4">
+                            {% if tournament.venue.description %}
+                            <h3 class="text-lg font-medium text-gray-800 mb-2">About</h3>
+                            <div class="text-gray-600">
+                                {{ tournament.venue.description|truncate(200) }}
+                                {% if tournament.venue.description|length > 200 %}
+                                <a href="#" class="text-blue-600 hover:text-blue-800 ml-1">Read more</a>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Venue Image Gallery -->
+            {% if venue_images and venue_images|length > 0 %}
+            <div class="mt-6">
+                <h3 class="text-lg font-medium text-gray-800 mb-4">Venue Image Gallery</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {% for image in venue_images %}
+                    <div class="venue-image-preview">
+                        <img src="/static/{{ image.image_path }}" alt="Venue Image">
+                        {% if image.is_primary %}
+                        <div class="is-primary-badge">Primary</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Submit Button -->
+        <div class="flex justify-between">
+            <a href="{{ url_for('organizer.edit_tournament', id=tournament.id) }}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                Cancel
+            </a>
+            
+            <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                Save Venue Settings
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

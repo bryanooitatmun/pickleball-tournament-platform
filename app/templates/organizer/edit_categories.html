@@ -95,6 +95,12 @@
         <a href="{{ url_for('organizer.edit_prizes', id=tournament.id) }}" class="edit-tab">
             Prizes
         </a>
+        <a href="{{ url_for('organizer.edit_venue', id=tournament.id) }}" class="edit-tab">
+            Venue
+        </a>
+        <a href="{{ url_for('organizer.edit_sponsors', id=tournament.id) }}" class="edit-tab">
+            Sponsors
+        </a>
     </div>
     
     <form method="POST" class="space-y-6">
@@ -320,12 +326,12 @@
                 <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                     Save Categories
                 </button>
-                <a href="{{ url_for('organizer.edit_prizes', id=tournament.id) }}" class="ml-2 inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200">
+                {# <a href="{{ url_for('organizer.edit_prizes', id=tournament.id) }}" class="ml-2 inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200">
                     Skip to Prizes
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
-                </a>
+                </a> #}
             </div>
         </div>
     </form>

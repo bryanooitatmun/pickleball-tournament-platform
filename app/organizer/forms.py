@@ -3,7 +3,7 @@ from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, TextAreaField, IntegerField, FloatField, SelectField, DateField, DateTimeField, TimeField, BooleanField, SubmitField, FieldList, FormField, DecimalField
 from wtforms.validators import DataRequired, Length, NumberRange, Optional, ValidationError
 from datetime import datetime, timedelta
-from app.models import TournamentTier, TournamentFormat, CategoryType, TournamentStatus, Venue
+from app.models import TournamentTier, TournamentFormat, CategoryType, TournamentStatus, Venue, SponsorTier
 
 
 class TournamentForm(FlaskForm):
@@ -221,3 +221,80 @@ class TournamentPaymentForm(FlaskForm):
 
 
 
+class VenueForm(FlaskForm):
+    name = StringField('Venue Name', validators=[DataRequired(), Length(min=3, max=100)])
+    address = StringField('Address', validators=[DataRequired(), Length(max=255)])
+    city = StringField('City', validators=[DataRequired(), Length(max=100)])
+    state = StringField('State/Province', validators=[DataRequired(), Length(max=100)])
+    country = StringField('Country', validators=[DataRequired(), Length(max=100)])
+    postal_code = StringField('Postal Code', validators=[Optional(), Length(max=20)])
+    
+    description = TextAreaField('Description', validators=[Optional(), Length(max=2000)])
+    website = StringField('Website', validators=[Optional(), Length(max=255)])
+    court_count = IntegerField('Number of Courts', validators=[Optional(), NumberRange(min=0)])
+    
+    is_featured = BooleanField('Feature this Venue')
+    display_order = IntegerField('Display Order', validators=[Optional(), NumberRange(min=1)])
+    
+    contact_email = StringField('Contact Email', validators=[Optional(), Length(max=100)])
+    contact_phone = StringField('Contact Phone', validators=[Optional(), Length(max=50)])
+    facilities = TextAreaField('Facilities', validators=[Optional(), Length(max=1000)])
+    amenities = TextAreaField('Amenities', validators=[Optional(), Length(max=1000)])
+    parking_info = TextAreaField('Parking Information', validators=[Optional(), Length(max=1000)])
+    google_maps_url = StringField('Google Maps URL', validators=[Optional(), Length(max=255)])
+    
+    image = FileField('Main Venue Image', validators=[
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+    ])
+    
+    submit = SubmitField('Save Venue')
+
+
+class VenueImageForm(FlaskForm):
+    image = FileField('Venue Image', validators=[
+        DataRequired(),
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+    ])
+    caption = StringField('Caption', validators=[Optional(), Length(max=255)])
+    is_primary = BooleanField('Set as Primary Image')
+    display_order = IntegerField('Display Order', validators=[Optional(), NumberRange(min=1)])
+    
+    submit = SubmitField('Add Image')
+
+
+class SponsorForm(FlaskForm):
+    name = StringField('Sponsor Name', validators=[DataRequired(), Length(min=3, max=100)])
+    tier = SelectField('Sponsor Tier', choices=[
+        (tier.name, tier.value) for tier in SponsorTier
+    ], validators=[DataRequired()])
+    
+    description = TextAreaField('Description', validators=[Optional(), Length(max=2000)])
+    website = StringField('Website', validators=[Optional(), Length(max=255)])
+    is_featured = BooleanField('Feature this Sponsor')
+    display_order = IntegerField('Display Order', validators=[Optional(), NumberRange(min=1)])
+    
+    contact_name = StringField('Contact Name', validators=[Optional(), Length(max=100)])
+    contact_email = StringField('Contact Email', validators=[Optional(), Length(max=100)])
+    contact_phone = StringField('Contact Phone', validators=[Optional(), Length(max=50)])
+    
+    logo = FileField('Sponsor Logo', validators=[
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+    ])
+    banner_image = FileField('Banner Image', validators=[
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+    ])
+    
+    submit = SubmitField('Save Sponsor')
+
+
+class TournamentSponsorForm(FlaskForm):
+    sponsors = FieldList(IntegerField('Sponsor ID'))
+    sponsor_order = FieldList(IntegerField('Order'))
+    
+    submit = SubmitField('Save Sponsors')
+
+
+class TournamentVenueForm(FlaskForm):
+    venue_id = IntegerField('Venue ID', validators=[Optional()])
+    
+    submit = SubmitField('Save Venue')

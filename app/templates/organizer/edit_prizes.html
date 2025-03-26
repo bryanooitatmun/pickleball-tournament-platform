@@ -144,6 +144,12 @@
         <a href="{{ url_for('organizer.edit_prizes', id=tournament.id) }}" class="edit-tab active">
             Prizes
         </a>
+        <a href="{{ url_for('organizer.edit_venue', id=tournament.id) }}" class="edit-tab">
+            Venue
+        </a>
+        <a href="{{ url_for('organizer.edit_sponsors', id=tournament.id) }}" class="edit-tab">
+            Sponsors
+        </a>
     </div>
     
     <form method="POST" class="space-y-6">
