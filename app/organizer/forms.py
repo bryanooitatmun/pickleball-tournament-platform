@@ -5,6 +5,26 @@ from wtforms.validators import DataRequired, Length, NumberRange, Optional, Vali
 from datetime import datetime, timedelta
 from app.models import TournamentTier, TournamentFormat, CategoryType, TournamentStatus, Venue, SponsorTier
 
+def validate_file_size(max_size_mb=5):
+    """
+    Creates a validator that checks if the file size is within the specified limit.
+    
+    Args:
+        max_size_mb (float): Maximum file size in megabytes
+        
+    Returns:
+        function: A validator function that can be used with WTForms
+    """
+    def _validate_file_size(form, field):
+        if field.data:
+            # Get file size in bytes and convert to MB
+            file_size = len(field.data.read()) / 1024 / 1024
+            field.data.seek(0)  # Reset file pointer after reading
+            
+            if file_size > max_size_mb:
+                raise ValidationError(f'File size too large. Maximum allowed size is {max_size_mb}MB. Your file is {file_size:.1f}MB.')
+    
+    return _validate_file_size
 
 class TournamentForm(FlaskForm):
     name = StringField('Tournament Name', validators=[DataRequired(), Length(min=5, max=100)])
@@ -20,7 +40,7 @@ class TournamentForm(FlaskForm):
                       validators=[DataRequired()])
     
     is_ranked = BooleanField('Ranked Tournament (contributes to player rankings)', default=True)
-    
+
     format = SelectField('Tournament Format', 
                         choices=[(fmt.name, fmt.value) for fmt in TournamentFormat], 
                         validators=[DataRequired()])
@@ -33,10 +53,12 @@ class TournamentForm(FlaskForm):
     
     # Upload fields
     logo = FileField('Tournament Logo', validators=[
-        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!'),
+        validate_file_size(max_size_mb=5)
     ])
     banner = FileField('Tournament Banner', validators=[
-        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!'),
+        validate_file_size(max_size_mb=5)
     ])
     
     # Payment details
@@ -45,14 +67,16 @@ class TournamentForm(FlaskForm):
     payment_account_name = StringField('Account Name', validators=[Optional(), Length(max=100)])
     payment_reference_prefix = StringField('Payment Reference Prefix', validators=[Optional(), Length(max=20)])
     payment_qr_code = FileField('Payment QR Code', validators=[
-        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!'),
+        validate_file_size(max_size_mb=5)
     ])
     payment_instructions = TextAreaField('Payment Instructions', validators=[Optional()])
     
     # Door gifts
     door_gifts = TextAreaField('Door Gifts', validators=[Optional()])
     door_gifts_image = FileField('Door Gifts Image', validators=[
-        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!'),
+        validate_file_size(max_size_mb=5)
     ])
     
     # Prize details
@@ -197,7 +221,8 @@ class TournamentGiftsForm(FlaskForm):
     
     door_gifts_image = FileField('Door Gifts Image', 
                                validators=[Optional(), 
-                                         FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')])
+                                         FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!'),
+                                        validate_file_size(max_size_mb=5)])
 
 class TournamentPaymentForm(FlaskForm):
     payment_bank_name = StringField('Bank Name', 
@@ -215,7 +240,8 @@ class TournamentPaymentForm(FlaskForm):
     
     payment_qr_code = FileField('Payment QR Code', 
                               validators=[Optional(), 
-                                        FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')])
+                                        FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!'),
+                                        validate_file_size(max_size_mb=5)])
     
     payment_instructions = TextAreaField('Payment Instructions', 
                                        validators=[Optional(), Length(max=1000)],
@@ -246,7 +272,8 @@ class VenueForm(FlaskForm):
     google_maps_url = StringField('Google Maps URL', validators=[Optional(), Length(max=255)])
     
     image = FileField('Main Venue Image', validators=[
-        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!'),
+        validate_file_size(max_size_mb=5)
     ])
     
     submit = SubmitField('Save Venue')
@@ -255,7 +282,8 @@ class VenueForm(FlaskForm):
 class VenueImageForm(FlaskForm):
     image = FileField('Venue Image', validators=[
         DataRequired(),
-        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!'),
+        validate_file_size(max_size_mb=5)
     ])
     caption = StringField('Caption', validators=[Optional(), Length(max=255)])
     is_primary = BooleanField('Set as Primary Image')
@@ -280,10 +308,12 @@ class SponsorForm(FlaskForm):
     contact_phone = StringField('Contact Phone', validators=[Optional(), Length(max=50)])
     
     logo = FileField('Sponsor Logo', validators=[
-        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!'),
+        validate_file_size(max_size_mb=5)
     ])
     banner_image = FileField('Banner Image', validators=[
-        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!'),
+        validate_file_size(max_size_mb=5)
     ])
     
     submit = SubmitField('Save Sponsor')

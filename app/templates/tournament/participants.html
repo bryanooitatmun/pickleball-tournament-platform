@@ -2,9 +2,66 @@
 
 {% block title %}{{ tournament.name }} - Participants - Pickleball Tournament Platform{% endblock %}
 
+{% block styles %}
+<style>
+    /* Mobile-friendly category tabs */
+    @media (max-width: 768px) {
+        .category-tabs {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+        
+        .category-tab {
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0.5rem 0.25rem;
+            font-size: 0.875rem;
+        }
+    }
+    
+    /* Team layout improvements */
+    .team-container {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    @media (min-width: 640px) {
+        .team-container {
+            flex-direction: row;
+            align-items: center;
+        }
+        
+        .team-separator {
+            display: block;
+        }
+    }
+    
+    @media (max-width: 639px) {
+        .team-separator {
+            display: none;
+        }
+        
+        .player-info {
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px dashed #e5e7eb;
+        }
+        
+        .player-info:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="mb-6">
-    <div class="flex items-center gap-2 text-gray-500 text-sm mb-2">
+    <div class="flex items-center gap-2 text-gray-500 text-sm mb-2 overflow-x-auto">
         <a href="{{ url_for('main.index') }}" class="hover:text-blue-600">Home</a>
         <span>/</span>
         <a href="{{ url_for('main.events') }}" class="hover:text-blue-600">Events</a>
@@ -17,11 +74,11 @@
     <h1 class="text-3xl font-bold mb-2">{{ tournament.name }}</h1>
     <div class="text-gray-600 mb-6">{{ tournament.start_date.strftime('%B %d') }}-{{ tournament.end_date.strftime('%d, %Y') }} • {{ tournament.location }}</div>
     
-    <!-- Category Selection Tabs -->
-    <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
+    <!-- Category Selection Tabs - Mobile-friendly with grid -->
+    <div class="category-tabs border-b border-gray-200 mb-6 pb-5 overflow-x-auto">
         {% for category in categories %}
             <a href="{{ url_for('tournament.participants', id=tournament.id, category=category.id) }}" 
-                class="py-2 px-4 border-b-2 font-medium text-sm {% if category.id == selected_category.id %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                class="category-tab py-2 px-4 border-b-2 font-medium text-sm {% if category.id == selected_category.id %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
                 {{ category.name }}
             </a>
         {% endfor %}
@@ -82,9 +139,9 @@
                                     </div>
                                 {% endif %}
                                 
-                                <div class="flex flex-col sm:flex-row sm:items-center">
+                                <div class="team-container">
                                     <!-- First player -->
-                                    <div class="flex items-center mb-2 sm:mb-0 sm:mr-6">
+                                    <div class="flex items-center player-info">
                                         <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                                             {% if team.player1.profile_image %}
                                                 <img src="{{ team.player1.profile_image }}" 
@@ -126,10 +183,10 @@
                                     </div>
                                     
                                     <!-- Team separator on larger screens -->
-                                    <div class="hidden sm:block text-gray-400 mx-2">/</div>
+                                    <div class="team-separator text-gray-400 mx-2">/</div>
                                     
                                     <!-- Second player -->
-                                    <div class="flex items-center">
+                                    <div class="flex items-center player-info">
                                         <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                                             {% if team.player2.profile_image %}
                                                 <img src="{{ team.player2.profile_image }}" 
@@ -236,21 +293,6 @@
         </div>
     {% endif %}
 </div>
-
-{# <!-- Registration CTA -->
-{% if tournament.status.value == 'upcoming' and tournament.is_registration_open() %}
-    <div class="text-center mb-8">
-        {% if current_user.is_authenticated and current_user.is_player() %}
-            <a href="{{ url_for('player.register_tournament', tournament_id=tournament.id) }}" class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                Register for This Tournament
-            </a>
-        {% else %}
-            <a href="{{ url_for('auth.login') }}" class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                Sign In to Register
-            </a>
-        {% endif %}
-    </div>
-{% endif %} #}
 
 <!-- Back to Tournament -->
 <div class="text-center mb-8">

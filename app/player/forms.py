@@ -6,6 +6,26 @@ from wtforms.validators import DataRequired, Email, Length, NumberRange, Optiona
 from datetime import datetime, date
 from app.models import Tournament, TournamentCategory, Registration, PlayerProfile, User, UserRole
 
+def validate_file_size(max_size_mb=5):
+    """
+    Creates a validator that checks if the file size is within the specified limit.
+    
+    Args:
+        max_size_mb (float): Maximum file size in megabytes
+        
+    Returns:
+        function: A validator function that can be used with WTForms
+    """
+    def _validate_file_size(form, field):
+        if field.data:
+            # Get file size in bytes and convert to MB
+            file_size = len(field.data.read()) / 1024 / 1024
+            field.data.seek(0)  # Reset file pointer after reading
+            
+            if file_size > max_size_mb:
+                raise ValidationError(f'File size too large. Maximum allowed size is {max_size_mb}MB. Your file is {file_size:.1f}MB.')
+    
+    return _validate_file_size
 
 class ProfileForm(FlaskForm):
     full_name = StringField('Full Name', validators=[DataRequired(), Length(max=100)])
@@ -20,13 +40,16 @@ class ProfileForm(FlaskForm):
     height = StringField('Height', validators=[Length(max=20)])
     paddle = StringField('Paddle', validators=[Length(max=100)])
     profile_image = FileField('Profile Picture', validators=[
-        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!'),
+        validate_file_size(max_size_mb=5)
     ])
     action_image = FileField('Action Shot', validators=[
-        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!'),
+        validate_file_size(max_size_mb=5)
     ])
     banner_image = FileField('Banner Image', validators=[
-        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!'),
+        validate_file_size(max_size_mb=5)
     ])
     instagram = StringField('Instagram Link', validators=[Optional(), URL()])
     facebook = StringField('Facebook Link', validators=[Optional(), URL()])
@@ -66,7 +89,9 @@ class RegistrationForm(FlaskForm):
     ])
     player1_dupr_id = StringField('Player 1 DUPR ID', validators=[
         DataRequired(),
-        Length(min=2, max=50, message="DUPR ID must be between 2 and 50 characters")
+        Length(min=6, max=6, message="DUPR ID must be exactly 6 characters"),
+        Regexp(r'^[A-Za-z0-9]+$', message="DUPR ID can only contain letters and numbers"),
+        # Custom validator will be called from the validate_player1_dupr_id method
     ])
     player1_date_of_birth = DateField('Player 1 Date of Birth', validators=[DataRequired()])
     player1_nationality = StringField('Player 1 Nationality', validators=[
@@ -84,7 +109,12 @@ class RegistrationForm(FlaskForm):
         Regexp(r'^[A-Za-z0-9-]+$', message="IC/Passport number can only contain letters, numbers, and hyphens")
     ])
     player2_phone = TelField('Player 2 Phone')
-    player2_dupr_id = StringField('Player 2 DUPR ID')
+    player2_dupr_id = StringField('Player 2 DUPR ID', validators=[
+        Optional(),  # Will be required for doubles in validate method
+        Length(min=6, max=6, message="DUPR ID must be exactly 6 characters"),
+        Regexp(r'^[A-Za-z0-9]+$', message="DUPR ID can only contain letters and numbers"),
+        # Custom validator will be called from the validate_player2_dupr_id method
+    ])
     player2_date_of_birth = DateField('Player 2 Date of Birth')
     player2_nationality = StringField('Player 2 Nationality')
     
@@ -139,6 +169,9 @@ class RegistrationForm(FlaskForm):
                 return False
             if not self.player2_ic_number.data:
                 self.player2_ic_number.errors = ['Partner IC/Passport number is required for doubles events']
+                return False
+            if not self.player2_dupr_id.data:
+                self.player2_dupr_id.errors = ['Partner DUPR ID is required for doubles events']
                 return False
             # Add more validation as needed
             
@@ -224,7 +257,37 @@ class RegistrationForm(FlaskForm):
                 if age > category.max_age:
                     raise ValidationError(f'Player 2 exceeds the maximum age requirement of {category.max_age} years')
 
+    def validate_player1_dupr_id(self, field):
+        """Validate DUPR ID format"""
+        # Check if exactly 6 characters
+        if len(field.data) != 6:
+            raise ValidationError('DUPR ID must be exactly 6 characters')
+        
+        # Check if alphanumeric
+        if not field.data.isalnum():
+            raise ValidationError('DUPR ID must contain only letters and numbers')
+        
+        # Check if contains at least one letter and one number
+        if not (re.search(r'[A-Za-z]', field.data) and re.search(r'[0-9]', field.data)):
+            raise ValidationError('DUPR ID must contain at least one letter and one number')
 
+    def validate_player2_dupr_id(self, field):
+        """Validate Player 2 DUPR ID format (when required)"""
+        # Skip validation if the field is empty and not required
+        if not field.data:
+            return
+        
+        # Check if exactly 6 characters
+        if len(field.data) != 6:
+            raise ValidationError('DUPR ID must be exactly 6 characters')
+        
+        # Check if alphanumeric
+        if not field.data.isalnum():
+            raise ValidationError('DUPR ID must contain only letters and numbers')
+        
+        # Check if contains at least one letter and one number
+        if not (re.search(r'[A-Za-z]', field.data) and re.search(r'[0-9]', field.data)):
+            raise ValidationError('DUPR ID must contain at least one letter and one number')
 # class TournamentRegistrationForm(FlaskForm):
 #     # Hidden fields
 #     tournament_id = HiddenField('Tournament ID')
@@ -309,7 +372,8 @@ class EquipmentForm(FlaskForm):
     brand = StringField('Brand', validators=[DataRequired(), Length(max=100)])
     name = StringField('Name', validators=[DataRequired(), Length(max=200)])
     image = FileField('Equipment Image', validators=[
-        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!'),
+        validate_file_size(max_size_mb=5)
     ])
     buy_link = StringField('Buy Link', validators=[Optional(), URL()])
     submit = SubmitField('Add Equipment')
@@ -317,7 +381,8 @@ class EquipmentForm(FlaskForm):
 class SponsorForm(FlaskForm):
     name = StringField('Sponsor Name', validators=[DataRequired(), Length(max=100)])
     logo = FileField('Sponsor Logo', validators=[
-        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!'),
+        validate_file_size(max_size_mb=5)
     ])
     link = StringField('Sponsor Website', validators=[Optional(), URL()])
     submit = SubmitField('Add Sponsor')
@@ -326,7 +391,8 @@ class PaymentForm(FlaskForm):
     """Form for payment proof upload"""
     payment_proof = FileField('Payment Proof', validators=[
         FileRequired(message="Please upload your payment proof"),
-        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only! Please upload JPG, JPEG or PNG files only.')
+        FileAllowed(['jpg', 'jpeg', 'png'], 'Images only! Please upload JPG, JPEG or PNG files only.'),
+        validate_file_size(max_size_mb=5)
     ])
     submit = SubmitField('Submit Payment')
 
