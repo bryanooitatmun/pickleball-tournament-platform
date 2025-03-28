@@ -449,50 +449,6 @@ class TournamentCategory(db.Model):
             result[prize.placement].append(prize)
         return result
 
-# class Registration(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     player_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'))
-#     category_id = db.Column(db.Integer, db.ForeignKey('tournament_category.id'))
-#     partner_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=True)  # For doubles
-#     registration_date = db.Column(db.DateTime, default=datetime.utcnow)
-#     is_approved = db.Column(db.Boolean, default=False)
-#     seed = db.Column(db.Integer, nullable=True)  # For tournament seeding
-    
-#     PAYMENT_STATUS_CHOICES = [
-#         ('pending', 'Pending'),
-#         ('paid', 'Paid'),
-#         ('refunded', 'Refunded')
-#     ]
-#     payment_status = db.Column(db.String(20), default='pending')
-#     payment_date = db.Column(db.DateTime, nullable=True)
-#     payment_reference = db.Column(db.String(100), nullable=True)
-
-#     # Add payment proof fields
-#     payment_proof = db.Column(db.String(255), nullable=True)
-#     payment_proof_uploaded_at = db.Column(db.DateTime, nullable=True)
-#     payment_notes = db.Column(db.Text, nullable=True)
-
-#     # Add payment verification
-#     payment_verified = db.Column(db.Boolean, default=False)
-#     payment_verified_at = db.Column(db.DateTime, nullable=True)
-#     payment_verified_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-#     payment_rejection_reason = db.Column(db.Text, nullable=True)
-
-
-#     def create_team(self, partner_registration):
-#         """Create a team from this registration and a partner registration"""
-#         if not partner_registration:
-#             return None
-            
-#         team = Team(
-#             player1_id=self.player_id,
-#             player2_id=partner_registration.player_id,
-#             category_id=self.category_id
-#         )
-#         db.session.add(team)
-#         return team
-
-
 class Team(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     player1_id = db.Column(db.Integer, db.ForeignKey('player_profile.id'), nullable=False)
