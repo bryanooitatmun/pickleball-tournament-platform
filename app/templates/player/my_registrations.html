@@ -101,6 +101,13 @@
                                             <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                                 Confirmed
                                             </span>
+                                            
+                                            {% if registration.checked_in %}
+                                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 ml-1">
+                                                    Checked In
+                                                </span>
+                                            {% endif %}
+                                            
                                         {% elif registration.payment_status == 'rejected' %}
                                             <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
                                                 Payment Rejected
@@ -109,6 +116,13 @@
                                             <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                                 Free Entry - Confirmed
                                             </span>
+                                            
+                                            {% if registration.checked_in %}
+                                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 ml-1">
+                                                    Checked In
+                                                </span>
+                                            {% endif %}
+                                            
                                         {% endif %}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -133,6 +147,12 @@
                                                     Cancel
                                                 </button>
                                             </form>
+                                        {% endif %}
+                                        
+                                        {% if tournament.status.value == 'active' and registration.payment_status in ['paid', 'free'] and not registration.checked_in %}
+                                            <a href="{{ url_for('player.check_in_status', tournament_id=tournament.id) }}" class="text-green-600 hover:text-green-800 ml-4">
+                                                Check In
+                                            </a>
                                         {% endif %}
                                     </td>
                                 </tr>

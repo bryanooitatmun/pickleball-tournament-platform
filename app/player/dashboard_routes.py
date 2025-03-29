@@ -1,11 +1,12 @@
 from flask import render_template, redirect, url_for, flash
 from flask_login import current_user, login_required
 from datetime import datetime
+import json
 
 from app import db # Might not be needed if only reading
 from app.player import bp # Import the blueprint
 # Import necessary models using the new structure
-from app.models import PlayerProfile, Registration, TournamentStatus, TournamentCategory
+from app.models import PlayerProfile, Registration, TournamentStatus, TournamentCategory, Match
 
 
 @bp.route('/dashboard')
@@ -38,7 +39,12 @@ def dashboard():
         'pending_payments': 0,
         'rejected_payments': 0,
         # Add more stats if needed (e.g., win/loss, points)
-        'total_points': profile.get_points(None) # Example: Get total points across all categories (needs refinement in model)
+        'total_points': profile.get_points(None), # Example: Get total points across all categories (needs refinement in model)
+        # Add enhanced statistics
+        'matches_won': profile.matches_won,
+        'matches_lost': profile.matches_lost,
+        'win_loss_ratio': round(profile.matches_won / (profile.matches_won + profile.matches_lost) * 100, 1) if (profile.matches_won + profile.matches_lost) > 0 else 0,
+        'avg_match_duration': profile.avg_match_duration or 0
     }
 
     # Group registrations by tournament
@@ -67,7 +73,6 @@ def dashboard():
              if reg.player_id == profile.id:
                  stats['rejected_payments'] += 1
 
-
     # Process grouped data
     for tournament_id, data in tournament_reg_map.items():
         tournament = data['tournament']
@@ -94,6 +99,29 @@ def dashboard():
             upcoming_tournaments_data.append(data)
             stats['upcoming_tournaments'] += 1
 
+    # Get match history
+    # Singles matches where player is player1 or player2
+    singles_matches = Match.query.filter(
+        (Match.player1_id == profile.id) | (Match.player2_id == profile.id),
+        Match.is_team_match == False
+    ).order_by(Match.scheduled_time.desc()).limit(10).all()
+    
+    # Doubles matches where player is in team1 or team2
+    # This is a bit more complex, depending on your database structure
+    # This is a placeholder based on the current database structure
+    doubles_matches = Match.query.join('team1').filter(
+        ((Match.team1.has(player1_id=profile.id)) | 
+         (Match.team1.has(player2_id=profile.id)) |
+         (Match.team2.has(player1_id=profile.id)) |
+         (Match.team2.has(player2_id=profile.id))),
+        Match.is_team_match == True
+    ).order_by(Match.scheduled_time.desc()).limit(10).all()
+    
+    # Combine and sort by date
+    match_history = singles_matches + doubles_matches
+    match_history.sort(key=lambda x: x.scheduled_time or datetime.min, reverse=True)
+    match_history = match_history[:10]  # Limit to most recent 10
+
     # Sort tournaments by date
     upcoming_tournaments_data.sort(key=lambda x: x['tournament'].start_date or datetime.min)
     ongoing_tournaments_data.sort(key=lambda x: x['tournament'].start_date or datetime.min)
@@ -101,6 +129,15 @@ def dashboard():
 
     # Set total tournaments count
     stats['total_tournaments'] = len(tournament_reg_map)
+    
+    # Next upcoming match
+    next_match = Match.query.filter(
+        ((Match.player1_id == profile.id) | (Match.player2_id == profile.id) |
+        (Match.team1.has(player1_id=profile.id)) | (Match.team1.has(player2_id=profile.id)) |
+        (Match.team2.has(player1_id=profile.id)) | (Match.team2.has(player2_id=profile.id))),
+        Match.scheduled_time > datetime.utcnow(),
+        Match.winner_id.is_(None)
+    ).order_by(Match.scheduled_time).first()
 
     return render_template('player/dashboard.html',
                            title='Player Dashboard',
@@ -108,4 +145,6 @@ def dashboard():
                            upcoming_tournaments=upcoming_tournaments_data,
                            ongoing_tournaments=ongoing_tournaments_data,
                            past_tournaments=past_tournaments_data,
-                           stats=stats)
+                           stats=stats,
+                           match_history=match_history,
+                           next_match=next_match)

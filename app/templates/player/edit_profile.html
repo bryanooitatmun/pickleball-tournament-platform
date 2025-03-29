@@ -104,6 +104,17 @@
                         {% endfor %}
                     </div>
                 </div>
+                
+                <div>
+                    <label for="coach_academy" class="block text-sm font-medium text-gray-700">Coach/Academy</label>
+                    <div class="mt-1">
+                        {{ form.coach_academy(class="p-2 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.coach_academy.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    <p class="mt-1 text-sm text-gray-500">Coach or academy you're affiliated with.</p>
+                </div>
             </div>
             
             <!-- Bio and Social Media -->
@@ -146,6 +157,26 @@
                     <div class="mt-1">
                         {{ form.twitter(class="p-2 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
                         {% for error in form.twitter.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="tiktok" class="block text-sm font-medium text-gray-700">TikTok Link</label>
+                    <div class="mt-1">
+                        {{ form.tiktok(class="p-2 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.tiktok.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="xiaohongshu" class="block text-sm font-medium text-gray-700">XiaoHongShu Link</label>
+                    <div class="mt-1">
+                        {{ form.xiaohongshu(class="p-2 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
+                        {% for error in form.xiaohongshu.errors %}
                             <span class="text-red-600 text-xs">{{ error }}</span>
                         {% endfor %}
                     </div>

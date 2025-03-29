@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block title %}Tournament Check-In Status - {{ tournament.name }}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow p-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-6">Check-In Status: {{ tournament.name }}</h1>
+    
+    <div class="mb-6">
+        <p class="text-gray-600">
+            <strong>Tournament Date:</strong> 
+            {% if tournament.start_date == tournament.end_date %}
+                {{ tournament.start_date.strftime('%B %d, %Y') }}
+            {% else %}
+                {{ tournament.start_date.strftime('%B %d') }} - {{ tournament.end_date.strftime('%B %d, %Y') }}
+            {% endif %}
+        </p>
+        <p class="text-gray-600"><strong>Location:</strong> {{ tournament.location }}</p>
+    </div>
+
+    {% if registrations %}
+        <div class="bg-blue-50 p-4 rounded-lg mb-6">
+            <p class="text-blue-800">
+                <i class="fas fa-info-circle mr-2"></i> 
+                Please check in when you arrive at the tournament venue. This helps organizers confirm your attendance and prepare match schedules.
+            </p>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="py-3 px-4 text-left text-gray-700 font-semibold border-b">Category</th>
+                        <th class="py-3 px-4 text-left text-gray-700 font-semibold border-b">Team</th>
+                        <th class="py-3 px-4 text-left text-gray-700 font-semibold border-b">Check-In Status</th>
+                        <th class="py-3 px-4 text-left text-gray-700 font-semibold border-b">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for registration in registrations %}
+                        <tr class="border-b hover:bg-gray-50" id="registration-{{ registration.id }}">
+                            <td class="py-3 px-4">{{ registration.category.name }}</td>
+                            <td class="py-3 px-4">{{ registration.team_name }}</td>
+                            <td class="py-3 px-4">
+                                {% if registration.checked_in %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-check-circle mr-1"></i> Checked In
+                                        <span class="ml-1 text-gray-500">
+                                            ({{ registration.check_in_time.strftime('%H:%M') }})
+                                        </span>
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        <i class="fas fa-clock mr-1"></i> Not Checked In
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4">
+                                {% if not registration.checked_in %}
+                                    <!-- Standard form submission -->
+                                    <form action="{{ url_for('player.check_in', registration_id=registration.id) }}" method="POST" class="inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded text-sm">
+                                            Check In
+                                        </button>
+                                    </form>
+                                    
+                                    <!-- Alternative AJAX button (with JavaScript handling) -->
+                                    <button 
+                                        class="ajax-check-in-btn bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded text-sm hidden" 
+                                        data-registration-id="{{ registration.id }}">
+                                        Check In (Ajax)
+                                    </button>
+                                {% else %}
+                                    <span class="text-gray-500 text-sm">Already checked in</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="mt-6">
+            <a href="{{ url_for('player.my_registrations') }}" class="inline-block bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded">
+                <i class="fas fa-arrow-left mr-1"></i> Back to My Registrations
+            </a>
+        </div>
+    {% else %}
+        <div class="bg-yellow-50 p-4 rounded-lg">
+            <p class="text-yellow-800">
+                <i class="fas fa-exclamation-triangle mr-2"></i> 
+                You don't have any registrations for this tournament.
+            </p>
+        </div>
+        
+        <div class="mt-6">
+            <a href="{{ url_for('player.my_registrations') }}" class="inline-block bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded">
+                <i class="fas fa-arrow-left mr-1"></i> Back to My Registrations
+            </a>
+            
+            <a href="{{ url_for('player.register_tournament', tournament_id=tournament.id) }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded ml-2">
+                <i class="fas fa-plus mr-1"></i> Register for this Tournament
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Setup Socket.IO for real-time updates (optional)
+    const socket = io();
+    
+    socket.on('connect', function() {
+        console.log('Connected to Socket.IO server');
+        // Join tournament room
+        socket.emit('join', 'tournament_{{ tournament.id }}');
+    });
+    
+    socket.on('player_check_in', function(data) {
+        // Update UI if another user checks in (e.g., doubles partner)
+        if (data.registration_id) {
+            const regRow = document.getElementById(`registration-${data.registration_id}`);
+            if (regRow) {
+                const statusCell = regRow.querySelector('td:nth-child(3)');
+                const actionCell = regRow.querySelector('td:nth-child(4)');
+                
+                if (statusCell) {
+                    statusCell.innerHTML = `
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <i class="fas fa-check-circle mr-1"></i> Checked In
+                            <span class="ml-1 text-gray-500">
+                                (just now)
+                            </span>
+                        </span>
+                    `;
+                }
+                
+                if (actionCell) {
+                    actionCell.innerHTML = `<span class="text-gray-500 text-sm">Already checked in</span>`;
+                }
+            }
+        }
+    });
+    
+    // Setup AJAX check-in (alternative to form submission)
+    const ajaxCheckInButtons = document.querySelectorAll('.ajax-check-in-btn');
+    ajaxCheckInButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const registrationId = this.dataset.registrationId;
+            const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+            
+            fetch(`/player/api/check_in/${registrationId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update UI
+                    const regRow = document.getElementById(`registration-${registrationId}`);
+                    const statusCell = regRow.querySelector('td:nth-child(3)');
+                    const actionCell = regRow.querySelector('td:nth-child(4)');
+                    
+                    statusCell.innerHTML = `
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <i class="fas fa-check-circle mr-1"></i> Checked In
+                            <span class="ml-1 text-gray-500">
+                                (${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})})
+                            </span>
+                        </span>
+                    `;
+                    
+                    actionCell.innerHTML = `<span class="text-gray-500 text-sm">Already checked in</span>`;
+                    
+                    // Show success message
+                    const flashContainer = document.querySelector('.container:has(.flash-message)');
+                    if (flashContainer) {
+                        const successMsg = document.createElement('div');
+                        successMsg.className = 'flash-message bg-green-100 border-green-500 text-green-700 px-4 py-3 rounded border mb-4 relative';
+                        successMsg.innerHTML = `
+                            <span class="block sm:inline">Successfully checked in for the tournament.</span>
+                            <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3 close-flash">
+                                <svg class="fill-current h-6 w-6 text-gray-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                    <title>Close</title>
+                                    <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
+                                </svg>
+                            </button>
+                        `;
+                        flashContainer.appendChild(successMsg);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

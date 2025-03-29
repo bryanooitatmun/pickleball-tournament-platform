@@ -44,27 +44,28 @@ This document outlines the development tasks required to implement the new featu
 ## Phase 3: Player Features Implementation
 
 
-1.  **Player Check-In:**
-    *   **Backend:** Create a new route in `app/player/registration_routes.py` (or a dedicated `checkin_routes.py`) like `/check_in/<registration_id>` to update `Registration` model. Protect with `@login_required`.
-    *   **Frontend:** Add check-in button/logic to relevant player views (e.g., dashboard, tournament detail).
-2.  **Player Dashboard Enhancement:**
-    *   **Backend:** Update `dashboard` route in `app/player/dashboard_routes.py` to query and pass new profile/stat data.
-    *   **Frontend:** Update `player/dashboard.html`.
-3.  **Persistent Upcoming Match Bar:**
-    *   **Backend:** Create an API endpoint (e.g., in `app/player/dashboard_routes.py` or a new `api_routes.py`) like `/api/next_match`.
-    *   **Frontend:** Implement JS logic in `base.html` or a shared JS file to fetch and display data, handle clicks.
-4.  **Feedback / Rating System:**
-    *   **Backend:**
+1.  ✅ **Player Check-In:**
+    *   ✅ **Backend:** Create a new route in `app/player/registration_routes.py` (or a dedicated `checkin_routes.py`) like `/check_in/<registration_id>` to update `Registration` model. Protect with `@login_required`.
+    *   ✅ **Frontend:** Add check-in button/logic to relevant player views (e.g., dashboard, tournament detail).
+2.  ✅ **Player Dashboard Enhancement:**
+    *   ✅ **Backend:** Update `dashboard` route in `app/player/dashboard_routes.py` to query and pass new profile/stat data.
+    *   ✅ **Frontend:** Update `player/dashboard.html`.
+3.  ✅ **Persistent Upcoming Match Bar:**
+    *   ✅ **Backend:** Create an API endpoint (e.g., in `app/player/dashboard_routes.py` or a new `api_routes.py`) like `/api/next_match`.
+    *   ✅ **Frontend:** Implement JS logic in `base.html` or a shared JS file to fetch and display data, handle clicks.
+4.  ✅ **Feedback / Rating System:**
+    *   ✅ **Backend:**
         *   Create `FeedbackForm` (e.g., in `app/player/forms.py` or `app/feedback/forms.py`).
         *   Create routes (e.g., in `app/player/feedback_routes.py` or integrate into existing player routes) for submission and viewing (admin/organizer).
         *   Implement saving logic for `Feedback` model.
-    *   **Frontend:** Create feedback form template. Add links/buttons in relevant player views.
-5.  **Player Profile Social Media:**
-    *   **Backend:** Update `ProfileForm` (`app/player/forms.py`). Update `edit_profile` route in `app/player/profile_routes.py`. Update public profile routes (e.g., in `app/main/routes.py`) to pass data.
-    *   **Frontend:** Update `player/edit_profile.html`. Update public templates (e.g., `main/player_detail.html`).
-6.  **Player Match Verification:**
-    *   **Backend:** Create a route (e.g., in `app/player/match_routes.py` or similar) like `/match/<match_id>/verify_player`. Protect and implement verification logic, check finalization, emit SocketIO update.
-    *   **Frontend:** Add verification UI to match detail pages (e.g., `main/match_detail.html` or a player-specific view).
+    *   ✅ **Frontend:** Create feedback form template. Add links/buttons in relevant player views.
+5.  ✅ **Player Profile Social Media:**
+    *   ✅ **Backend:** Update `ProfileForm` (`app/player/forms.py`). Update `edit_profile` route in `app/player/profile_routes.py`. Update public profile routes (e.g., in `app/main/routes.py`) to pass data.
+    *   ✅ **Frontend:** Update `player/edit_profile.html`. Update public templates (e.g., `main/player_detail.html`).
+6.  ✅ **Player Match Verification:**
+    *   ✅ **Backend:** Create a route (e.g., in `app/player/match_routes.py` or similar) like `/match/<match_id>/verify_player`. Protect and implement verification logic, check finalization, emit SocketIO update.
+    *   ✅ **Frontend:** Add verification UI to match detail pages (e.g., `main/match_detail.html` or a player-specific view).
+    
 ## Phase 4: Live Features & Notifications
 
 1.  **Live Match & Court View:**
