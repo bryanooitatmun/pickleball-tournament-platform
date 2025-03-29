@@ -25,21 +25,21 @@ This document outlines the development tasks required to implement the new featu
 
 ## Phase 2: Organizer Features Implementation
 
-1.  **Bracket Generation & Seeding:**
-    *   **Backend:** Modify `BracketService` or helper functions (`app/helpers/tournament.py`). Implement logic in `app/organizer/match_routes.py` (e.g., `generate_all_brackets`) and potentially `app/organizer/category_routes.py` (`manage_category`) to trigger generation and handle manual seeding adjustments.
-    *   **Frontend:** Create/Update `generate_bracket.html` (or integrate into category management template). Implement UI for manual seeding. Update `manage_registrations.html` (likely part of category management view) to display seeding.
-2.  **Match Scheduling & Court Assignment:**
-    *   **Backend:** Update `MatchForm` (`app/organizer/forms.py`). Update `update_match` route in `app/organizer/match_routes.py` to handle saving `court` and `scheduled_time`.
-    *   **Frontend:** Create/Update `edit_match.html` (or integrate into match display/management UI).
-3.  **Score Entry & Verification:**
-    *   **Backend:** Update `ScoreForm` (`app/organizer/forms.py`). Modify `update_match` route in `app/organizer/match_routes.py` for score saving and verification flag logic. Implement SocketIO emits.
-    *   **Frontend:** Create/Update `edit_score.html` (or integrate into match display/management UI). Add UI for Referee verification.
-4.  **Player Check-In View:**
-    *   **Backend:** Update `view_registrations` route in `app/organizer/registration_routes.py` (or relevant category management route) to fetch and pass check-in status.
-    *   **Frontend:** Update `organizer/view_registrations.html` (or relevant category management template) to display check-in status.
-5.  **Livestream Embedding:**
-    *   **Backend:** Update `update_match` route in `app/organizer/match_routes.py` to save `livestream_url`. Update relevant public match display routes (e.g., in `app/main/routes.py`) to pass the URL.
-    *   **Frontend:** Update public match detail templates (e.g., `main/match_detail.html`) to embed the player.
+1.  ✅ **Bracket Generation & Seeding:**
+    *   ✅ **Backend:** Modify `BracketService` or helper functions (`app/helpers/tournament.py`). Implement logic in `app/organizer/match_routes.py` (e.g., `generate_all_brackets`) and potentially `app/organizer/category_routes.py` (`manage_category`) to trigger generation and handle manual seeding adjustments.
+    *   ✅ **Frontend:** Create/Update `generate_bracket.html` (or integrate into category management template). Implement UI for manual seeding. Update `manage_registrations.html` (likely part of category management view) to display seeding.
+2.  ✅ **Match Scheduling & Court Assignment:**
+    *   ✅ **Backend:** Update `MatchForm` (`app/organizer/forms.py`). Update `update_match` route in `app/organizer/match_routes.py` to handle saving `court` and `scheduled_time`.
+    *   ✅ **Frontend:** Create/Update `edit_match.html` (or integrate into match display/management UI).
+3.  ✅ **Score Entry & Verification:**
+    *   ✅ **Backend:** Update `ScoreForm` (`app/organizer/forms.py`). Modify `update_match` route in `app/organizer/match_routes.py` for score saving and verification flag logic. Implement SocketIO emits.
+    *   ✅ **Frontend:** Create/Update `edit_match.html` (or integrate into match display/management UI). Add UI for Referee verification.
+4.  ✅ **Player Check-In View:**
+    *   ✅ **Backend:** Update `view_registrations` route in `app/organizer/registration_routes.py` (or relevant category management route) to fetch and pass check-in status.
+    *   ✅ **Frontend:** Update `organizer/view_registrations.html` (or relevant category management template) to display check-in status.
+5.  ✅ **Livestream Embedding:**
+    *   ✅ **Backend:** Update `update_match` route in `app/organizer/match_routes.py` to save `livestream_url`. Update relevant public match display routes (e.g., in `app/main/routes.py`) to pass the URL.
+    *   ✅ **Frontend:** Update public match detail templates (e.g., `main/match_detail.html`) to embed the player.
 
 ## Phase 3: Player Features Implementation
 

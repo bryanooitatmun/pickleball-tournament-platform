@@ -1,5 +1,7 @@
 # Helper Functions
-
+from flask import current_app
+from app import db
+from app.models import Registration, Match, MatchStage, Team, PlayerProfile, Group, GroupStanding
 
 def _format_match_for_api(match):
     """Helper to format match data for API responses"""
@@ -17,30 +19,40 @@ def _format_match_for_api(match):
         # Doubles match
         if match.team1:
             match_info['team1_name'] = f"{match.team1.player1.full_name}/{match.team1.player2.full_name}"
+            match_info['team1_id'] = match.team1_id
         else:
             match_info['team1_name'] = "TBD"
+            match_info['team1_id'] = None
         
         if match.team2:
             match_info['team2_name'] = f"{match.team2.player1.full_name}/{match.team2.player2.full_name}"
+            match_info['team2_id'] = match.team2_id
         else:
             match_info['team2_name'] = "TBD"
+            match_info['team2_id'] = None
         
         if hasattr(match, 'winner') and match.winner:
             match_info['winner_name'] = f"{match.winner.player1.full_name}/{match.winner.player2.full_name}"
+            match_info['winner_id'] = match.winner_id
     else:
         # Singles match
         if match.player1:
             match_info['player1_name'] = match.player1.full_name
+            match_info['player1_id'] = match.player1_id
         else:
             match_info['player1_name'] = "TBD"
+            match_info['player1_id'] = None
         
         if match.player2:
             match_info['player2_name'] = match.player2.full_name
+            match_info['player2_id'] = match.player2_id
         else:
             match_info['player2_name'] = "TBD"
+            match_info['player2_id'] = None
         
         if hasattr(match, 'winner') and match.winner:
             match_info['winner_name'] = match.winner.full_name
+            match_info['winner_id'] = match.winner_id
     
     # Add scores
     for score in match.scores:
@@ -55,6 +67,14 @@ def _format_match_for_api(match):
     
     if match.court:
         match_info['court'] = match.court
+        
+    # Add verification info
+    match_info['referee_verified'] = match.referee_verified
+    match_info['player_verified'] = match.player_verified
+    
+    # Add livestream URL if available
+    if match.livestream_url:
+        match_info['livestream_url'] = match.livestream_url
     
     return match_info
 
@@ -64,7 +84,7 @@ def _generate_group_stage(category):
         return False
     
     # Get registrations
-    registrations = Registration.query.filter_by(category_id=category.id).all()
+    registrations = Registration.query.filter_by(category_id=category.id, is_approved=True).all()
     if len(registrations) < category.group_count * 2:  # Need at least 2 teams per group
         return False
     
@@ -85,9 +105,8 @@ def _generate_group_stage(category):
         db.session.flush()  # Get the group ID
         groups.append(group)
     
-    # Distribute teams to groups evenly
     # Sort by seed if available
-    sorted_regs = sorted(registrations, key=lambda x: x.seed if x.seed else 999)
+    sorted_regs = sorted(registrations, key=lambda x: x.seed if x.seed is not None else 999)
     
     # Create participants list (either teams or players)
     participants = []
@@ -119,7 +138,7 @@ def _generate_group_stage(category):
             player = PlayerProfile.query.get(reg.player_id)
             participants.append(player)
     
-    # Distribute participants to groups (snake seeding)
+    # Distribute participants to groups using snake seeding
     group_participants = [[] for _ in range(len(groups))]
     
     for i, participant in enumerate(participants):
@@ -256,10 +275,10 @@ def _generate_knockout_from_groups(category):
     db.session.commit()
     return True
 
-def _generate_single_elimination(category):
+def _generate_single_elimination(category, use_seeding=True, third_place_match=True):
     """Generate single elimination bracket from registrations"""
     # Get registrations
-    registrations = Registration.query.filter_by(category_id=category.id).all()
+    registrations = Registration.query.filter_by(category_id=category.id, is_approved=True).all()
     if not registrations:
         return False
     
@@ -302,19 +321,27 @@ def _generate_single_elimination(category):
                 'seed': reg.seed
             })
     
-    # Sort by seed if available (None seeds at the end)
-    sorted_participants = sorted(
-        participants,
-        key=lambda p: p['seed'] if p['seed'] else 999
-    )
-    
-    # Extract just the player/team from each entry
+    # Sort by seed if available and seeding is enabled
     seeded_participants = []
-    for p in sorted_participants:
-        if is_doubles:
-            seeded_participants.append(p['team'])
-        else:
-            seeded_participants.append(p['player'])
+    if use_seeding:
+        sorted_participants = sorted(
+            participants,
+            key=lambda p: p['seed'] if p['seed'] is not None else 999
+        )
+        
+        # Extract just the player/team from each entry
+        for p in sorted_participants:
+            if is_doubles:
+                seeded_participants.append(p['team'])
+            else:
+                seeded_participants.append(p['player'])
+    else:
+        # No seeding, just extract players/teams
+        for p in participants:
+            if is_doubles:
+                seeded_participants.append(p['team'])
+            else:
+                seeded_participants.append(p['player'])
     
     # Determine bracket size (next power of 2)
     bracket_size = 1
@@ -326,12 +353,12 @@ def _generate_single_elimination(category):
         seeded_participants.append(None)
     
     # Generate knockout matches
-    _create_knockout_matches(category, seeded_participants, is_doubles)
+    _create_knockout_matches(category, seeded_participants, is_doubles, third_place_match)
     
     db.session.commit()
     return True
 
-def _create_knockout_matches(category, seeded_participants, is_doubles):
+def _create_knockout_matches(category, seeded_participants, is_doubles, third_place_match=True):
     """Create knockout bracket matches based on seeded participants"""
     n = len(seeded_participants)
     if n < 2:
@@ -356,15 +383,15 @@ def _create_knockout_matches(category, seeded_participants, is_doubles):
             match_order=i // 2
         )
         
-        team1 = seeded_participants[i]
-        team2 = seeded_participants[i + 1] if i + 1 < n else None
+        participant1 = seeded_participants[i]
+        participant2 = seeded_participants[i + 1] if i + 1 < n else None
         
         if is_doubles:
-            match.team1_id = team1.id if team1 else None
-            match.team2_id = team2.id if team2 else None
+            match.team1_id = participant1.id if participant1 else None
+            match.team2_id = participant2.id if participant2 else None
         else:
-            match.player1_id = team1.id if team1 else None
-            match.player2_id = team2.id if team2 else None
+            match.player1_id = participant1.id if participant1 else None
+            match.player2_id = participant2.id if participant2 else None
         
         db.session.add(match)
         matches.append(match)
@@ -399,7 +426,7 @@ def _create_knockout_matches(category, seeded_participants, is_doubles):
         prev_round_matches = next_round_matches
     
     # Create 3rd place match if needed
-    if round_count >= 2:  # At least semifinal round exists
+    if third_place_match and round_count >= 2:  # At least semifinal round exists
         semifinal_matches = Match.query.filter_by(
             category_id=category.id,
             stage=MatchStage.KNOCKOUT,
@@ -416,3 +443,37 @@ def _create_knockout_matches(category, seeded_participants, is_doubles):
             db.session.add(match)
     
     db.session.flush()
+
+def update_match_seeds(category_id, seed_data):
+    """
+    Update registration seeds for a category based on manual seeding
+    
+    Args:
+        category_id: The ID of the tournament category
+        seed_data: Dictionary mapping registration_id -> seed value
+    
+    Returns:
+        Boolean indicating success
+    """
+    try:
+        for reg_id, seed_val in seed_data.items():
+            try:
+                reg_id = int(reg_id)
+                seed_val = int(seed_val) if seed_val else None
+                
+                # Get the registration and verify it's for the right category
+                reg = Registration.query.get(reg_id)
+                if reg and reg.category_id == category_id:
+                    reg.seed = seed_val
+                    
+            except (ValueError, TypeError) as e:
+                current_app.logger.error(f"Invalid data in seed update: {reg_id} -> {seed_val}, Error: {str(e)}")
+                # Continue processing other seeds even if one fails
+        
+        db.session.commit()
+        return True
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error updating seeds: {str(e)}")
+        return False

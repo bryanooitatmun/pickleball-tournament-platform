@@ -23,19 +23,27 @@
                 <h3 class="text-sm font-medium text-gray-500 mb-2">Registration Status</h3>
                 <div class="flex flex-wrap gap-2">
                     <a href="{{ url_for('organizer.view_registrations', status='pending', tournament=tournament_filter) }}" 
-                       class="px-4 py-2 rounded-md {% if status_filter == 'pending' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
+                    class="px-4 py-2 rounded-md {% if status_filter == 'pending' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
                         Pending Verification
                     </a>
                     <a href="{{ url_for('organizer.view_registrations', status='approved', tournament=tournament_filter) }}"
-                       class="px-4 py-2 rounded-md {% if status_filter == 'approved' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
+                    class="px-4 py-2 rounded-md {% if status_filter == 'approved' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
                         Approved
                     </a>
+                    <a href="{{ url_for('organizer.view_registrations', status='checked_in', tournament=tournament_filter) }}"
+                    class="px-4 py-2 rounded-md {% if status_filter == 'checked_in' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
+                        Checked In
+                    </a>
+                    <a href="{{ url_for('organizer.view_registrations', status='not_checked_in', tournament=tournament_filter) }}"
+                    class="px-4 py-2 rounded-md {% if status_filter == 'not_checked_in' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
+                        Not Checked In
+                    </a>
                     <a href="{{ url_for('organizer.view_registrations', status='rejected', tournament=tournament_filter) }}"
-                       class="px-4 py-2 rounded-md {% if status_filter == 'rejected' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
+                    class="px-4 py-2 rounded-md {% if status_filter == 'rejected' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
                         Rejected
                     </a>
                     <a href="{{ url_for('organizer.view_registrations', status='all', tournament=tournament_filter) }}"
-                       class="px-4 py-2 rounded-md {% if status_filter == 'all' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
+                    class="px-4 py-2 rounded-md {% if status_filter == 'all' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
                         All Statuses
                     </a>
                 </div>
@@ -95,6 +103,9 @@
                         </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Status
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Check-in
                         </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Actions
@@ -177,7 +188,30 @@
                                 </span>
                             {% endif %}
                         </td>
-                        
+                        <!-- Check in -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if reg.checked_in %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    Checked In
+                                </span>
+                                {% if reg.check_in_time %}
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        {{ reg.check_in_time.strftime('%b %d, %Y %H:%M') }}
+                                    </div>
+                                {% endif %}
+                            {% elif reg.payment_verified %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                    Not Checked In
+                                </span>
+                                <button type="button" 
+                                        class="text-blue-600 hover:text-blue-900 text-xs mt-1 checkin-btn"
+                                        data-registration-id="{{ reg.id }}">
+                                    Check In
+                                </button>
+                            {% else %}
+                                <span class="text-gray-400 text-xs">Not Applicable</span>
+                            {% endif %}
+                        </td>
                         <!-- Actions -->
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <a href="{{ url_for('organizer.view_registration', id=reg.id) }}" class="text-blue-600 hover:text-blue-900">
@@ -305,6 +339,7 @@
     const rejectForm = document.getElementById('rejectForm');
     const rejectButtons = document.querySelectorAll('.reject-btn');
     const closeButtons = document.querySelectorAll('.closeModal');
+    const checkinButtons = document.querySelectorAll('.checkin-btn');
     
     // Open modal when reject button is clicked
     rejectButtons.forEach(button => {
@@ -339,6 +374,53 @@
     rejectModal.addEventListener('click', function(e) {
       e.stopPropagation();
     });
+
+    checkinButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const registrationId = this.dataset.registrationId;
+        
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/registration/${registrationId}/checkin`;
+        
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = document.querySelector('input[name="csrf_token"]').value;
+        form.appendChild(csrfInput);
+        
+        // Append to body, submit, then remove
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+      });
+    });
+    
+    // SocketIO connection for real-time updates (if on a single tournament view)
+    if (window.io) {
+      const socket = io();
+      const tournamentFilter = document.getElementById('tournamentFilter').value;
+      
+      if (tournamentFilter && tournamentFilter !== 'all') {
+        // Join tournament room to receive updates
+        socket.emit('join_tournament', { tournament_id: tournamentFilter });
+        
+        // Handle player check-in event
+        socket.on('player_checked_in', function(data) {
+          // Refresh the page when a player is checked in (you can implement a more elegant update if preferred)
+          window.location.reload();
+        });
+        
+        // Handle player check-out event
+        socket.on('player_checked_out', function(data) {
+          // Refresh the page when a player is checked out
+          window.location.reload();
+        });
+      }
+    }
+    
   });
 </script>
 {% endblock %}

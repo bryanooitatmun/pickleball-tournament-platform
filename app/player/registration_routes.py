@@ -137,7 +137,7 @@ def register_tournament(tournament_id):
                  return redirect(url_for('player.register_tournament', tournament_id=tournament_id))
             if not current_user.player_profile:
                  flash('Please complete your player profile before registering.', 'warning')
-                 return redirect(url_for('player.edit_profile', next=request.url)) # Redirect to profile edit
+                 return redirect(url_for('player.register_tournament', tournament_id=tournament_id)) # Redirect to profile edit
             player1_id = current_user.player_profile.id
         elif user1:
             # Anonymous registration, but email exists - force login

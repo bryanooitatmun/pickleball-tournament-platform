@@ -115,6 +115,32 @@
                 </div>
             </div>
 
+            <!-- Livestream -->
+            {% if match.livestream_url %}
+            <div class="border-b border-gray-200">
+                <div class="aspect-w-16 aspect-h-9 bg-black">
+                    {% if 'youtube.com' in match.livestream_url or 'youtu.be' in match.livestream_url %}
+                        {% set youtube_id = match.livestream_url.split('v=')[-1] if 'v=' in match.livestream_url else match.livestream_url.split('/')[-1] %}
+                        <iframe 
+                            src="https://www.youtube.com/embed/{{ youtube_id }}?autoplay=1" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen
+                            class="w-full h-full"
+                        ></iframe>
+                    {% else %}
+                        <div class="flex items-center justify-center h-full py-10">
+                            <a href="{{ match.livestream_url }}" target="_blank" class="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 font-medium">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                                </svg>
+                                Watch Livestream
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
             <!-- Players and Live Scores -->
             <div class="p-6 live-scoring" data-tournament-id="{{ tournament.id }}" data-match-id="{{ match.id }}">
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-6 items-center">
