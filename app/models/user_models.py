@@ -94,8 +94,8 @@ class PlayerProfile(db.Model):
     # Coach/academy affiliation (required by Phase 3)
     coach_academy = db.Column(db.String(255))
     
-    # Detailed statistics (JSON field for flexibility)
-    stats = db.Column(JSON, default=dict)
+    # Detailed statistics (using Text field instead of JSON for better compatibility)
+    stats = db.Column(db.Text, default='{}')
     
     # Basic stats counters (could be calculated from matches if needed)
     matches_won = db.Column(db.Integer, default=0)
