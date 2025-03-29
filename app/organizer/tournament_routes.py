@@ -286,7 +286,7 @@ def edit_tournament(id):
             db.session.commit()
             flash('Tournament details updated successfully!', 'success')
             # Redirect back to the detail/management page, or maybe category edit?
-            return redirect(url_for('organizer.tournament_detail', id=tournament.id))
+            return redirect(url_for('organizer.edit_tournament', id=id))
         except Exception as e:
             db.session.rollback()
             flash(f'Error updating tournament: {e}', 'danger')

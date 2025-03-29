@@ -381,7 +381,7 @@ def my_registrations():
         Tournament.start_date.desc(), # Show newest tournaments first
         TournamentCategory.display_order # Order by category within tournament
     ).all()
-
+    
     # Group by tournament for display (optional, could display linearly)
     tournaments_data = {}
     for reg in registrations:
@@ -392,14 +392,14 @@ def my_registrations():
                 'registrations': []
             }
         tournaments_data[tournament.id]['registrations'].append(reg)
-
+    
     # Sort tournaments by date if grouping (newest first)
     sorted_tournaments = sorted(tournaments_data.values(), key=lambda t: t['tournament'].start_date or datetime.min, reverse=True)
 
     return render_template('player/my_registrations.html',
                            title='My Tournament Registrations',
                            # Pass either grouped or flat list
-                           grouped_tournaments=sorted_tournaments
+                           tournaments=sorted_tournaments
                            # registrations=registrations # Alternative: pass flat list
                            )
 

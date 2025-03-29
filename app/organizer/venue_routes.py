@@ -11,14 +11,57 @@ from app.decorators import organizer_required
 from app.helpers.registration import save_picture # Assuming this helper handles image saving
 
 # --- Standalone Venue Management ---
-
+@bp.route('/tournament/<int:id>/venue', methods=['GET', 'POST'])
+@login_required
+@organizer_required
+def edit_venue(id):
+    """Edit venue for a tournament"""
+    tournament = Tournament.query.get_or_404(id)
+    
+    # Ensure the tournament belongs to this organizer
+    if tournament.organizer_id != current_user.id and not current_user.is_admin():
+        flash('You do not have permission to edit this tournament.', 'danger')
+        return redirect(url_for('organizer.dashboard'))
+    
+    form = TournamentVenueForm()
+    
+    if form.validate_on_submit():
+        venue_id = form.venue_id.data
+        if venue_id:
+            venue = Venue.query.get(venue_id)
+            if venue:
+                tournament.venue_id = venue_id
+            else:
+                flash('Selected venue not found.', 'danger')
+        else:
+            tournament.venue_id = None
+            
+        db.session.commit()
+        flash('Tournament venue updated successfully.', 'success')
+        return redirect(url_for('organizer.edit_tournament', id=id))
+    
+    # Get all venues for dropdown
+    venues = Venue.query.order_by(Venue.name).all()
+    
+    # Get venue images if there's a venue assigned
+    venue_images = []
+    if tournament.venue_id:
+        venue_images = VenueImage.query.filter_by(venue_id=tournament.venue_id).order_by(VenueImage.display_order).all()
+    
+    return render_template('organizer/edit_venue.html',
+                          title='Edit Venue',
+                          tournament=tournament,
+                          venues=venues,
+                          venue_images=venue_images,
+                          form=form)
+                          
 @bp.route('/venues')
 @login_required
 @organizer_required # Or maybe admin_required depending on who manages venues globally
 def venues():
     """List all venues"""
     venues = Venue.query.order_by(Venue.display_order, Venue.name).all()
-    return render_template('organizer/venues.html', # Consider moving templates to organizer/venue/
+    return render_template('organizer/edit_tournament/venues.html', # Consider moving templates to organizer/venue/
                           title='Manage Venues',
                           venues=venues)
 
@@ -68,7 +111,7 @@ def edit_venue_details(id):
         try:
             db.session.commit()
             flash('Venue updated successfully!', 'success')
-            return redirect(url_for('organizer.venues')) # Redirect back to list
+            return redirect(url_for('organizer.edit_tournament', id=id)) # Redirect back to list
         except Exception as e:
             db.session.rollback()
             flash(f'Error updating venue: {e}', 'danger')
@@ -76,7 +119,7 @@ def edit_venue_details(id):
     # Get venue images for gallery section (already ordered by relationship)
     venue_images = venue.images.all()
 
-    return render_template('organizer/edit_venue_details.html', # Consider moving templates
+    return render_template('organizer/edit_tournament/edit_venue_details.html', # Consider moving templates
                           title=f'Edit Venue: {venue.name}',
                           venue=venue,
                           venue_images=venue_images,
@@ -125,7 +168,7 @@ def add_venue_image(id):
              flash(f'Error adding venue image: {e}', 'danger')
 
 
-    return render_template('organizer/add_venue_image.html', # Consider moving templates
+    return render_template('organizer/edit_tournament/add_venue_image.html', # Consider moving templates
                           title=f'Add Image to {venue.name}',
                           venue=venue,
                           form=form)
@@ -264,7 +307,7 @@ def edit_tournament_venue(id):
     if tournament.venue:
         venue_images = tournament.venue.images.all() # Assumes relationship is ordered
 
-    return render_template('organizer/edit_tournament_venue.html', # Consider moving templates
+    return render_template('organizer/edit_tournament/edit_tournament_venue.html', # Consider moving templates
                           title='Assign Tournament Venue',
                           tournament=tournament,
                           venue_images=venue_images, # Pass images of current venue

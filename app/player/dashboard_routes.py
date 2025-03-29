@@ -5,7 +5,8 @@ from datetime import datetime
 from app import db # Might not be needed if only reading
 from app.player import bp # Import the blueprint
 # Import necessary models using the new structure
-from app.models import PlayerProfile, Registration, TournamentStatus
+from app.models import PlayerProfile, Registration, TournamentStatus, TournamentCategory
+
 
 @bp.route('/dashboard')
 @login_required
@@ -19,7 +20,7 @@ def dashboard():
     # Get registrations where user is player1 or player2
     # Eager load related data to avoid N+1 queries in template/loop
     registrations = Registration.query.options(
-        db.joinedload(Registration.category).joinedload(Registration.tournament) # Load category and tournament
+        db.joinedload(Registration.category).joinedload(TournamentCategory.tournament) # Load Tournament via TournamentCategory
     ).filter(
         (Registration.player_id == profile.id) | (Registration.partner_id == profile.id)
     ).all()

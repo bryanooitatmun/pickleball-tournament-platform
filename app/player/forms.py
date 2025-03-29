@@ -5,6 +5,7 @@ from wtforms import StringField, TextAreaField, IntegerField, SelectField, Submi
 from wtforms.validators import DataRequired, Email, Length, NumberRange, Optional, URL, EqualTo, Regexp, ValidationError
 from datetime import datetime, date
 from app.models import Tournament, TournamentCategory, Registration, PlayerProfile, User, UserRole
+import re
 
 def validate_file_size(max_size_mb=5):
     """

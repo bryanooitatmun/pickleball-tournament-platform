@@ -16,6 +16,8 @@ def validate_file_size(max_size_mb=5):
         function: A validator function that can be used with WTForms
     """
     def _validate_file_size(form, field):
+        if isinstance(field.data, str):
+            return True
         if field.data:
             # Get file size in bytes and convert to MB
             file_size = len(field.data.read()) / 1024 / 1024

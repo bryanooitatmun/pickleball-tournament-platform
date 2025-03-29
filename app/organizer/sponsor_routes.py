@@ -11,6 +11,93 @@ from app.decorators import organizer_required
 from app.helpers.registration import save_picture # Assuming this helper handles image saving
 
 # --- Standalone Sponsor Management ---
+@bp.route('/tournament/<int:id>/sponsors', methods=['GET', 'POST'])
+@login_required
+@organizer_required
+def edit_sponsors(id):
+    """Edit sponsors for a tournament"""
+    tournament = Tournament.query.get_or_404(id)
+    
+    # Ensure the tournament belongs to this organizer
+    if tournament.organizer_id != current_user.id and not current_user.is_admin():
+        flash('You do not have permission to edit this tournament.', 'danger')
+        return redirect(url_for('organizer.dashboard'))
+    
+    form = TournamentSponsorForm()
+    
+    if form.validate_on_submit():
+        # Get selected sponsor IDs and order
+        sponsor_ids = request.form.getlist('selected_sponsors')
+        sponsor_order = request.form.getlist('sponsor_order[]')
+        
+        # Clear existing sponsors
+        tournament.platform_sponsors = []
+        
+        # Add selected sponsors in order
+        if sponsor_ids:
+            # First process sponsors with defined order
+            for sponsor_id in sponsor_order:
+                if sponsor_id in sponsor_ids:
+                    sponsor = PlatformSponsor.query.get(sponsor_id)
+                    if sponsor:
+                        tournament.platform_sponsors.append(sponsor)
+            
+            # Then add any remaining sponsors that were checked but not in the order list
+            for sponsor_id in sponsor_ids:
+                if sponsor_id not in sponsor_order:
+                    sponsor = PlatformSponsor.query.get(sponsor_id)
+                    if sponsor:
+                        tournament.platform_sponsors.append(sponsor)
+        
+        db.session.commit()
+        flash('Tournament sponsors updated successfully.', 'success')
+        return redirect(url_for('organizer.edit_tournament', id=id))
+    
+    # Get all sponsors for selection
+    all_sponsors = PlatformSponsor.query.order_by(
+        # Order by tier first (Premier > Official > Featured > Supporting)
+        db.case(
+            {
+                'PREMIER': 1,
+                'OFFICIAL': 2,
+                'FEATURED': 3,
+                'SUPPORTING': 4
+            },
+            value=PlatformSponsor.tier.name,
+            else_=5
+        ),
+        # Then by display order within tier
+        PlatformSponsor.display_order
+    ).all()
+    
+    # Get currently selected sponsor IDs
+    selected_sponsor_ids = [sponsor.id for sponsor in tournament.platform_sponsors]
+    
+    # Get tournament sponsors in their current order
+    tournament_sponsors = tournament.platform_sponsors
+
+    print(tournament_sponsors)
+
+    # Sort the sponsors by tier first, then by display_order
+    tournament_sponsors = sorted(tournament_sponsors, 
+        key=lambda x: (
+            # Order by tier priority (Premier > Official > Featured > Supporting)
+            {'PREMIER': 1, 'OFFICIAL': 2, 'FEATURED': 3, 'SUPPORTING': 4}.get(x.tier.name if x.tier else 'SUPPORTING', 5),
+            # Then by display order within tier
+            x.display_order or 999
+        )
+    )
+    print(tournament_sponsors)
+    # Available sponsors (excluding already selected)
+    available_sponsors = all_sponsors
+    
+    return render_template('organizer/edit_sponsors.html',
+                          title='Edit Sponsors',
+                          tournament=tournament,
+                          available_sponsors=available_sponsors,
+                          selected_sponsor_ids=selected_sponsor_ids,
+                          tournament_sponsors=tournament_sponsors,
+                          form=form)
 
 @bp.route('/sponsors')
 @login_required
@@ -28,7 +115,7 @@ def manage_sponsors():
     # Sort in Python after fetching
     sponsors.sort(key=lambda s: (tier_order.get(s.tier, 5), s.display_order or 999, s.name))
 
-    return render_template('organizer/manage_sponsors.html', # Consider moving templates
+    return render_template('organizer/edit_tournament/manage_sponsors.html', # Consider moving templates
                           title='Manage Sponsors',
                           sponsors=sponsors)
 
@@ -68,7 +155,7 @@ def create_sponsor():
             db.session.rollback()
             flash(f'Error creating sponsor: {e}', 'danger')
 
-    return render_template('organizer/create_sponsor.html', # Consider moving templates
+    return render_template('organizer/edit_tournament/create_sponsor.html', # Consider moving templates
                           title='Create Sponsor',
                           form=form)
 
@@ -103,7 +190,7 @@ def edit_sponsor(id):
             db.session.rollback()
             flash(f'Error updating sponsor: {e}', 'danger')
 
-    return render_template('organizer/edit_sponsor.html', # Consider moving templates
+    return render_template('organizer/edit_tournament/edit_sponsor.html', # Consider moving templates
                           title=f'Edit Sponsor: {sponsor.name}',
                           sponsor=sponsor,
                           form=form)
@@ -202,7 +289,7 @@ def edit_tournament_sponsors(id):
     # Get IDs of sponsors currently associated with this tournament
     selected_sponsor_ids = {sponsor.id for sponsor in tournament.platform_sponsors}
 
-    return render_template('organizer/edit_tournament_sponsors.html', # Consider moving templates
+    return render_template('organizer/edit_tournament/edit_tournament_sponsors.html', # Consider moving templates
                           title=f'Edit Sponsors for {tournament.name}',
                           tournament=tournament,
                           all_sponsors=all_sponsors,
