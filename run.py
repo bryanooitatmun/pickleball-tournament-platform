@@ -1,4 +1,4 @@
-from app import create_app, db
+from app import create_app, db, socketio
 from app.models import (User, PlayerProfile, Tournament, TournamentCategory, Match, 
 MatchScore, Registration, Equipment, PlayerSponsor, PlatformSponsor, Venue, Advertisement)
 
@@ -23,4 +23,5 @@ def make_shell_context():
     }
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Use SocketIO to run the app instead of app.run()
+    socketio.run(app, debug=True)

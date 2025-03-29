@@ -10,6 +10,7 @@ from app.models.match_models import *
 from app.models.registration_models import *
 from app.models.venue_sponsor_models import *
 from app.models.support_models import *
+from app.models.feedback_models import *  # Import the new Feedback model
 from app.models.prize_models import *
 from app.models.misc_models import *
 

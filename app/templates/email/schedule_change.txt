@@ -1,0 +1,20 @@
+Hello {{ user.username }},
+
+There has been a change to your match schedule in the {{ category_name }} category of {{ tournament.name }}.
+
+The following changes have been made:
+{% for field, value in changes.items() %}
+- {{ field|capitalize }}: {{ value }}
+{% endfor %}
+
+Updated Match Details:
+- Time: {{ match.scheduled_time.strftime('%I:%M %p, %d %B %Y') if match.scheduled_time else "TBD" }}
+- Court: {{ match.court or "TBD" }}
+{% if match.livestream_url %}
+- Livestream: {{ match.livestream_url }}
+{% endif %}
+
+Please make note of these changes and adjust your plans accordingly.
+
+Best regards,
+{{ tournament.name }} Organizers

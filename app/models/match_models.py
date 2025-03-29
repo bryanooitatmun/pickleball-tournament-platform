@@ -88,8 +88,8 @@ class Match(db.Model):
     match_order = db.Column(db.Integer)  # Order within the round/group
 
     # Scheduling info
-    court = db.Column(db.String(50), nullable=True) # Changed from court_assignment for consistency
-    scheduled_time = db.Column(db.DateTime, nullable=True)
+    court = db.Column(db.String(50), nullable=True) # Field exists and is properly named
+    scheduled_time = db.Column(db.DateTime, nullable=True) # Field exists and is properly named
     livestream_url = db.Column(db.String(255), nullable=True) # Added from requirements
 
     # For singles matches

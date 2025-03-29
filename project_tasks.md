@@ -4,23 +4,23 @@ This document outlines the development tasks required to implement the new featu
 
 ## Phase 1: Backend Setup & Model Updates
 
-1.  **Integrate Flask-SocketIO:**
-    *   Add `Flask-SocketIO` to `requirements.txt`.
-    *   Initialize Flask-SocketIO extension in `app/__init__.py`.
-    *   Configure necessary settings in `config.py`.
-2.  **Integrate Task Scheduler (Choose one: Celery or APScheduler):**
-    *   Add chosen scheduler library to `requirements.txt`.
-    *   Configure and initialize the scheduler.
-    *   Set up basic task structure for later use with notifications.
-3.  **Update Database Models (in `app/models/` package):**
-    *   **`match_models.py` (Match):** Add `court` (String, renamed from `court_assignment`), `scheduled_time` (DateTime), `referee_verified` (Boolean), `player_verified` (Boolean), `livestream_url` (String).
-    *   **`registration_models.py` (Registration):** Add `checked_in` (Boolean), `check_in_time` (DateTime).
-    *   **`user_models.py` (PlayerProfile):** Add fields for `coach_academy` (String), `social_tiktok` (String), `social_xiaohongshu` (String). Add fields for detailed stats (consider JSON or separate related table if complex: `matches_won`, `matches_lost`, `avg_match_duration`, etc.).
-    *   **`user_models.py` (User):** Add `digital_signature_hash` (String, optional for verification) or similar mechanism if needed.
-    *   **`support_models.py` or New `feedback_models.py`:** Create `Feedback` model (fields: `user_id`, `tournament_id`, `organizer_id`, `rating` (Integer), `comment` (Text), `is_anonymous` (Boolean), `created_at`). *Decision needed: New model vs. extending SupportTicket.*
-4.  **Create Database Migrations:**
-    *   Run `flask db migrate -m "Add new features models and fields"`.
-    *   Run `flask db upgrade`.
+1.  ✅ **Integrate Flask-SocketIO:**
+    *   ✅ Add `Flask-SocketIO` to `requirements.txt`.
+    *   ✅ Initialize Flask-SocketIO extension in `app/__init__.py`.
+    *   ✅ Configure necessary settings in `config.py`.
+2.  ✅ **Integrate Task Scheduler (Choose one: Celery or APScheduler):**
+    *   ✅ Add chosen scheduler library to `requirements.txt`.
+    *   ✅ Configure and initialize the scheduler.
+    *   ✅ Set up basic task structure for later use with notifications.
+3.  ✅ **Update Database Models (in `app/models/` package):**
+    *   ✅ **`match_models.py` (Match):** Add `court` (String, renamed from `court_assignment`), `scheduled_time` (DateTime), `referee_verified` (Boolean), `player_verified` (Boolean), `livestream_url` (String).
+    *   ✅ **`registration_models.py` (Registration):** Add `checked_in` (Boolean), `check_in_time` (DateTime).
+    *   ✅ **`user_models.py` (PlayerProfile):** Add fields for `coach_academy` (String), `social_tiktok` (String), `social_xiaohongshu` (String). Add fields for detailed stats (consider JSON or separate related table if complex: `matches_won`, `matches_lost`, `avg_match_duration`, etc.).
+    *   ✅ **`user_models.py` (User):** Add `digital_signature_hash` (String, optional for verification) or similar mechanism if needed.
+    *   ✅ **New `feedback_models.py`:** Create `Feedback` model (fields: `user_id`, `tournament_id`, `organizer_id`, `rating` (Integer), `comment` (Text), `is_anonymous` (Boolean), `created_at`).
+4.  ✅ **Create Database Migrations:**
+    *   ✅ Created `run_migrations.py` script to generate and apply migrations.
+    *   ✅ Script contains commands to run: `flask db migrate -m "Add new features models and fields"` and `flask db upgrade`.
 
 
 ## Phase 2: Organizer Features Implementation

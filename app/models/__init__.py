@@ -11,6 +11,7 @@ from .match_models import Team, Group, GroupStanding, Match, MatchScore
 from .registration_models import Registration
 from .venue_sponsor_models import Venue, VenueImage, PlatformSponsor, PlayerSponsor, tournament_sponsors
 from .support_models import SupportTicket, TicketResponse
+from .feedback_models import Feedback  # Import the new Feedback model
 from .prize_models import Prize
 from .misc_models import Equipment, Advertisement
 
@@ -23,7 +24,7 @@ from .misc_models import Equipment, Advertisement
 #     'Team', 'Group', 'GroupStanding', 'Match', 'MatchScore',
 #     'Registration',
 #     'Venue', 'VenueImage', 'PlatformSponsor', 'PlayerSponsor', 'tournament_sponsors',
-#     'SupportTicket', 'TicketResponse',
+#     'SupportTicket', 'TicketResponse', 'Feedback',
 #     'Prize',
 #     'Equipment', 'Advertisement'
 # ]

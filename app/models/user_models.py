@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy import Enum, Column, Integer, String, Boolean, DateTime, ForeignKey, Date, Text
+from sqlalchemy import Enum, Column, Integer, String, Boolean, DateTime, ForeignKey, Date, Text, JSON
 from sqlalchemy.orm import relationship
 from app import db, login
 from app.models.enums import UserRole, CategoryType # Import necessary enums
@@ -18,6 +18,9 @@ class User(UserMixin, db.Model):
     role = db.Column(Enum(UserRole), default=UserRole.PLAYER)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Added for digital signature verification (for match results)
+    digital_signature_hash = db.Column(db.String(128), nullable=True)
 
     # Relationships
     # Use string for relationship target to avoid circular imports initially
@@ -33,12 +36,25 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+        
+    def set_digital_signature(self, signature):
+        """Set a digital signature for the user (for match result verification)"""
+        self.digital_signature_hash = generate_password_hash(signature)
+        
+    def verify_digital_signature(self, signature):
+        """Verify a digital signature"""
+        if not self.digital_signature_hash:
+            return False
+        return check_password_hash(self.digital_signature_hash, signature)
 
     def is_admin(self):
         return self.role == UserRole.ADMIN
 
     def is_organizer(self):
         return self.role == UserRole.ORGANIZER or self.role == UserRole.ADMIN
+        
+    def is_referee(self):
+        return self.role == UserRole.REFEREE
 
     def is_player(self):
         return self.role == UserRole.PLAYER
@@ -56,10 +72,10 @@ class PlayerProfile(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     dupr_id = db.Column(db.String(50), nullable=True)
     date_of_birth = db.Column(db.Date, nullable=True)
-    full_name = db.Column(db.String(100)) # Consider removing if always same as User.full_name
+    full_name = db.Column(db.String(100))
     country = db.Column(db.String(100))
     city = db.Column(db.String(100))
-    age = db.Column(db.Integer) # Consider making this a calculated property based on date_of_birth
+    age = db.Column(db.Integer)
     bio = db.Column(db.Text)
     plays = db.Column(db.String(50))  # Right-handed, Left-handed
     height = db.Column(db.String(20))  # Height in ft and inches
@@ -67,10 +83,25 @@ class PlayerProfile(db.Model):
     profile_image = db.Column(db.String(255))
     action_image = db.Column(db.String(255))
     banner_image = db.Column(db.String(255))
-    # Social links will be added later based on project_tasks.md
+    
+    # New fields added for social media
     instagram = db.Column(db.String(255))
     facebook = db.Column(db.String(255))
     twitter = db.Column(db.String(255))
+    tiktok = db.Column(db.String(255))  # Added as required
+    xiaohongshu = db.Column(db.String(255))  # Added as required
+    
+    # Coach/academy affiliation (required by Phase 3)
+    coach_academy = db.Column(db.String(255))
+    
+    # Detailed statistics (JSON field for flexibility)
+    stats = db.Column(JSON, default=dict)
+    
+    # Basic stats counters (could be calculated from matches if needed)
+    matches_won = db.Column(db.Integer, default=0)
+    matches_lost = db.Column(db.Integer, default=0)
+    avg_match_duration = db.Column(db.Integer, default=0)  # in minutes
+    
     turned_pro = db.Column(db.Integer)
 
     # Rankings
@@ -118,6 +149,40 @@ class PlayerProfile(db.Model):
         elif category_type == CategoryType.MIXED_DOUBLES:
             return self.mixed_doubles_points
         return 0
+        
+    def update_match_stats(self):
+        """Update match statistics"""
+        # Count singles matches won and lost
+        singles_won = self.matches_won_singles.count()
+        singles_lost = self.matches_lost_singles.count()
+        
+        # Count doubles matches won and lost through teams
+        doubles_won = 0
+        doubles_lost = 0
+        
+        # Teams where this player is player1
+        teams_as_player1 = db.session.query('Team').filter_by(player1_id=self.id).all()
+        # Teams where this player is player2
+        teams_as_player2 = db.session.query('Team').filter_by(player2_id=self.id).all()
+        
+        for team in teams_as_player1 + teams_as_player2:
+            doubles_won += team.matches_won.count()
+            doubles_lost += team.matches_lost.count()
+            
+        # Update stats
+        self.matches_won = singles_won + doubles_won
+        self.matches_lost = singles_lost + doubles_lost
+        
+        # We could calculate avg_match_duration here if we had match duration data
+        
+        return {
+            'singles_won': singles_won,
+            'singles_lost': singles_lost,
+            'doubles_won': doubles_won,
+            'doubles_lost': doubles_lost,
+            'total_won': self.matches_won,
+            'total_lost': self.matches_lost
+        }
 
     def __repr__(self):
         return f'<PlayerProfile {self.full_name}>'
