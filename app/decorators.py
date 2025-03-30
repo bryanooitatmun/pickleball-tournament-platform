@@ -29,3 +29,12 @@ def referee_required(f):
             return redirect(url_for('main.index'))
         return f(*args, **kwargs)
     return decorated_function
+
+def player_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.player_profile:
+            flash('You need to be an player to access this page.', 'danger')
+            return redirect(url_for('main.index'))
+        return f(*args, **kwargs)
+    return decorated_function
