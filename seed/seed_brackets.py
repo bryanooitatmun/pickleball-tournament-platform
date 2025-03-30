@@ -4,9 +4,9 @@ Generates groups and bracket matches for a tournament category.
 """
 
 from app.models import (
-    Tournament, TournamentCategory, Team, Match, MatchScore, Group, GroupStanding
+    Tournament, TournamentCategory, Team, Match, MatchScore, Group, GroupStanding, Registration
 )
-from seed_base import app, db, commit_changes
+from .seed_base import app, db, commit_changes
 from datetime import datetime, timedelta
 import random
 import sys
@@ -82,7 +82,6 @@ def create_group_matches(group, teams, percentage_completed=80, commit=True):
                 match_order=match_number,
                 team1_id=team1.id,
                 team2_id=team2.id,
-                is_team_match=True,
                 completed=completed,
                 court=f"Court {random.randint(1, 8)}",
                 scheduled_time=datetime.now() + timedelta(hours=random.randint(-12, 24)),
@@ -206,6 +205,12 @@ def create_knockout_matches(category, group_qualifiers, percentage_completed=75,
         (group_qualifiers['D'][1][0], group_qualifiers['A'][1][1]),  # D1 vs A2
     ]
     
+    # Create a flat list of all qualified teams for seed advantage calculation
+    all_qualified_teams = []
+    for group_letter in ['A', 'B', 'C', 'D']:
+        if group_letter in group_qualifiers:
+            all_qualified_teams.extend(group_qualifiers[group_letter][1])
+    
     qf_matches = []
     for idx, (team1, team2) in enumerate(qf_matchups):
         # Determine if match is completed
@@ -217,7 +222,6 @@ def create_knockout_matches(category, group_qualifiers, percentage_completed=75,
             match_order=idx + 1,
             team1_id=team1.id,
             team2_id=team2.id,
-            is_team_match=True,
             completed=completed,
             court=f"Court {random.randint(1, 4)}",
             scheduled_time=datetime.now() + timedelta(hours=random.randint(24, 36)),
@@ -227,8 +231,11 @@ def create_knockout_matches(category, group_qualifiers, percentage_completed=75,
         )
         
         if completed:
-            # Higher seed advantage
-            seed_diff = qualified_teams.index(team1) - qualified_teams.index(team2)
+            # Higher seed advantage based on a list of all qualified teams
+            # First position in a group is ranked higher than second position in a group
+            team1_idx = all_qualified_teams.index(team1)
+            team2_idx = all_qualified_teams.index(team2)
+            seed_diff = team1_idx - team2_idx
             higher_seed_advantage = 0.5 + min(0.3, abs(seed_diff) * 0.05) * (1 if seed_diff < 0 else -1)
             
             team1_wins = random.random() < higher_seed_advantage
@@ -275,7 +282,6 @@ def create_knockout_matches(category, group_qualifiers, percentage_completed=75,
                 match_order=1,
                 team1_id=completed_qfs[0].winning_team_id,
                 team2_id=completed_qfs[1].winning_team_id,
-                is_team_match=True,
                 completed=False,  # Pending
                 court="Court 1",
                 scheduled_time=datetime.now() + timedelta(hours=48),
@@ -294,7 +300,6 @@ def create_knockout_matches(category, group_qualifiers, percentage_completed=75,
                 match_order=2,
                 team1_id=completed_qfs[2].winning_team_id,
                 team2_id=completed_qfs[3].winning_team_id,
-                is_team_match=True,
                 completed=False,  # Pending
                 court="Court 2",
                 scheduled_time=datetime.now() + timedelta(hours=48),

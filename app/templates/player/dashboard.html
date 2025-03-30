@@ -34,7 +34,7 @@
             <div class="flex-grow px-4">
                 <div class="flex justify-center items-center">
                     <div class="text-right mr-3">
-                        {% if next_match.is_team_match %}
+                        {% if next_match.is_doubles %}
                             {% if next_match.team1.player1_id == profile.id or next_match.team1.player2_id == profile.id %}
                                 <span class="font-bold">You & {{ next_match.team1.player1_id == profile.id ? next_match.team1.player2_profile.full_name : next_match.team1.player1_profile.full_name }}</span>
                             {% else %}
@@ -46,7 +46,7 @@
                     </div>
                     <div class="text-center text-xl font-bold mx-3">VS</div>
                     <div class="text-left ml-3">
-                        {% if next_match.is_team_match %}
+                        {% if next_match.is_doubles %}
                             {% if next_match.team1.player1_id == profile.id or next_match.team1.player2_id == profile.id %}
                                 <span class="font-bold">{{ next_match.team2.player1_profile.full_name }} & {{ next_match.team2.player2_profile.full_name }}</span>
                             {% else %}
@@ -317,7 +317,7 @@
                                     {{ match.category.category_type.value }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {% if match.is_team_match %}
+                                    {% if match.is_doubles %}
                                         {% if match.team1.player1_id == profile.id or match.team1.player2_id == profile.id %}
                                             {{ match.team2.player1_profile.full_name }} & {{ match.team2.player2_profile.full_name }}
                                         {% else %}
@@ -343,7 +343,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     {% if match.winner_id or match.winning_team_id %}
-                                        {% if match.is_team_match %}
+                                        {% if match.is_doubles %}
                                             {% if match.winning_team_id %}
                                                 {% if (match.team1_id == match.winning_team_id and (match.team1.player1_id == profile.id or match.team1.player2_id == profile.id)) or
                                                       (match.team2_id == match.winning_team_id and (match.team2.player1_id == profile.id or match.team2.player2_id == profile.id)) %}

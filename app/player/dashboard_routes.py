@@ -103,7 +103,7 @@ def dashboard():
     # Singles matches where player is player1 or player2
     singles_matches = Match.query.filter(
         (Match.player1_id == profile.id) | (Match.player2_id == profile.id),
-        Match.is_team_match == False
+        Match.is_doubles == False
     ).order_by(Match.scheduled_time.desc()).limit(10).all()
     
     # Doubles matches where player is in team1 or team2
@@ -114,7 +114,7 @@ def dashboard():
          (Match.team1.has(player2_id=profile.id)) |
          (Match.team2.has(player1_id=profile.id)) |
          (Match.team2.has(player2_id=profile.id))),
-        Match.is_team_match == True
+        Match.is_doubles == True
     ).order_by(Match.scheduled_time.desc()).limit(10).all()
     
     # Combine and sort by date

@@ -4,7 +4,7 @@ Creates admin, organizer, referee, and player accounts with profiles.
 """
 
 from app.models import User, UserRole, PlayerProfile
-from seed_base import app, db, commit_changes, random_phone, date_in_range
+from .seed_base import app, db, commit_changes, random_phone, date_in_range
 from werkzeug.security import generate_password_hash
 import random
 import string

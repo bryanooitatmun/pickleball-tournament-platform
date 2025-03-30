@@ -4,7 +4,7 @@ Handles match court assignments, scheduled times, and verification status.
 """
 
 from app.models import Tournament, TournamentCategory, Match, MatchScore, User, UserRole
-from seed_base import app, db, commit_changes
+from .seed_base import app, db, commit_changes
 from datetime import datetime, timedelta
 import random
 import sys
@@ -180,7 +180,7 @@ def update_match_scores(tournament, commit=True):
         )
         
         # Set appropriate scores based on winner
-        if match.is_team_match:
+        if match.is_doubles:
             if match.team1_id == match.winning_team_id:
                 score.player1_score = 11
                 score.player2_score = random.randint(5, 9)

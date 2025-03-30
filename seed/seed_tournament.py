@@ -7,8 +7,8 @@ from app.models import (
     Tournament, TournamentCategory, CategoryType, TournamentTier, 
     TournamentFormat, TournamentStatus, Venue, PrizeType, Prize, User, UserRole
 )
-from seed_base import app, db, commit_changes, generate_reference
-from seed_users import create_organizer
+from .seed_base import app, db, commit_changes, generate_reference
+from .seed_users import create_organizer
 from datetime import datetime, timedelta
 import sys
 import random

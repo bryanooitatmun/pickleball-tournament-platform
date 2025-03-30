@@ -4,8 +4,8 @@ Creates teams and registrations for tournament categories.
 """
 
 from app.models import Tournament, TournamentCategory, CategoryType, Registration, User, PlayerProfile, Team
-from seed_base import app, db, commit_changes, generate_reference, random_phone
-from seed_users import create_player
+from .seed_base import app, db, commit_changes, generate_reference, random_phone
+from .seed_users import create_player
 from datetime import datetime, timedelta
 import random
 import string

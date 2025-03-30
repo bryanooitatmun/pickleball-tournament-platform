@@ -3,7 +3,7 @@ Main seeding script for the Pickleball Tournament Platform.
 Coordinates all seeding operations across different modules.
 """
 
-from seed_base import app, db, commit_changes, reset_db
+from .seed_base import app, db, commit_changes, reset_db
 from datetime import datetime
 import sys
 import time
@@ -17,12 +17,17 @@ def run_seed_module(module_name, description):
     start_time = time.time()
     
     try:
-        __import__(module_name).main()
+        # Import from the seed package using the full module path
+        module = __import__(f"seed.{module_name}", fromlist=['main'])
+        module.main()
         end_time = time.time()
         print(f"\n✓ Completed {module_name} in {round(end_time - start_time, 2)} seconds")
         return True
     except Exception as e:
         print(f"\n✗ Error in {module_name}: {e}")
+        print(f"Error details: {type(e).__name__}")
+        import traceback
+        traceback.print_exc()
         return False
 
 def main():

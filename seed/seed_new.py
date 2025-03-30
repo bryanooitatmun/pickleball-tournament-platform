@@ -569,7 +569,6 @@ def seed_mens_doubles():
                     match_order=match_number,
                     team1_id=team1.id,
                     team2_id=team2.id,
-                    is_team_match=True,
                     completed=completed,
                     court=f"Court {random.randint(1, 8)}",
                     scheduled_time=datetime.utcnow() + timedelta(hours=random.randint(-24, 24)),
@@ -697,7 +696,6 @@ def seed_mens_doubles():
             match_order=idx + 1,
             team1_id=team1_id,
             team2_id=team2_id,
-            is_team_match=True,
             completed=completed,
             court=f"Court {random.randint(1, 4)}",
             scheduled_time=datetime.utcnow() + timedelta(hours=random.randint(8, 16)),
@@ -752,7 +750,6 @@ def seed_mens_doubles():
                 match_order=idx + 1,
                 team1_id=qf1.winning_team_id,
                 team2_id=qf2.winning_team_id,
-                is_team_match=True,
                 completed=False,  # Not completed yet
                 court=f"Court {random.randint(1, 2)}",
                 scheduled_time=datetime.utcnow() + timedelta(hours=random.randint(20, 28)),
