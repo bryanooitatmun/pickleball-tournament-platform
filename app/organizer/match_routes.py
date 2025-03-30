@@ -159,11 +159,30 @@ def update_match(id, match_id):
 
             # --- Post-Commit Actions ---
             # Emit socket.io event with match update
-            socketio.emit('match_updated', {
+            # --- Emit socket.io events with match update
+            socketio.emit('match_update', {
                 'match': _format_match_for_api(match),
                 'tournament_id': match.category.tournament_id,
-                'category_id': match.category_id
+                'category_id': match.category_id,
+                'status': 'completed' if match.completed else 'in_progress'
             }, room=f'tournament_{match.category.tournament_id}')
+            
+            # Emit score update for live match view
+            socketio.emit('score_update', {
+                'match_id': match.id,
+                'player1_score': new_scores[-1].player1_score if new_scores else 0,
+                'player2_score': new_scores[-1].player2_score if new_scores else 0,
+                'set_number': len(new_scores)
+            }, room=f'match_{match.id}')
+            
+            # Emit court update for live courts view
+            if match.court:
+                socketio.emit('court_update', {
+                    'court': match.court,
+                    'match_id': match.id,
+                    'tournament_id': match.category.tournament_id,
+                    'status': 'completed' if match.completed else 'in_progress'
+                }, room=f'courts_view_{match.category.tournament_id}')
 
             # Schedule notification for court/time change if needed
             if schedule_changed:

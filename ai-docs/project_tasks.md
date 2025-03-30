@@ -68,15 +68,15 @@ This document outlines the development tasks required to implement the new featu
     
 ## Phase 4: Live Features & Notifications
 
-1.  **Live Match & Court View:**
-    *   **Backend:**
-        *   Create a new route (e.g., `/live_courts/<tournament_id>`) that fetches current court assignments, active matches, and upcoming matches.
-        *   Implement SocketIO event handlers (`on_connect`, `on_join_room`, etc.).
-        *   Emit score/match updates from relevant backend actions (score entry, match finalization, scheduling changes) to specific tournament rooms.
-    *   **Frontend:**
-        *   Create `live_courts.html` template.
-        *   Use JavaScript and SocketIO client library to connect, join the tournament room, and listen for events.
-        *   Update the UI dynamically based on received SocketIO messages (scores, next match info).
+1.  ✅ **Live Match & Court View:**
+    *   ✅ **Backend:**
+        *   ✅ Create a new route (e.g., `/live_courts/<tournament_id>`) that fetches current court assignments, active matches, and upcoming matches.
+        *   ✅ Implement SocketIO event handlers (`on_connect`, `on_join_room`, etc.).
+        *   ✅ Emit score/match updates from relevant backend actions (score entry, match finalization, scheduling changes) to specific tournament rooms.
+    *   ✅ **Frontend:**
+        *   ✅ Create `live_courts.html` template.
+        *   ✅ Use JavaScript and SocketIO client library to connect, join the tournament room, and listen for events.
+        *   ✅ Update the UI dynamically based on received SocketIO messages (scores, next match info).
 2.  **Email Notifications:**
     *   **Backend:**
         *   Create email templates (e.g., in `app/templates/email/`).

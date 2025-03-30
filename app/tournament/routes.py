@@ -537,6 +537,141 @@ def live_match(id, match_id):
                            match=match,
                            scores=scores)
 
+@bp.route('/<int:id>/live_courts')
+def live_courts(id):
+    """
+    Live view of all courts in a tournament, showing active matches and next scheduled matches
+    """
+    # Get tournament
+    tournament = Tournament.query.get_or_404(id)
+    
+    # Check if tournament is ongoing
+    if tournament.status != TournamentStatus.ONGOING:
+        flash('Live court view is only available for ongoing tournaments.', 'warning')
+        return redirect(url_for('main.tournament_detail', id=id))
+    
+    # Get all matches with court assignments for this tournament
+    all_assigned_matches = Match.query.join(TournamentCategory).filter(
+        TournamentCategory.tournament_id == id,
+        Match.court.isnot(None)
+    ).order_by(Match.scheduled_time).all()
+    
+    # Organize matches by court
+    courts = {}
+    # Get ongoing matches (not completed, have players/teams assigned, and have a court)
+    ongoing_matches = {}
+    # Get upcoming matches by court (next scheduled match for each court)
+    upcoming_matches = {}
+    
+    # Current time for comparison
+    now = datetime.now()
+    
+    # Process all assigned matches to organize them by court
+    for match in all_assigned_matches:
+        court = match.court
+        
+        # Add court to dictionaries if not already present
+        if court not in courts:
+            courts[court] = []
+        if court not in ongoing_matches:
+            ongoing_matches[court] = None
+        if court not in upcoming_matches:
+            upcoming_matches[court] = None
+        
+        # Add match to the court's matches list
+        courts[court].append(match)
+        
+        # Check if this is an ongoing match
+        if not match.completed and (
+            (match.is_doubles and match.team1_id and match.team2_id) or
+            (not match.is_doubles and match.player1_id and match.player2_id)
+        ):
+            # If no ongoing match for this court or this match is earlier, use this one
+            if (ongoing_matches[court] is None or 
+                (match.scheduled_time and ongoing_matches[court].scheduled_time and 
+                 match.scheduled_time < ongoing_matches[court].scheduled_time)):
+                ongoing_matches[court] = match
+        
+        # Check if this is an upcoming match
+        if not match.completed and match.scheduled_time and match.scheduled_time > now:
+            # If no upcoming match for this court yet or this one is earlier
+            if (upcoming_matches[court] is None or 
+                (match.scheduled_time and upcoming_matches[court].scheduled_time and 
+                 match.scheduled_time < upcoming_matches[court].scheduled_time)):
+                upcoming_matches[court] = match
+    
+    # Get match scores for ongoing matches
+    scores = {}
+    for court, match in ongoing_matches.items():
+        if match:
+            match_scores = MatchScore.query.filter_by(match_id=match.id).order_by(MatchScore.set_number).all()
+            scores[match.id] = match_scores
+    
+    return render_template('tournament/live_courts.html',
+                           title=f"{tournament.name} - Live Courts",
+                           tournament=tournament,
+                           courts=courts,
+                           ongoing_matches=ongoing_matches,
+                           upcoming_matches=upcoming_matches,
+                           scores=scores,
+                           now=now)
+
+# Add this API endpoint after the api_scores function
+@bp.route('/api/<int:id>/courts_data')
+def api_courts_data(id):
+    """API endpoint for live court status data"""
+    # Get tournament
+    tournament = Tournament.query.get_or_404(id)
+    
+    # Get all matches with court assignments for this tournament
+    all_assigned_matches = Match.query.join(TournamentCategory).filter(
+        TournamentCategory.tournament_id == id,
+        Match.court.isnot(None)
+    ).order_by(Match.scheduled_time).all()
+    
+    # Organize matches by court
+    courts_data = {}
+    now = datetime.now()
+    
+    for match in all_assigned_matches:
+        court = match.court
+        
+        # Initialize court data if not exists
+        if court not in courts_data:
+            courts_data[court] = {
+                'ongoing_match': None,
+                'upcoming_match': None
+            }
+        
+        # Check if match is ongoing (not completed and has players/teams assigned)
+        if not match.completed and (
+            (match.is_doubles and match.team1_id and match.team2_id) or
+            (not match.is_doubles and match.player1_id and match.player2_id)
+        ):
+            current_ongoing = courts_data[court]['ongoing_match']
+            
+            # If no ongoing match yet or this match is scheduled earlier
+            if current_ongoing is None or (
+                match.scheduled_time and current_ongoing.get('scheduled_time') and
+                match.scheduled_time < datetime.fromisoformat(current_ongoing['scheduled_time'])
+            ):
+                # Format match data for JSON
+                courts_data[court]['ongoing_match'] = _format_match_for_api(match)
+        
+        # Check if match is upcoming
+        if not match.completed and match.scheduled_time and match.scheduled_time > now:
+            current_upcoming = courts_data[court]['upcoming_match']
+            
+            # If no upcoming match yet or this match is scheduled earlier
+            if current_upcoming is None or (
+                match.scheduled_time and current_upcoming.get('scheduled_time') and
+                match.scheduled_time < datetime.fromisoformat(current_upcoming['scheduled_time'])
+            ):
+                # Format match data for JSON
+                courts_data[court]['upcoming_match'] = _format_match_for_api(match)
+    
+    return jsonify(courts_data)
+    
 @bp.route('/api/<int:id>/scores')
 def api_scores(id):
     # API endpoint to get latest scores for all matches in a tournament

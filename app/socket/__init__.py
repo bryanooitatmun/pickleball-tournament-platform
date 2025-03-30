@@ -57,3 +57,13 @@ def register_socketio_handlers(socketio):
             room = f'match_{match_id}'
             join_room(room)
             print(f'Client joined match room: {room}')
+            
+    @socketio.on('join_courts_view')
+    def join_courts_view(data):
+        """Join a courts view room for live updates on all courts."""
+        tournament_id = data.get('tournament_id')
+        if tournament_id:
+            room = f'courts_view_{tournament_id}'
+            join_room(room)
+            print(f'Client joined courts view room: {room}')
+            emit('status', {'msg': f'Joined courts view for tournament {tournament_id}'}, room=room)
