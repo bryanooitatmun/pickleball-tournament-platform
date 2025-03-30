@@ -30,6 +30,15 @@ def referee_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def referee_or_organizer_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not (current_user.is_referee() or current_user.is_organizer()):
+            flash('You need to be a referee or organizer to access this page.', 'danger')
+            return redirect(url_for('main.index'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 def player_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):

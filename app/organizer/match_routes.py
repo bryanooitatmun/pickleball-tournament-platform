@@ -7,7 +7,7 @@ from app import db, socketio
 from app.organizer import bp # Import the blueprint
 # Import necessary models using the new structure
 from app.models import Tournament, TournamentCategory, Match, MatchScore, TournamentStatus, TournamentFormat, Registration
-from app.decorators import organizer_required, referee_required
+from app.decorators import organizer_required, referee_required, referee_or_organizer_required
 # Import services or helpers needed for bracket generation, placing, etc.
 from app.services import BracketService, PlacingService
 from app.helpers.tournament import (
@@ -24,17 +24,14 @@ from app.organizer.forms import MatchForm, ScoreForm, CompleteMatchForm
 
 @bp.route('/tournament/<int:id>/update_match/<int:match_id>', methods=['GET', 'POST'])
 @login_required
-@organizer_required # Or maybe referee_required as well?
+@referee_or_organizer_required # Allows Referees, Organizers, and Admins (via is_organizer check)
 def update_match(id, match_id):
     """Update match scores and potentially winner based on form submission."""
     tournament = Tournament.query.get_or_404(id)
     match = Match.query.get_or_404(match_id)
     form = MatchForm()
 
-    # Permission check
-    if not current_user.is_admin() and tournament.organizer_id != current_user.id and current_user.role != 'REFEREE':
-        flash('You do not have permission to update matches for this tournament.', 'danger')
-        return redirect(url_for('organizer.tournament_detail', id=id))
+    # Permission check is now handled by the decorator above
 
     if match.category.tournament_id != tournament.id:
          flash('Match does not belong to this tournament.', 'danger')
