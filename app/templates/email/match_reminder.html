@@ -50,7 +50,7 @@
         </div>
         <div class="content">
             <p>Hello {{ user.username }},</p>
-            <p>This is a reminder that your match in the <strong>{{ category_name }}</strong> category of <strong>{{ tournament.name }}</strong> is scheduled to start soon.</p>
+            <p>This is a reminder that your match in the <strong>{{ category_name }}</strong> category of <strong>{{ tournament.name }}</strong> is scheduled to start {% if is_day_before %}in 24 hours{% else %}soon{% endif %}.</p>
             
             <div class="match-details">
                 <h3>Match Details:</h3>
@@ -61,7 +61,11 @@
                 {% endif %}
             </div>
             
+            {% if is_day_before %}
+            <p>This is a 24-hour reminder to help you prepare for your upcoming match. You'll receive another reminder closer to the match time.</p>
+            {% else %}
             <p>Please ensure you arrive at least 15-30 minutes before your scheduled time to check in with tournament officials.</p>
+            {% endif %}
             <p><strong>Good luck!</strong></p>
             <p>Best regards,<br>{{ tournament.name }} Organizers</p>
         </div>

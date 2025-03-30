@@ -78,6 +78,20 @@ def update_match(id, match_id):
                                old_time != match.scheduled_time or
                                old_livestream != match.livestream_url)
 
+            if schedule_changed:
+                # Track what changed for notification
+                changes = {}
+                if old_court != match.court:
+                    changes['court'] = match.court
+                if old_time != match.scheduled_time:
+                    changes['scheduled_time'] = match.scheduled_time
+                if old_livestream != match.livestream_url:
+                    changes['livestream_url'] = match.livestream_url
+                
+                # Schedule notification task
+                from app.tasks.email_tasks import send_schedule_change_email
+                send_schedule_change_email(match.id, changes)
+                
             # --- Update Scores ---
             set_count = form.set_count.data
             new_scores = []

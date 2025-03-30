@@ -55,9 +55,9 @@ This document outlines the development tasks required to implement the new featu
     *   ✅ **Frontend:** Implement JS logic in `base.html` or a shared JS file to fetch and display data, handle clicks.
 4.  ✅ **Feedback / Rating System:**
     *   ✅ **Backend:**
-        *   Create `FeedbackForm` (e.g., in `app/player/forms.py` or `app/feedback/forms.py`).
-        *   Create routes (e.g., in `app/player/feedback_routes.py` or integrate into existing player routes) for submission and viewing (admin/organizer).
-        *   Implement saving logic for `Feedback` model.
+        *   ✅ Create `FeedbackForm` (e.g., in `app/player/forms.py` or `app/feedback/forms.py`).
+        *   ✅ Create routes (e.g., in `app/player/feedback_routes.py` or integrate into existing player routes) for submission and viewing (admin/organizer).
+        *   ✅ Implement saving logic for `Feedback` model.
     *   ✅ **Frontend:** Create feedback form template. Add links/buttons in relevant player views.
 5.  ✅ **Player Profile Social Media:**
     *   ✅ **Backend:** Update `ProfileForm` (`app/player/forms.py`). Update `edit_profile` route in `app/player/profile_routes.py`. Update public profile routes (e.g., in `app/main/routes.py`) to pass data.
@@ -77,28 +77,28 @@ This document outlines the development tasks required to implement the new featu
         *   ✅ Create `live_courts.html` template.
         *   ✅ Use JavaScript and SocketIO client library to connect, join the tournament room, and listen for events.
         *   ✅ Update the UI dynamically based on received SocketIO messages (scores, next match info).
-2.  **Email Notifications:**
-    *   **Backend:**
-        *   Create email templates (e.g., in `app/templates/email/`).
-        *   Implement task functions (e.g., in `app/tasks.py`) to send emails for reminders, changes, etc., using Flask-Mail.
-        *   Schedule these tasks using Celery/APScheduler:
-            *   Reminders: Schedule based on `Match.scheduled_time`.
-            *   Changes: Trigger task immediately when schedule/court is updated.
+2.  ✅ **Email Notifications:**
+    *   ✅ **Backend:**
+        *   ✅ Create email templates (e.g., in `app/templates/email/`).
+        *   ✅ Implement task functions (e.g., in `app/tasks.py`) to send emails for reminders, changes, etc., using Flask-Mail.
+        *   ✅ Schedule these tasks using Celery/APScheduler:
+            *   ✅ Reminders: Schedule based on `Match.scheduled_time`.
+            *   ✅ Changes: Trigger task immediately when schedule/court is updated.
 
 ## Phase 5: Roles, Permissions & Testing
 
 1.  **Refine Roles & Permissions:**
     *   **Backend:** Add `Referee` role (`UserRole.REFEREE`). Ensure all relevant routes are protected with appropriate decorators (`@login_required`, `@organizer_required`, `@admin_required`, potentially a new `@referee_required`). Add specific checks within routes where needed (e.g., checking if user is referee or organizer for score entry).
 2.  **Testing:**
-    *   Write unit and integration tests for:
-        *   Model changes and relationships.
-        *   New service logic (Bracket generation, seeding, placing).
+    *   Write unit and integration tests for :
+        *   Service logic (Bracket generation, seeding, placing). Please be comphensive on the tests and look for edge cases and go through all possible conditionals.
         *   Form validation.
         *   Route access control and permissions.
         *   Feedback submission.
         *   Score verification workflow.
         *   SocketIO event handling (basic tests).
         *   Notification task triggering (basic tests).
+        *   Any other complex tasks/workflow in the codebase.
 3.  **Code Review & Refactoring:**
     *   Review code against preferences (simplicity, DRY, file size).
     *   Refactor large files or complex functions.
