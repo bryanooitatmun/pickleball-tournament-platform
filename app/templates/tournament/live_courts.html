@@ -181,7 +181,7 @@
                                         
                                         <!-- Action buttons -->
                                         <div class="mt-3 flex">
-                                            <a href="{{ url_for('tournament.live_match', id=tournament.id, match_id=ongoing_match.id) }}" class="text-blue-600 text-sm hover:text-blue-800">
+                                            <a href="{{ url_for('tournament.match_detail', id=tournament.id, match_id=ongoing_match.id) }}" class="text-blue-600 text-sm hover:text-blue-800">
                                                 <i class="fas fa-eye mr-1"></i> View Match
                                             </a>
                                             {% if ongoing_match.livestream_url %}
@@ -315,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
             location.reload();
         }
     });
-    
+    /*
     // Periodically update court data via API
     function updateCourtData() {
         fetch(`/tournament/api/{{ tournament.id }}/courts_data`)
@@ -341,6 +341,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update court data every 60 seconds
     setInterval(updateCourtData, 60000);
+    */
 });
 </script>
 {% endblock %}

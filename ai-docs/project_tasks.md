@@ -1,44 +1,52 @@
-Report button works initially, but doesn't work after scrolling
+# Project Tasks
 
-Live_match.html and Live_score.html, doesn't take into account doubles matches
+## Current Bug Fixes
 
-Live_courts.html, next match is not showing the correct match. Example:
+1. [ ] **Report Button Issue**
+   - Report button works initially but doesn't work after scrolling
+   - Need to investigate event handling after page scroll
 
-        CURRENT MATCH
-        Men's Doubles - Semifinal
+2. [✅] **Doubles Matches Display Issues in Live Views**
+   - Fixed issue where `match_detail.html` and `live_scoring.html` didn't properly display doubles matches
+   - Consolidated `live_match.html` into `match_detail.html` to eliminate redundancy
+   - Enhanced `match_detail.html` with live scoring functionality
+   - Updated templates to conditionally render singles or doubles matches based on match.is_doubles
+   - Improved display of team information in all match view templates
 
-        Thomas Chen / William Zhang
+3. [ ] **Live Courts Incorrect Next Match Display**
+   - `live_courts.html` not showing correct next match information
+   - Example shows incorrect timing and match details for doubles matches
 
-        0
-        Kenneth Park / George Huang
+4. [✅] **Live Scoring "No Matches" Issue**
+   - Fixed `live_scoring.html` incorrectly showing "no matches currently in progress" 
+   - Updated query to also account for doubles matches:
+     ```python
+     ongoing_matches = Match.query.join(TournamentCategory).filter(
+         TournamentCategory.tournament_id == id,
+         Match.completed == False,
+         # For singles matches OR doubles matches
+         ((Match.player1_id.isnot(None) & Match.player2_id.isnot(None)) |
+          (Match.team1_id.isnot(None) & Match.team2_id.isnot(None)))
+     ).all()
+     ```
+   - Updated template to render doubles matches properly, showing both team members
+   - Also updated API endpoint for scores to include doubles match information
 
-        0
-        Match in progress
+5. [ ] **Schedule Display Issues**
+   - `schedule.html` not showing correctly
+   - Categories by group stages if applicable not displaying properly
+   - Player list doesn't take into account doubles matches
 
-        View Match
-        NEXT MATCH
-        Men's Doubles - Semifinal
+6. [ ] **Manage Category Issues**
+   - ✅ Calculate placing form doesn't work (missing CSRF token) - Fixed by changing the template to use proper hidden input for CSRF token
+   - Difficult to view long lists of matches
+   - Need to improve organization - possibly view by groups, rounds, or player search
+   - Generate bracket functionality broken - routes and template are mismatched
 
-        19:58 (2869.0 mins)
+## Completed Tasks
 
-        Thomas Chen / William Zhang
+- None currently
 
-        Kenneth Park / George Huang
+## Future Enhancements
 
-live_scoring.html, it's showing that no matches currently in progress. Because for the routes:
-    ongoing_matches = Match.query.join(TournamentCategory).filter(
-        TournamentCategory.tournament_id == id,
-        Match.completed == False,
-        Match.player1_id.isnot(None),
-        Match.player2_id.isnot(None)
-    ).all()
-    it's not taking into account doubles matches.
-
-schedule.html not showing correctly. Categories by group stages if applicable, and the player list isn't taking into account for doubles matches. 
-
-manage_category.html:
-    calculate placing form doesn't work because no form csrf_token
-
-    Organize matches, very hard to view long lists of matches. Don't overcomplicate. Maybe view by groups (if applicable), view by rounds, or search players
-
-    generate bracket doesn't work. Routes and template is mismatched.
+- To be determined after bug fixes are completed

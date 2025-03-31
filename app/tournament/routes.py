@@ -372,12 +372,13 @@ def live_scoring(id):
         flash('Live scoring is only available for ongoing tournaments.', 'warning')
         return redirect(url_for('main.tournament_detail', id=id))
     
-    # Get all ongoing matches
+    # Get all ongoing matches (both singles and doubles)
     ongoing_matches = Match.query.join(TournamentCategory).filter(
         TournamentCategory.tournament_id == id,
         Match.completed == False,
-        Match.player1_id.isnot(None),
-        Match.player2_id.isnot(None)
+        # For singles matches OR doubles matches
+        ((Match.player1_id.isnot(None) & Match.player2_id.isnot(None)) |
+         (Match.team1_id.isnot(None) & Match.team2_id.isnot(None)))
     ).all()
     
     # Get match scores
@@ -512,30 +513,7 @@ def match_detail(id, match_id):
                            match=match,
                            scores=scores)
 
-@bp.route('/<int:id>/match/<int:match_id>/live')
-def live_match(id, match_id):
-    # Get tournament and match
-    tournament = Tournament.query.get_or_404(id)
-    match = Match.query.get_or_404(match_id)
-    
-    # Verify match belongs to this tournament
-    if match.category.tournament_id != id:
-        flash('Match not found in this tournament.', 'danger')
-        return redirect(url_for('main.tournament_detail', id=id))
-    
-    # Check if match is ongoing
-    if match.completed:
-        flash('This match has already been completed.', 'warning')
-        return redirect(url_for('tournament.match_detail', id=id, match_id=match_id))
-    
-    # Get match scores
-    scores = MatchScore.query.filter_by(match_id=match_id).order_by(MatchScore.set_number).all()
-    
-    return render_template('tournament/live_match.html',
-                           title=f"{tournament.name} - Live Match",
-                           tournament=tournament,
-                           match=match,
-                           scores=scores)
+# Route removed as match_detail.html now handles live scoring functionality
 
 @bp.route('/<int:id>/live_courts')
 def live_courts(id):
@@ -677,35 +655,64 @@ def api_scores(id):
     # API endpoint to get latest scores for all matches in a tournament
     # This can be used for live updates via AJAX
     
-    # Get all ongoing matches for this tournament
+    # Get all ongoing matches for this tournament (both singles and doubles)
     ongoing_matches = Match.query.join(TournamentCategory).filter(
         TournamentCategory.tournament_id == id,
         Match.completed == False,
-        Match.player1_id.isnot(None),
-        Match.player2_id.isnot(None)
+        # For singles matches OR doubles matches
+        ((Match.player1_id.isnot(None) & Match.player2_id.isnot(None)) |
+         (Match.team1_id.isnot(None) & Match.team2_id.isnot(None)))
     ).all()
     
     result = []
     for match in ongoing_matches:
         scores = MatchScore.query.filter_by(match_id=match.id).order_by(MatchScore.set_number).all()
-        match_data = {
-            'match_id': match.id,
-            'player1': match.player1.full_name if match.player1 else 'TBD',
-            'player2': match.player2.full_name if match.player2 else 'TBD',
-            'scores': [
-                {
-                    'set': score.set_number,
-                    'player1_score': score.player1_score,
-                    'player2_score': score.player2_score
-                } for score in scores
-            ]
-        }
         
-        # Add doubles partner info if applicable
-        if match.player1_partner:
-            match_data['player1_partner'] = match.player1_partner.full_name
-        if match.player2_partner:
-            match_data['player2_partner'] = match.player2_partner.full_name
+        # Handle both singles and doubles matches appropriately
+        if match.is_doubles:
+            match_data = {
+                'match_id': match.id,
+                'is_doubles': True,
+                'scores': [
+                    {
+                        'set': score.set_number,
+                        'player1_score': score.player1_score,
+                        'player2_score': score.player2_score
+                    } for score in scores
+                ]
+            }
+            
+            # Add team information
+            if match.team1:
+                match_data['team1'] = {
+                    'player1': match.team1.player1.full_name,
+                    'player2': match.team1.player2.full_name
+                }
+            else:
+                match_data['team1'] = {'player1': 'TBD', 'player2': 'TBD'}
+                
+            if match.team2:
+                match_data['team2'] = {
+                    'player1': match.team2.player1.full_name,
+                    'player2': match.team2.player2.full_name
+                }
+            else:
+                match_data['team2'] = {'player1': 'TBD', 'player2': 'TBD'}
+        else:
+            # Singles match
+            match_data = {
+                'match_id': match.id,
+                'is_doubles': False,
+                'player1': match.player1.full_name if match.player1 else 'TBD',
+                'player2': match.player2.full_name if match.player2 else 'TBD',
+                'scores': [
+                    {
+                        'set': score.set_number,
+                        'player1_score': score.player1_score,
+                        'player2_score': score.player2_score
+                    } for score in scores
+                ]
+            }
         
         result.append(match_data)
     

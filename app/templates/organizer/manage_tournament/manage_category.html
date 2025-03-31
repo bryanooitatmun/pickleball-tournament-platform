@@ -93,6 +93,7 @@
                         
                         {% if matches %}
                         <form method="POST" action="{{ url_for('organizer.calculate_placings', id=tournament.id, category_id=category.id) }}" class="inline-block">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -181,6 +182,7 @@
                 
                 {% if tournament.status == 'ongoing' %}
                     <form method="POST" action="{{ url_for('organizer.finalize_category', id=tournament.id, category_id=category.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
                             Finalize Category
                         </button>
