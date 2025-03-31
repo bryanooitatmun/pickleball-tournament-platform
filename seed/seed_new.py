@@ -445,7 +445,7 @@ def seed_mens_doubles():
             is_team_registration=True,
             
             # Payment info
-            payment_status='approved',
+            payment_status='paid',
             payment_verified=True,
             payment_verified_at=datetime.utcnow() - timedelta(days=random.randint(2, 10)),
             payment_proof=f"payment_{idx+1}.png",
@@ -839,7 +839,7 @@ def seed_womens_doubles():
             is_team_registration=True,
             
             # Payment info
-            payment_status='approved',
+            payment_status='paid',
             payment_verified=True,
             payment_verified_at=datetime.utcnow() - timedelta(days=random.randint(2, 10)),
             payment_proof=f"payment_w_{idx+1}.png",

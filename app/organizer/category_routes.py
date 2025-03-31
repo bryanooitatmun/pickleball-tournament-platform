@@ -336,7 +336,7 @@ def manage_category(id, category_id):
     prize_dist_data = {p: category.prize_distribution.get(p) for p in default_placements}
     points_dist_data = {p: category.points_distribution.get(p) for p in default_placements}
 
-    return render_template('organizer/manage_category.html', # Assuming template exists
+    return render_template('organizer/manage_tournament/manage_category.html', # Assuming template exists
                           title=f"Manage {category.name}",
                           tournament=tournament,
                           category=category,

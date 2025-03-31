@@ -316,7 +316,7 @@
                     Edit Match Details
                 </a>
                 
-                <form method="POST" action="{{ url_for('organizer.complete_match', id=tournament.id, category_id=category.id, match_id=match.id) }}">
+                <form method="POST" action="{{ url_for('organizer.update_match', id=tournament.id, category_id=category.id, match_id=match.id) }}">
                     <input type="hidden" name="match_id" value="{{ match.id }}">
                     
                     {% if match.player1 and match.player2 %}

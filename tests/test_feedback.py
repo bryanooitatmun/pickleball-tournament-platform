@@ -92,7 +92,7 @@ def test_feedback_submission(client, init_database, app):
     registration = Registration(
         category_id=category.id,
         player_id=player_id,
-        payment_status='verified',
+        payment_status='paid',
         payment_verified=True
     )
     init_database.session.add(registration)
@@ -170,7 +170,7 @@ def test_anonymous_feedback_submission(client, init_database, app):
     registration = Registration(
         category_id=category.id,
         player_id=player_id,
-        payment_status='verified',
+        payment_status='paid',
         payment_verified=True
     )
     init_database.session.add(registration)
@@ -291,7 +291,7 @@ def test_feedback_after_tournament(client, init_database, app):
     registration = Registration(
         category_id=category.id,
         player_id=player_id,
-        payment_status='verified',
+        payment_status='paid',
         payment_verified=True
     )
     init_database.session.add(registration)
@@ -317,7 +317,7 @@ def test_feedback_after_tournament(client, init_database, app):
     registration = Registration(
         category_id=category.id,
         player_id=player_id,
-        payment_status='verified',
+        payment_status='paid',
         payment_verified=True
     )
     init_database.session.add(registration)

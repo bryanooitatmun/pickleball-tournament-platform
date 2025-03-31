@@ -41,7 +41,7 @@ def create_test_registration(db_session, category, player):
     r = Registration(
         category_id=category.id,
         player_id=player.user_id, # Use user_id from PlayerProfile
-        payment_status='verified'
+        payment_status='paid'
     )
     db_session.add(r)
     db_session.commit()

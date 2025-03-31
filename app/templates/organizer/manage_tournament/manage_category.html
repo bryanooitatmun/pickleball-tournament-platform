@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Manage {{ category.category_type.value }} - {{ tournament.name }} - Pickleball Tournament Platform{% endblock %}
+{% block title %}Manage {{ category.name }} - {{ tournament.name }} - Pickleball Tournament Platform{% endblock %}
 
 {% block content %}
 <div class="mb-6">
@@ -11,19 +11,19 @@
         <span>/</span>
         <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="hover:text-blue-600">{{ tournament.name }}</a>
         <span>/</span>
-        <span class="text-gray-700">{{ category.category_type.value }}</span>
+        <span class="text-gray-700">{{ category.name }}</span>
     </div>
     
     <div class="flex justify-between items-start">
         <div>
-            <h1 class="text-3xl font-bold mb-2">{{ category.category_type.value }}</h1>
+            <h1 class="text-3xl font-bold mb-2">{{ category.name }}</h1>
             <div class="text-gray-600">{{ tournament.name }} • {{ tournament.start_date.strftime('%B %d') }}-{{ tournament.end_date.strftime('%d, %Y') }}</div>
         </div>
         
         <div class="flex space-x-3">
-            <a href="{{ url_for('organizer.manage_registrations', id=tournament.id, category_id=category.id) }}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+            {# <a href="{{ url_for('organizer.manage_registrations', id=tournament.id, category_id=category.id) }}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
                 Manage Registrations
-            </a>
+            </a> #}
             <a href="{{ url_for('tournament.participants', id=tournament.id, category=category.id) }}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
                 View Participants
             </a>
@@ -66,9 +66,9 @@
             </div>
             
             <div class="flex justify-between items-center pt-4 border-t border-gray-100">
-                <a href="{{ url_for('organizer.manage_registrations', id=tournament.id, category_id=category.id) }}" class="text-blue-600 hover:text-blue-800">
+                {# <a href="{{ url_for('organizer.manage_registrations', id=tournament.id, category_id=category.id) }}" class="text-blue-600 hover:text-blue-800">
                     View All Registrations →
-                </a>
+                </a> #}
                 
                 <div>
                     <span class="text-gray-500 text-sm">Registration Deadline:</span>
@@ -177,7 +177,7 @@
                                                     <i class="fas fa-calculator"></i>
                                                 </a>
                                                 
-                                                <form method="POST" action="{{ url_for('organizer.complete_match', id=tournament.id, category_id=category.id, match_id=match.id) }}" class="inline">
+                                                <form method="POST" action="{{ url_for('organizer.update_match', id=tournament.id, category_id=category.id, match_id=match.id) }}" class="inline">
                                                     <input type="hidden" name="match_id" value="{{ match.id }}">
                                                     <input type="hidden" name="winner_id" value="{{ match.player1_id if match.player1_id else ''}}">
                                                     <input type="hidden" name="completed" value="{% if match.completed %}0{% else %}1{% endif %}">
@@ -289,9 +289,9 @@
             
             <div class="space-y-3">
                 {% if tournament.status == 'upcoming' %}
-                    <a href="{{ url_for('organizer.manage_registrations', id=tournament.id, category_id=category.id) }}" class="block w-full text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    {# <a href="{{ url_for('organizer.manage_registrations', id=tournament.id, category_id=category.id) }}" class="block w-full text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                         Manage Registrations
-                    </a>
+                    </a> #}
                     
                     <a href="{{ url_for('organizer.generate_bracket', id=tournament.id, category_id=category.id) }}" class="block w-full text-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
                         Generate Bracket

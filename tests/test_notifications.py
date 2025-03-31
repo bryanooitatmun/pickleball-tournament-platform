@@ -101,7 +101,7 @@ def create_test_registration(db_session, category, player):
     reg = Registration(
         category_id=category.id,
         player_id=player.id if hasattr(player, 'id') else player.user_id,
-        payment_status='verified'
+        payment_status='paid'
     )
     db_session.add(reg)
     db_session.commit()

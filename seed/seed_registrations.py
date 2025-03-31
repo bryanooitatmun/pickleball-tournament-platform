@@ -37,13 +37,13 @@ def register_team(category, player1, player2, seed=None, commit=True):
         is_team_registration=True,
         
         # Payment info
-        payment_status='approved',
+        payment_status='paid',
         payment_verified=True,
         payment_verified_at=datetime.now() - timedelta(days=random.randint(1, 5)),
         payment_proof=f"payment_{player1.id}_{player2.id}.png",
         payment_proof_uploaded_at=datetime.now() - timedelta(days=random.randint(3, 7)),
         payment_reference=generate_reference(tournament.payment_reference_prefix),
-        
+        is_approved=True,
         # Player 1 details
         player_id=player1.player_profile.id,
         player1_name=player1.full_name,
