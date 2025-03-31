@@ -86,7 +86,7 @@
 </div>
 
 <!-- Participants List -->
-<div class="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
+<div class="bg-white rounded-lg shadow-sm overflow-hidden pb-8 mb-8">
     <div class="px-6 py-4 border-b border-gray-200">
         <h2 class="text-xl font-bold">{{ selected_category.name }} Participants</h2>
         <div class="text-sm text-gray-600">
@@ -166,7 +166,7 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                                                 </svg>
                                             </button>
-                                            <ul id="dropdown{{ team.player1.id }}" class="dropdown-menu hidden fixed z-50 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu">
+                                            <ul id="dropdown{{ team.player1.id }}" class="dropdown-menu hidden absolute z-50 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu">
                                                 <li>
                                                     <a href="{{ url_for('support.create_ticket', tournament_id=tournament.id, report_player=team.player1.id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">
                                                         <div class="flex items-center">
@@ -211,7 +211,7 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                                                 </svg>
                                             </button>
-                                            <ul id="dropdown{{ team.player2.id }}" class="dropdown-menu hidden fixed z-50 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu">
+                                            <ul id="dropdown{{ team.player2.id }}" class="dropdown-menu hidden absolute z-50 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu">
                                                 <li>
                                                     <a href="{{ url_for('support.create_ticket', tournament_id=tournament.id, report_player=team.player2.id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">
                                                         <div class="flex items-center">
@@ -306,6 +306,8 @@
 <script>
     function toggleDropdown(id) {
         const dropdown = document.getElementById(id);
+        const button = document.getElementById('dropdownMenuButton' + id.replace('dropdown', ''));
+        
         if (dropdown.classList.contains('hidden')) {
             // Close all other dropdowns first
             document.querySelectorAll('.dropdown-menu').forEach(menu => {
@@ -313,13 +315,28 @@
                     menu.classList.add('hidden');
                 }
             });
+            
+            // Set the dropdown to be positioned relative to its parent
+            dropdown.style.position = 'absolute';
+            dropdown.style.top = '100%'; // Position it below the button
+            dropdown.style.left = '0';  // Align to the right of the parent
+            dropdown.style.zIndex = '50';
+            
+            // Ensure the parent container is positioned relatively
+            if (button && button.parentElement) {
+                // Make sure the parent has relative positioning
+                if (getComputedStyle(button.parentElement).position === 'static') {
+                    button.parentElement.style.position = 'relative';
+                }
+            }
+            
             // Open this dropdown
             dropdown.classList.remove('hidden');
         } else {
             dropdown.classList.add('hidden');
         }
     }
-    
+
     // Close dropdowns when clicking outside
     document.addEventListener('click', function(event) {
         if (!event.target.closest('.dropdown')) {

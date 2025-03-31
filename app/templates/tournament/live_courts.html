@@ -114,12 +114,20 @@
                                                 <div class="flex-1">
                                                     {% if ongoing_match.is_doubles %}
                                                         <p class="font-medium">
-                                                            {{ ongoing_match.team1_profile.player1.full_name if ongoing_match.team1_profile else 'TBD' }} /
-                                                            {{ ongoing_match.team1_profile.player2.full_name if ongoing_match.team1_profile else 'TBD' }}
+                                                            {% if ongoing_match.team1_id %}
+                                                                {% if ongoing_match.team1 %}
+                                                                    {{ ongoing_match.team1.player1.full_name if ongoing_match.team1.player1 else 'TBD' }} /
+                                                                    {{ ongoing_match.team1.player2.full_name if ongoing_match.team1.player2 else 'TBD' }}
+                                                                {% else %}
+                                                                    Team 1 (TBD)
+                                                                {% endif %}
+                                                            {% else %}
+                                                                Team 1 (TBD)
+                                                            {% endif %}
                                                         </p>
                                                     {% else %}
                                                         <p class="font-medium">
-                                                            {{ ongoing_match.player1_profile.full_name if ongoing_match.player1_profile else 'TBD' }}
+                                                            {{ ongoing_match.player1.full_name if ongoing_match.player1 else 'TBD' }}
                                                         </p>
                                                     {% endif %}
                                                 </div>
@@ -139,12 +147,20 @@
                                                 <div class="flex-1">
                                                     {% if ongoing_match.is_doubles %}
                                                         <p class="font-medium">
-                                                            {{ ongoing_match.team2_profile.player1.full_name if ongoing_match.team2_profile else 'TBD' }} /
-                                                            {{ ongoing_match.team2_profile.player2.full_name if ongoing_match.team2_profile else 'TBD' }}
+                                                            {% if ongoing_match.team2_id %}
+                                                                {% if ongoing_match.team2 %}
+                                                                    {{ ongoing_match.team2.player1.full_name if ongoing_match.team2.player1 else 'TBD' }} /
+                                                                    {{ ongoing_match.team2.player2.full_name if ongoing_match.team2.player2 else 'TBD' }}
+                                                                {% else %}
+                                                                    Team 2 (TBD)
+                                                                {% endif %}
+                                                            {% else %}
+                                                                Team 2 (TBD)
+                                                            {% endif %}
                                                         </p>
                                                     {% else %}
                                                         <p class="font-medium">
-                                                            {{ ongoing_match.player2_profile.full_name if ongoing_match.player2_profile else 'TBD' }}
+                                                            {{ ongoing_match.player2.full_name if ongoing_match.player2 else 'TBD' }}
                                                         </p>
                                                     {% endif %}
                                                 </div>
@@ -208,7 +224,8 @@
                                             <p class="text-sm font-medium text-gray-800">
                                                 <i class="far fa-clock mr-1"></i>
                                                 {{ upcoming_match.scheduled_time.strftime('%H:%M') }}
-                                                ({{ (upcoming_match.scheduled_time - now).total_seconds() // 60 }} mins)
+                                                {% set time_diff = (upcoming_match.scheduled_time - now).total_seconds() // 60 %}
+                                                ({% if time_diff > 0 %}in {{ time_diff }}{% else %}{{ time_diff * -1 }} ago{% endif %} mins)
                                             </p>
                                         </div>
                                         
@@ -217,12 +234,20 @@
                                             <div class="mb-2">
                                                 {% if upcoming_match.is_doubles %}
                                                     <p class="font-medium">
-                                                        {{ upcoming_match.team1_profile.player1.full_name if upcoming_match.team1_profile else 'TBD' }} /
-                                                        {{ upcoming_match.team1_profile.player2.full_name if upcoming_match.team1_profile else 'TBD' }}
+                                                        {% if upcoming_match.team1_id %}
+                                                            {% if upcoming_match.team1 %}
+                                                                {{ upcoming_match.team1.player1.full_name if upcoming_match.team1.player1 else 'TBD' }} /
+                                                                {{ upcoming_match.team1.player2.full_name if upcoming_match.team1.player2 else 'TBD' }}
+                                                            {% else %}
+                                                                Team 1 (TBD)
+                                                            {% endif %}
+                                                        {% else %}
+                                                            Team 1 (TBD)
+                                                        {% endif %}
                                                     </p>
                                                 {% else %}
                                                     <p class="font-medium">
-                                                        {{ upcoming_match.player1_profile.full_name if upcoming_match.player1_profile else 'TBD' }}
+                                                        {{ upcoming_match.player1.full_name if upcoming_match.player1 else 'TBD' }}
                                                     </p>
                                                 {% endif %}
                                             </div>
@@ -230,12 +255,20 @@
                                             <div>
                                                 {% if upcoming_match.is_doubles %}
                                                     <p class="font-medium">
-                                                        {{ upcoming_match.team2_profile.player1.full_name if upcoming_match.team2_profile else 'TBD' }} /
-                                                        {{ upcoming_match.team2_profile.player2.full_name if upcoming_match.team2_profile else 'TBD' }}
+                                                        {% if upcoming_match.team2_id %}
+                                                            {% if upcoming_match.team2 %}
+                                                                {{ upcoming_match.team2.player1.full_name if upcoming_match.team2.player1 else 'TBD' }} /
+                                                                {{ upcoming_match.team2.player2.full_name if upcoming_match.team2.player2 else 'TBD' }}
+                                                            {% else %}
+                                                                Team 2 (TBD)
+                                                            {% endif %}
+                                                        {% else %}
+                                                            Team 2 (TBD)
+                                                        {% endif %}
                                                     </p>
                                                 {% else %}
                                                     <p class="font-medium">
-                                                        {{ upcoming_match.player2_profile.full_name if upcoming_match.player2_profile else 'TBD' }}
+                                                        {{ upcoming_match.player2.full_name if upcoming_match.player2 else 'TBD' }}
                                                     </p>
                                                 {% endif %}
                                             </div>

@@ -219,7 +219,7 @@ def create_knockout_matches(category, group_qualifiers, percentage_completed=75,
         
         match = Match(
             category_id=category.id,
-            round=4,  # Quarterfinals
+            round=3,  # Quarterfinals
             stage=MatchStage.KNOCKOUT,
             match_order=idx + 1,
             team1_id=team1.id,
@@ -404,7 +404,7 @@ def seed_mens_doubles_bracket(category_name="Men's Doubles Open", commit=True):
             group_qualifiers[group_letter] = (group, qualified_group_teams)
         
         # Create knockout matches with the specific pairing structure
-        create_knockout_matches(category, group_qualifiers, percentage_completed=75, commit=False)
+        create_knockout_matches(category, group_qualifiers, percentage_completed=100, commit=False)
         
         if commit:
             commit_changes(f"Created complete bracket for {category_name}")
