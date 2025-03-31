@@ -76,140 +76,6 @@
             </div>
         </div>
         
-        <!-- Tournament Bracket -->
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-            <div class="p-6 border-b border-gray-200">
-                <h2 class="text-xl font-bold">Tournament Bracket</h2>
-            </div>
-            
-            {% if matches %}
-                <div id="bracket-container" class="p-6 overflow-x-auto">
-                    <div class="flex space-x-8">
-                        {% set rounds = {} %}
-                        {% for match in matches %}
-                            {% set _ = rounds.update({match.round: (rounds.get(match.round, []) + [match])}) %}
-                        {% endfor %}
-                        
-                        {% for round_num in rounds.keys()|sort(reverse=true) %}
-                            <div class="bracket-round min-w-[240px]">
-                                <h3 class="text-center font-medium text-gray-700 mb-4">
-                                    {% if round_num == 1 %}
-                                        Final
-                                    {% elif round_num == 1.5 %}
-                                        3rd Place
-                                    {% elif round_num == 2 %}
-                                        Semifinals
-                                    {% elif round_num == 3 %}
-                                        Quarterfinals
-                                    {% elif round_num == 4 %}
-                                        Round of 16
-                                    {% elif round_num == 5 %}
-                                        Round of 32
-                                    {% elif round_num == 6 %}
-                                        Round of 64
-                                    {% else %}
-                                        Round {{ round_num }}
-                                    {% endif %}
-                                </h3>
-                                
-                                {% for match in rounds[round_num]|sort(attribute='match_order') %}
-                                    <div id="match-{{ match.id }}" class="bracket-match mb-4 relative">
-                                        <div class="absolute top-0 right-0 p-1">
-                                            <a href="{{ url_for('organizer.update_match', id=tournament.id, category_id=category.id, match_id=match.id) }}" class="text-gray-500 hover:text-blue-600">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                        </div>
-                                        
-                                        <div class="bracket-team {% if match.winner_id == match.player1_id %}bracket-winner{% endif %}">
-                                            <div class="flex justify-between items-center">
-                                                <div class="flex items-center">
-                                                    {% if match.player1 %}
-                                                        <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                                                            {% if match.player1.profile_image %}
-                                                                <img src="{{ url_for('static', filename=match.player1.profile_image) }}" 
-                                                                    class="w-6 h-6 rounded-full object-cover" 
-                                                                    alt="{{ match.player1.full_name }}">
-                                                            {% else %}
-                                                                <span class="text-blue-600 text-xs font-bold">{{ match.player1.full_name[:1] }}</span>
-                                                            {% endif %}
-                                                        </div>
-                                                        <span class="text-sm truncate">{{ match.player1.full_name }}</span>
-                                                    {% else %}
-                                                        <span class="text-sm text-gray-500">TBD</span>
-                                                    {% endif %}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="bracket-team {% if match.winner_id == match.player2_id %}bracket-winner{% endif %}">
-                                            <div class="flex justify-between items-center">
-                                                <div class="flex items-center">
-                                                    {% if match.player2 %}
-                                                        <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                                                            {% if match.player2.profile_image %}
-                                                                <img src="{{ url_for('static', filename=match.player2.profile_image) }}" 
-                                                                    class="w-6 h-6 rounded-full object-cover" 
-                                                                    alt="{{ match.player2.full_name }}">
-                                                            {% else %}
-                                                                <span class="text-blue-600 text-xs font-bold">{{ match.player2.full_name[:1] }}</span>
-                                                            {% endif %}
-                                                        </div>
-                                                        <span class="text-sm truncate">{{ match.player2.full_name }}</span>
-                                                    {% else %}
-                                                        <span class="text-sm text-gray-500">TBD</span>
-                                                    {% endif %}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="px-2 py-1 bg-gray-50 flex justify-between items-center text-xs text-gray-500">
-                                            <div>
-                                                {% if match.court %}Court {{ match.court }}{% endif %}
-                                                {% if match.scheduled_time %}
-                                                    {% if match.court %} • {% endif %}
-                                                    {{ match.scheduled_time.strftime('%b %d, %I:%M %p') }}
-                                                {% endif %}
-                                            </div>
-                                            
-                                            <div class="flex space-x-2">
-                                                <a href="{{ url_for('organizer.update_match', id=tournament.id, category_id=category.id, match_id=match.id) }}" class="text-blue-600 hover:text-blue-800" title="Edit Score">
-                                                    <i class="fas fa-calculator"></i>
-                                                </a>
-                                                
-                                                <form method="POST" action="{{ url_for('organizer.update_match', id=tournament.id, category_id=category.id, match_id=match.id) }}" class="inline">
-                                                    <input type="hidden" name="match_id" value="{{ match.id }}">
-                                                    <input type="hidden" name="winner_id" value="{{ match.player1_id if match.player1_id else ''}}">
-                                                    <input type="hidden" name="completed" value="{% if match.completed %}0{% else %}1{% endif %}">
-                                                    
-                                                    <button type="submit" class="text-{{ 'green' if not match.completed else 'orange' }}-600 hover:text-{{ 'green' if not match.completed else 'orange' }}-800" title="{{ 'Mark as Complete' if not match.completed else 'Mark as Incomplete' }}">
-                                                        <i class="fas {{ 'fa-check-circle' if not match.completed else 'fa-times-circle' }}"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                
-                <div class="px-6 py-4 border-t border-gray-200 text-right">
-                    <a href="{{ url_for('tournament.bracket', id=tournament.id, category=category.id) }}" class="text-blue-600 hover:text-blue-800">
-                        View Public Bracket →
-                    </a>
-                </div>
-            {% else %}
-                <div class="p-8 text-center text-gray-500">
-                    <p class="mb-4">No bracket has been generated for this category yet.</p>
-                    {% if tournament.status == 'upcoming' %}
-                        <a href="{{ url_for('organizer.generate_bracket', id=tournament.id, category_id=category.id) }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                            Generate Bracket
-                        </a>
-                    {% endif %}
-                </div>
-            {% endif %}
-        </div>
         <div class="bg-white rounded-lg shadow-md p-6 mt-8">
             <h2 class="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Bracket Management</h2>
             
@@ -218,12 +84,12 @@
                     <h3 class="font-medium text-gray-700">Bracket Generation</h3>
                     
                     <div class="flex space-x-2">
-                        <a href="{{ url_for('organizer.generate_bracket', id=tournament.id, category_id=category.id) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {# <a href="{{ url_for('organizer.generate_bracket', id=tournament.id, category_id=category.id) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                             </svg>
                             Generate Bracket
-                        </a>
+                        </a> #}
                         
                         {% if matches %}
                         <form method="POST" action="{{ url_for('organizer.calculate_placings', id=tournament.id, category_id=category.id) }}" class="inline-block">
