@@ -2,6 +2,44 @@
 
 {% block title %}Manage {{ category.name }} - {{ tournament.name }} - Pickleball Tournament Platform{% endblock %}
 
+{% block styles %}
+<style>
+    /* Matches table styles */
+    .matches-container {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    
+    /* Match filtering tabs */
+    .filter-tab {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .filter-tab.active {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+    /* Search input styles */
+    .search-container {
+        position: relative;
+    }
+
+    .search-container input {
+        padding-left: 2.5rem;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="mb-6">
     <div class="flex items-center gap-2 text-gray-500 text-sm mb-2">
@@ -20,19 +58,6 @@
             <div class="text-gray-600">{{ tournament.name }} • {{ tournament.start_date.strftime('%B %d') }}-{{ tournament.end_date.strftime('%d, %Y') }}</div>
         </div>
         
-        <div class="flex space-x-3">
-            {# <a href="{{ url_for('organizer.manage_registrations', id=tournament.id, category_id=category.id) }}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-                Manage Registrations
-            </a> #}
-            <a href="{{ url_for('tournament.participants', id=tournament.id, category=category.id) }}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-                View Participants
-            </a>
-            {% if tournament.status == 'upcoming' %}
-                <a href="{{ url_for('organizer.generate_bracket', id=tournament.id, category_id=category.id) }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                    Generate Bracket
-                </a>
-            {% endif %}
-        </div>
     </div>
 </div>
 
@@ -65,10 +90,6 @@
             </div>
             
             <div class="flex justify-between items-center pt-4 border-t border-gray-100">
-                {# <a href="{{ url_for('organizer.manage_registrations', id=tournament.id, category_id=category.id) }}" class="text-blue-600 hover:text-blue-800">
-                    View All Registrations →
-                </a> #}
-                
                 <div>
                     <span class="text-gray-500 text-sm">Registration Deadline:</span>
                     <span class="font-medium">{{ tournament.registration_deadline.strftime('%B %d, %Y') }}</span>
@@ -84,12 +105,135 @@
                     <h3 class="font-medium text-gray-700">Bracket Generation</h3>
                     
                     <div class="flex space-x-2">
-                        {# <a href="{{ url_for('organizer.generate_bracket', id=tournament.id, category_id=category.id) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            Generate Bracket
-                        </a> #}
+                        {% if category.format.value == 'Group Stage + Knockout' %}
+                            {# Check if group stage matches exist already #}
+                            {% set has_group_matches = matches|selectattr('stage.name', 'eq', 'GROUP')|list|length > 0 %}
+                            {% set has_knockout_matches = matches|selectattr('stage.name', 'eq', 'KNOCKOUT')|list|length > 0 %}
+                            
+                            {# Only show Group Stage button if no group matches exist #}
+                            {% if not has_group_matches %}
+                            <form action="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" method="POST" class="inline-block">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="action" value="generate_bracket">
+                                <input type="hidden" name="bracket_type" value="generate_groups">
+                                <!-- Group Stage Settings -->
+                                <div class="mt-4">
+                                    <h3 class="text-lg font-medium text-gray-800">Group Stage Settings</h3>
+                                    <p class="text-sm text-gray-500 mb-3">Configure group stage parameters for this category</p>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label for="group_count" class="block text-sm font-medium text-gray-700">Number of Groups</label>
+                                            <input type="number" name="group_count" id="group_count" min="2" 
+                                                value="{{ category.group_count or 4 }}" 
+                                                class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                        </div>
+                                        
+                                        <div>
+                                            <label for="teams_per_group" class="block text-sm font-medium text-gray-700">Teams Per Group</label>
+                                            <input type="number" name="teams_per_group" id="teams_per_group" min="2"
+                                                value="{{ category.teams_per_group or 4 }}" 
+                                                class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                        </div>
+                                        
+                                        <div>
+                                            <label for="teams_advancing_per_group" class="block text-sm font-medium text-gray-700">Teams Advancing Per Group</label>
+                                            <input type="number" name="teams_advancing_per_group" id="teams_advancing_per_group" min="1"
+                                                value="{{ category.teams_advancing_per_group or 2 }}" 
+                                                class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                    Generate Group Stage
+                                </button>
+                            </form>
+                            {% endif %}
+                            
+                            {# Only show Knockout button if group matches exist but knockout matches don't #}
+                            {% if has_group_matches and not has_knockout_matches %}
+                            <form action="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" method="POST" class="inline-block">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="action" value="generate_bracket">
+                                <input type="hidden" name="bracket_type" value="generate_knockout">
+                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                    Generate Knockout
+                                </button>
+                            </form>
+                            {% endif %}
+                            
+                            {# Show status messages if both are already generated #}
+                            {% if has_group_matches and has_knockout_matches %}
+                            <div class="text-green-600 p-2 bg-green-50 rounded flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                All brackets generated
+                            </div>
+                            {% endif %}
+                        
+                        {% elif category.format.value == 'Single Elimination' %}
+                            {# Check if knockout matches exist already #}
+                            {% set has_knockout_matches = matches|selectattr('stage.name', 'eq', 'KNOCKOUT')|list|length > 0 %}
+                            
+                            {# Only show Bracket button if no knockout matches exist #}
+                            {% if not has_knockout_matches %}
+                            <form action="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" method="POST" class="inline-block">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="action" value="generate_bracket">
+                                <input type="hidden" name="bracket_type" value="generate_knockout">
+                                <div class="flex flex-col space-y-2">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <input type="checkbox" id="use_seeding" name="use_seeding" checked class="h-4 w-4 text-blue-600">
+                                        <label for="use_seeding" class="text-sm text-gray-700">Use seeding</label>
+                                    </div>
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <input type="checkbox" id="third_place_match" name="third_place_match" checked class="h-4 w-4 text-blue-600">
+                                        <label for="third_place_match" class="text-sm text-gray-700">Include 3rd place match</label>
+                                    </div>
+                                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                        </svg>
+                                        Generate Bracket
+                                    </button>
+                                </div>
+                            </form>
+                            {% else %}
+                            <div class="text-green-600 p-2 bg-green-50 rounded flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Bracket already generated
+                            </div>
+                            {% endif %}
+                        {% else %}
+                            {# Other formats #}
+                            {% set has_matches = matches|length > 0 %}
+                            {% if not has_matches %}
+                            <form action="{{ url_for('organizer.generate_bracket', id=tournament.id, category_id=category.id) }}" method="GET" class="inline-block">
+                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                    Generate Bracket
+                                </button>
+                            </form>
+                            {% else %}
+                            <div class="text-green-600 p-2 bg-green-50 rounded flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Bracket already generated
+                            </div>
+                            {% endif %}
+                        {% endif %}
                         
                         {% if matches %}
                         <form method="POST" action="{{ url_for('organizer.calculate_placings', id=tournament.id, category_id=category.id) }}" class="inline-block">
@@ -107,13 +251,19 @@
                     <div class="mt-4">
                         <div class="text-sm text-gray-500">
                             {% if category.format == 'Group Stage + Knockout' %}
-                                For Group Stage + Knockout format: First generate the group stage, then after group play is complete, generate the knockout stage.
+                                {% if not has_group_matches %}
+                                    First generate the group stage, then after group play is complete, generate the knockout stage.
+                                {% elif not has_knockout_matches %}
+                                    Group stage has been generated. After all group matches are completed, generate the knockout stage.
+                                {% else %}
+                                    Both group stage and knockout stage have been generated.
+                                {% endif %}
                             {% elif category.format == 'Single Elimination' %}
-                                This will create a single elimination bracket based on the seeding of registered players/teams.
-                            {% elif category.format == 'Double Elimination' %}
-                                This will create a double elimination bracket with winners and losers brackets.
-                            {% elif category.format == 'Round Robin' %}
-                                This will create a round-robin schedule where each participant plays against every other participant.
+                                {% if not has_knockout_matches %}
+                                    This will create a single elimination bracket based on the seeding of registered players/teams.
+                                {% else %}
+                                    Single elimination bracket has been generated.
+                                {% endif %}
                             {% endif %}
                         </div>
                     </div>
@@ -125,7 +275,7 @@
                     <div class="bg-gray-50 rounded-lg p-4">
                         <dl class="grid grid-cols-2 gap-x-4 gap-y-2">
                             <dt class="text-sm font-medium text-gray-500">Format:</dt>
-                            <dd class="text-sm text-gray-900">{{ category.format }}</dd>
+                            <dd class="text-sm text-gray-900">{{ category.format.value }}</dd>
                             
                             <dt class="text-sm font-medium text-gray-500">Total Registrations:</dt>
                             <dd class="text-sm text-gray-900">{{ registrations|length }}</dd>
@@ -154,40 +304,24 @@
             <h2 class="text-xl font-bold mb-4">Quick Actions</h2>
             
             <div class="space-y-3">
-                {% if tournament.status == 'upcoming' %}
-                    {# <a href="{{ url_for('organizer.manage_registrations', id=tournament.id, category_id=category.id) }}" class="block w-full text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                        Manage Registrations
-                    </a> #}
-                    
-                    <a href="{{ url_for('organizer.generate_bracket', id=tournament.id, category_id=category.id) }}" class="block w-full text-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-                        Generate Bracket
-                    </a>
-                {% endif %}
-                
-                {# {% if matches %}
-                    <a href="{{ url_for('organizer.update_match', id=tournament.id, category_id=category.id, match_id=matches[0].id) }}" class="block w-full text-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-                        Edit Matches
-                    </a>
-                {% endif %} #}
-                
                 <a href="{{ url_for('tournament.participants', id=tournament.id, category=category.id) }}" class="block w-full text-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
                     View Participants
                 </a>
                 
-                {% if tournament.status == 'ongoing' and matches %}
+                {% if tournament.status.value == 'ongoing' and matches %}
                     <a href="{{ url_for('tournament.live_scoring', id=tournament.id) }}" class="block w-full text-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
                         Live Scoring
                     </a>
                 {% endif %}
                 
-                {% if tournament.status == 'ongoing' %}
+                {# {% if tournament.status.value == 'ongoing' %}
                     <form method="POST" action="{{ url_for('organizer.finalize_category', id=tournament.id, category_id=category.id) }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
                             Finalize Category
                         </button>
                     </form>
-                {% endif %}
+                {% endif %} #}
             </div>
         </div>
         
@@ -218,6 +352,7 @@
                             <i class="fas fa-check-circle mr-1"></i> All matches complete
                         </div>
                         <form method="POST" action="{{ url_for('organizer.finalize_category', id=tournament.id, category_id=category.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
                                 Finalize Results
                             </button>
@@ -232,139 +367,435 @@
     <h2 class="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Matches</h2>
     
     {% if matches %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            #
-                        </th>
-                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Round
-                        </th>
-                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Participants
-                        </th>
-                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Score
-                        </th>
-                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Court
-                        </th>
-                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Time
-                        </th>
-                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                        </th>
-                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Actions
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for match in matches %}
-                        <tr class="{% if match.completed %}bg-green-50{% endif %}">
-                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ match.id }}
-                            </td>
-                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ match.round_name }}
-                                {% if match.group %}
-                                    <span class="text-gray-500">({{ match.group.name }})</span>
-                                {% endif %}
-                            </td>
-                            <td class="px-3 py-4 whitespace-nowrap text-sm">
-                                {% if match.is_doubles %}
-                                    <div class="text-gray-900">
-                                        {% if match.team1 %}
-                                            {{ match.team1.player1.full_name }}/{{ match.team1.player2.full_name }}
-                                        {% else %}
-                                            TBD
-                                        {% endif %}
-                                    </div>
-                                    <div class="text-gray-600 mt-1">vs</div>
-                                    <div class="text-gray-900 mt-1">
-                                        {% if match.team2 %}
-                                            {{ match.team2.player1.full_name }}/{{ match.team2.player2.full_name }}
-                                        {% else %}
-                                            TBD
-                                        {% endif %}
-                                    </div>
-                                {% else %}
-                                    <div class="text-gray-900">
-                                        {% if match.player1 %}
-                                            {{ match.player1.full_name }}
-                                        {% else %}
-                                            TBD
-                                        {% endif %}
-                                    </div>
-                                    <div class="text-gray-600 mt-1">vs</div>
-                                    <div class="text-gray-900 mt-1">
-                                        {% if match.player2 %}
-                                            {{ match.player2.full_name }}
-                                        {% else %}
-                                            TBD
-                                        {% endif %}
-                                    </div>
-                                {% endif %}
-                            </td>
-                            <td class="px-3 py-4 whitespace-nowrap text-sm">
-                                {% if match.scores.all() %}
-                                    {% for score in match.scores %}
-                                        <div class="text-gray-900">{{ score.player1_score }}-{{ score.player2_score }}</div>
-                                    {% endfor %}
-                                {% else %}
-                                    <span class="text-gray-500">Not played</span>
-                                {% endif %}
-                            </td>
-                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {% if match.court %}
-                                    {{ match.court }}
-                                {% else %}
-                                    <span class="text-gray-500">TBD</span>
-                                {% endif %}
-                            </td>
-                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {% if match.scheduled_time %}
-                                    {{ match.scheduled_time.strftime('%d/%m/%Y %H:%M') }}
-                                {% else %}
-                                    <span class="text-gray-500">TBD</span>
-                                {% endif %}
-                            </td>
-                            <td class="px-3 py-4 whitespace-nowrap text-sm">
-                                {% if match.completed %}
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                        Completed
-                                    </span>
-                                {% else %}
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                        Pending
-                                    </span>
-                                {% endif %}
-                                <div class="text-xs text-gray-500 mt-1">
-                                    {% if match.referee_verified %}
-                                        <span class="text-green-600">Referee ✓</span>
+        <!-- Match filtering and search options -->
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex space-x-2">
+                <button class="filter-tab px-3 py-1 rounded-md active" data-filter="all">All</button>
+                {% if groups %}
+                    <button class="filter-tab px-3 py-1 rounded-md bg-gray-100" data-filter="group">Group Stage</button>
+                {% endif %}
+                <button class="filter-tab px-3 py-1 rounded-md bg-gray-100" data-filter="knockout">Knockout</button>
+                <button class="filter-tab px-3 py-1 rounded-md bg-gray-100" data-filter="completed">Completed</button>
+                <button class="filter-tab px-3 py-1 rounded-md bg-gray-100" data-filter="pending">Pending</button>
+            </div>
+            <div class="search-container">
+                <span class="search-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </span>
+                <input type="text" id="match-search" placeholder="Search player name..." class="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+
+        <!-- Matches container with maximum height and scrollability -->
+        <div class="matches-container">
+            {% if groups %}
+                <!-- Group stage matches -->
+                <div class="group-stage-matches mb-4">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Group Stage</h3>
+                    
+                    {% for group in groups %}
+                        <div class="group-section mb-4 matches-group" data-group="{{ group.name }}">
+                            <h4 class="bg-blue-50 text-blue-700 px-4 py-2 rounded-t-lg font-medium">Group {{ group.name }}</h4>
+                            
+                            <table class="min-w-full divide-y divide-gray-200 border-x border-b">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Match</th>
+                                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Participants</th>
+                                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Court</th>
+                                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% set group_matches = matches|selectattr('stage.name', 'eq', 'GROUP')|selectattr('group.id', 'eq', group.id)|list %}
+                                    {% if group_matches %}
+                                        {% for match in group_matches %}
+                                            <tr class="match-row {% if match.completed %}bg-green-50 completed-match{% else %}pending-match{% endif %} group-match" 
+                                                data-player1="{{ match.player1.full_name if match.player1 else '' }}" 
+                                                data-player2="{{ match.player2.full_name if match.player2 else '' }}"
+                                                data-team1="{{ (match.team1.player1.full_name + ' ' + match.team1.player2.full_name) if match.team1 else '' }}"
+                                                data-team2="{{ (match.team2.player1.full_name + ' ' + match.team2.player2.full_name) if match.team2 else '' }}">
+                                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">{{ match.id }}</td>
+                                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">Match {{ match.match_order }}</td>
+                                                <td class="px-3 py-4 whitespace-nowrap text-sm">
+                                                    {% if match.is_doubles %}
+                                                        <div class="text-gray-900">
+                                                            {% if match.team1 %}
+                                                                {{ match.team1.player1.full_name }}/{{ match.team1.player2.full_name }}
+                                                            {% else %}
+                                                                TBD
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="text-gray-600 mt-1">vs</div>
+                                                        <div class="text-gray-900 mt-1">
+                                                            {% if match.team2 %}
+                                                                {{ match.team2.player1.full_name }}/{{ match.team2.player2.full_name }}
+                                                            {% else %}
+                                                                TBD
+                                                            {% endif %}
+                                                        </div>
+                                                    {% else %}
+                                                        <div class="text-gray-900">
+                                                            {% if match.player1 %}
+                                                                {{ match.player1.full_name }}
+                                                            {% else %}
+                                                                TBD
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="text-gray-600 mt-1">vs</div>
+                                                        <div class="text-gray-900 mt-1">
+                                                            {% if match.player2 %}
+                                                                {{ match.player2.full_name }}
+                                                            {% else %}
+                                                                TBD
+                                                            {% endif %}
+                                                        </div>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="px-3 py-4 whitespace-nowrap text-sm">
+                                                    {% if match.scores.all() %}
+                                                        {% for score in match.scores %}
+                                                            <div class="text-gray-900">{{ score.player1_score }}-{{ score.player2_score }}</div>
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <span class="text-gray-500">Not played</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    {% if match.court %}
+                                                        {{ match.court }}
+                                                    {% else %}
+                                                        <span class="text-gray-500">TBD</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    {% if match.scheduled_time %}
+                                                        {{ match.scheduled_time.strftime('%d/%m/%Y %H:%M') }}
+                                                    {% else %}
+                                                        <span class="text-gray-500">TBD</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="px-3 py-4 whitespace-nowrap text-sm">
+                                                    {% if match.completed %}
+                                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                            Completed
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                            Pending
+                                                        </span>
+                                                    {% endif %}
+                                                    <div class="text-xs text-gray-500 mt-1">
+                                                        {% if match.referee_verified %}
+                                                            <span class="text-green-600">Referee ✓</span>
+                                                        {% else %}
+                                                            <span class="text-gray-400">Referee ✗</span>
+                                                        {% endif %}
+                                                        
+                                                        {% if match.player_verified %}
+                                                            <span class="text-green-600">Player ✓</span>
+                                                        {% else %}
+                                                            <span class="text-gray-400">Player ✗</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </td>
+                                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <a href="{{ url_for('organizer.update_match', id=tournament.id, match_id=match.id) }}" class="text-indigo-600 hover:text-indigo-900">
+                                                        Edit
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
                                     {% else %}
-                                        <span class="text-gray-400">Referee ✗</span>
+                                        <tr>
+                                            <td colspan="8" class="px-6 py-4 text-center text-gray-500">No matches in this group yet</td>
+                                        </tr>
                                     {% endif %}
-                                    
-                                    {% if match.player_verified %}
-                                        <span class="text-green-600">Player ✓</span>
-                                    {% else %}
-                                        <span class="text-gray-400">Player ✗</span>
-                                    {% endif %}
-                                </div>
-                            </td>
-                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <a href="{{ url_for('organizer.update_match', id=tournament.id, match_id=match.id) }}" class="text-indigo-600 hover:text-indigo-900">
-                                    Edit
-                                </a>
-                            </td>
-                        </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     {% endfor %}
-                </tbody>
-            </table>
+                </div>
+            {% endif %}
+            
+            <!-- Knockout stage matches -->
+            {% set knockout_matches = matches|selectattr('stage.name', 'eq', 'KNOCKOUT')|list %}
+            {% if knockout_matches %}
+                <div class="knockout-stage-matches">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Knockout Stage</h3>
+                    
+                    {% set rounds = knockout_matches|groupby('round')|list|sort(attribute='grouper')|reverse %}
+                    {% for round_group in rounds %}
+                        {% if round_group.grouper == 1 %}
+                            {% set round_name = 'Final' %}
+                        {% elif round_group.grouper == 1.5 %}
+                            {% set round_name = '3rd Place' %}
+                        {% elif round_group.grouper == 2 %}
+                            {% set round_name = 'Semifinals' %}
+                        {% elif round_group.grouper == 3 %}
+                            {% set round_name = 'Quarterfinals' %}
+                        {% elif round_group.grouper == 4 %}
+                            {% set round_name = 'Round of 16' %}
+                        {% elif round_group.grouper == 5 %}
+                            {% set round_name = 'Round of 32' %}
+                        {% elif round_group.grouper == 6 %}
+                            {% set round_name = 'Round of 64' %}
+                        {% else %}
+                            {% set round_name = 'Round ' ~ round_group.grouper %}
+                        {% endif %}
+                        
+                        <div class="round-section mb-4 matches-round" data-round="{{ round_group.grouper }}">
+                            <h4 class="bg-purple-50 text-purple-700 px-4 py-2 rounded-t-lg font-medium">{{ round_name }}</h4>
+                            
+                            <table class="min-w-full divide-y divide-gray-200 border-x border-b">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Match</th>
+                                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Participants</th>
+                                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Court</th>
+                                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for match in round_group.list %}
+                                        <tr class="match-row {% if match.completed %}bg-green-50 completed-match{% else %}pending-match{% endif %} knockout-match" 
+                                            data-player1="{{ match.player1.full_name if match.player1 else '' }}" 
+                                            data-player2="{{ match.player2.full_name if match.player2 else '' }}"
+                                            data-team1="{{ (match.team1.player1.full_name + ' ' + match.team1.player2.full_name) if match.team1 else '' }}"
+                                            data-team2="{{ (match.team2.player1.full_name + ' ' + match.team2.player2.full_name) if match.team2 else '' }}">
+                                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">{{ match.id }}</td>
+                                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">Match {{ match.match_order + 1 }}</td>
+                                            <td class="px-3 py-4 whitespace-nowrap text-sm">
+                                                {% if match.is_doubles %}
+                                                    <div class="text-gray-900">
+                                                        {% if match.team1 %}
+                                                            {{ match.team1.player1.full_name }}/{{ match.team1.player2.full_name }}
+                                                        {% else %}
+                                                            TBD
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="text-gray-600 mt-1">vs</div>
+                                                    <div class="text-gray-900 mt-1">
+                                                        {% if match.team2 %}
+                                                            {{ match.team2.player1.full_name }}/{{ match.team2.player2.full_name }}
+                                                        {% else %}
+                                                            TBD
+                                                        {% endif %}
+                                                    </div>
+                                                {% else %}
+                                                    <div class="text-gray-900">
+                                                        {% if match.player1 %}
+                                                            {{ match.player1.full_name }}
+                                                        {% else %}
+                                                            TBD
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="text-gray-600 mt-1">vs</div>
+                                                    <div class="text-gray-900 mt-1">
+                                                        {% if match.player2 %}
+                                                            {{ match.player2.full_name }}
+                                                        {% else %}
+                                                            TBD
+                                                        {% endif %}
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-3 py-4 whitespace-nowrap text-sm">
+                                                {% if match.scores.all() %}
+                                                    {% for score in match.scores %}
+                                                        <div class="text-gray-900">{{ score.player1_score }}-{{ score.player2_score }}</div>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <span class="text-gray-500">Not played</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {% if match.court %}
+                                                    {{ match.court }}
+                                                {% else %}
+                                                    <span class="text-gray-500">TBD</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {% if match.scheduled_time %}
+                                                    {{ match.scheduled_time.strftime('%d/%m/%Y %H:%M') }}
+                                                {% else %}
+                                                    <span class="text-gray-500">TBD</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-3 py-4 whitespace-nowrap text-sm">
+                                                {% if match.completed %}
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                        Completed
+                                                    </span>
+                                                {% else %}
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                        Pending
+                                                    </span>
+                                                {% endif %}
+                                                <div class="text-xs text-gray-500 mt-1">
+                                                    {% if match.referee_verified %}
+                                                        <span class="text-green-600">Referee ✓</span>
+                                                    {% else %}
+                                                        <span class="text-gray-400">Referee ✗</span>
+                                                    {% endif %}
+                                                    
+                                                    {% if match.player_verified %}
+                                                        <span class="text-green-600">Player ✓</span>
+                                                    {% else %}
+                                                        <span class="text-gray-400">Player ✗</span>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <a href="{{ url_for('organizer.update_match', id=tournament.id, match_id=match.id) }}" class="text-indigo-600 hover:text-indigo-900">
+                                                    Edit
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <!-- Playoff matches (3rd place matches) -->
+            {% set playoff_matches = matches|selectattr('stage.name', 'eq', 'PLAYOFF')|list %}
+            {% if playoff_matches %}
+                <div class="playoff-stage-matches mb-4">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Playoff Matches</h3>
+                    
+                    <div class="playoff-section">
+                        <h4 class="bg-green-50 text-green-700 px-4 py-2 rounded-t-lg font-medium">3rd Place Match</h4>
+                        
+                        <table class="min-w-full divide-y divide-gray-200 border-x border-b">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Match</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Participants</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Court</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for match in playoff_matches %}
+                                    <tr class="match-row {% if match.completed %}bg-green-50 completed-match{% else %}pending-match{% endif %} playoff-match" 
+                                        data-player1="{{ match.player1.full_name if match.player1 else '' }}" 
+                                        data-player2="{{ match.player2.full_name if match.player2 else '' }}"
+                                        data-team1="{{ (match.team1.player1.full_name + ' ' + match.team1.player2.full_name) if match.team1 else '' }}"
+                                        data-team2="{{ (match.team2.player1.full_name + ' ' + match.team2.player2.full_name) if match.team2 else '' }}">
+                                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">{{ match.id }}</td>
+                                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">3rd Place</td>
+                                        <td class="px-3 py-4 whitespace-nowrap text-sm">
+                                            {% if match.is_doubles %}
+                                                <div class="text-gray-900">
+                                                    {% if match.team1 %}
+                                                        {{ match.team1.player1.full_name }}/{{ match.team1.player2.full_name }}
+                                                    {% else %}
+                                                        TBD
+                                                    {% endif %}
+                                                </div>
+                                                <div class="text-gray-600 mt-1">vs</div>
+                                                <div class="text-gray-900 mt-1">
+                                                    {% if match.team2 %}
+                                                        {{ match.team2.player1.full_name }}/{{ match.team2.player2.full_name }}
+                                                    {% else %}
+                                                        TBD
+                                                    {% endif %}
+                                                </div>
+                                            {% else %}
+                                                <div class="text-gray-900">
+                                                    {% if match.player1 %}
+                                                        {{ match.player1.full_name }}
+                                                    {% else %}
+                                                        TBD
+                                                    {% endif %}
+                                                </div>
+                                                <div class="text-gray-600 mt-1">vs</div>
+                                                <div class="text-gray-900 mt-1">
+                                                    {% if match.player2 %}
+                                                        {{ match.player2.full_name }}
+                                                    {% else %}
+                                                        TBD
+                                                    {% endif %}
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-3 py-4 whitespace-nowrap text-sm">
+                                            {% if match.scores.all() %}
+                                                {% for score in match.scores %}
+                                                    <div class="text-gray-900">{{ score.player1_score }}-{{ score.player2_score }}</div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <span class="text-gray-500">Not played</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {% if match.court %}
+                                                {{ match.court }}
+                                            {% else %}
+                                                <span class="text-gray-500">TBD</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {% if match.scheduled_time %}
+                                                {{ match.scheduled_time.strftime('%d/%m/%Y %H:%M') }}
+                                            {% else %}
+                                                <span class="text-gray-500">TBD</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-3 py-4 whitespace-nowrap text-sm">
+                                            {% if match.completed %}
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                    Completed
+                                                </span>
+                                            {% else %}
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                    Pending
+                                                </span>
+                                            {% endif %}
+                                            <div class="text-xs text-gray-500 mt-1">
+                                                {% if match.referee_verified %}
+                                                    <span class="text-green-600">Referee ✓</span>
+                                                {% else %}
+                                                    <span class="text-gray-400">Referee ✗</span>
+                                                {% endif %}
+                                                
+                                                {% if match.player_verified %}
+                                                    <span class="text-green-600">Player ✓</span>
+                                                {% else %}
+                                                    <span class="text-gray-400">Player ✗</span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <a href="{{ url_for('organizer.update_match', id=tournament.id, match_id=match.id) }}" class="text-indigo-600 hover:text-indigo-900">
+                                                Edit
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
         </div>
     {% else %}
         <div class="text-center py-6 text-gray-500">
@@ -381,11 +812,109 @@
 
 {% block scripts %}
 {% if matches %}
-<script src="{{ url_for('static', filename='js/bracket-visualization.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize the bracket visualization
-        new BracketVisualization('bracket-container');
+        // Filter functionality
+        const filterTabs = document.querySelectorAll('.filter-tab');
+        const matchRows = document.querySelectorAll('.match-row');
+        const searchInput = document.getElementById('match-search');
+        const groupSections = document.querySelectorAll('.matches-group');
+        const roundSections = document.querySelectorAll('.matches-round');
+        const playoffSection = document.querySelector('.playoff-stage-matches');
+        
+        // Apply filter when tab is clicked
+        filterTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Update active tab styling
+                filterTabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.classList.add('bg-gray-100');
+                });
+                tab.classList.add('active');
+                tab.classList.remove('bg-gray-100');
+                
+                // Apply filter
+                const filter = tab.getAttribute('data-filter');
+                applyFilters(filter, searchInput.value);
+            });
+        });
+        
+        // Apply search filter when input changes
+        searchInput.addEventListener('input', () => {
+            const activeFilter = document.querySelector('.filter-tab.active').getAttribute('data-filter');
+            applyFilters(activeFilter, searchInput.value);
+        });
+        
+        // Function to apply both type and search filters
+        function applyFilters(typeFilter, searchQuery) {
+            searchQuery = searchQuery.toLowerCase();
+            
+            // Then filter rows by match type and search query
+            matchRows.forEach(row => {
+                // Get player/team names for search
+                const player1 = row.getAttribute('data-player1').toLowerCase();
+                const player2 = row.getAttribute('data-player2').toLowerCase();
+                const team1 = row.getAttribute('data-team1').toLowerCase();
+                const team2 = row.getAttribute('data-team2').toLowerCase();
+                const allNames = player1 + ' ' + player2 + ' ' + team1 + ' ' + team2;
+                
+                // Check if row matches type filter
+                let matchesTypeFilter = true;
+                console.log(row.classList)
+                if (typeFilter === 'group') {
+                    matchesTypeFilter = row.classList.contains('group-match');
+                } else if (typeFilter === 'knockout') {
+                    matchesTypeFilter = row.classList.contains('knockout-match') || row.classList.contains('playoff-match');
+                } else if (typeFilter === 'completed') {
+                    matchesTypeFilter = row.classList.contains('completed-match');
+                } else if (typeFilter === 'pending') {
+                    matchesTypeFilter = row.classList.contains('pending-match');
+                }
+                
+                // Check if row matches search query
+                const matchesSearch = searchQuery === '' || allNames.includes(searchQuery);
+
+                // Show/hide row based on both filters
+                if (matchesTypeFilter && matchesSearch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Hide empty group/round sections
+            groupSections.forEach(section => {
+                const visibleRows = section.querySelectorAll('.match-row:not([style*="display: none"])');
+                section.style.display = visibleRows.length > 0 ? 'block' : 'none';
+            });
+            
+            roundSections.forEach(section => {
+                const visibleRows = section.querySelectorAll('.match-row:not([style*="display: none"])');
+                section.style.display = visibleRows.length > 0 ? 'block' : 'none';
+            });
+            
+            // Show "no matches" message if all matches are hidden
+            const visibleMatches = document.querySelectorAll('.match-row:not([style*="display: none"])');
+            if (visibleMatches.length === 0) {
+                // If no container for the message exists, create one
+                let noMatchesMsg = document.getElementById('no-matches-message');
+                if (!noMatchesMsg) {
+                    noMatchesMsg = document.createElement('div');
+                    noMatchesMsg.id = 'no-matches-message';
+                    noMatchesMsg.className = 'text-center py-6 text-gray-500';
+                    noMatchesMsg.innerHTML = 'No matches match your current filters.';
+                    document.querySelector('.matches-container').appendChild(noMatchesMsg);
+                } else {
+                    noMatchesMsg.style.display = 'block';
+                }
+            } else {
+                // Hide the message if matches are visible
+                const noMatchesMsg = document.getElementById('no-matches-message');
+                if (noMatchesMsg) {
+                    noMatchesMsg.style.display = 'none';
+                }
+            }
+        }
     });
 </script>
 {% endif %}

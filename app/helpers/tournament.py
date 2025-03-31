@@ -80,8 +80,10 @@ def _format_match_for_api(match):
 
 def _generate_group_stage(category):
     """Generate group stage matches for a category"""
-    if not category.group_count or not category.teams_per_group:
-        return False
+    if not category.group_count:
+        category.group_count = 4  # Default to 4 groups
+    if not category.teams_per_group:
+        category.teams_per_group = 4  # Default to 4 teams per group
     
     # Get registrations
     registrations = Registration.query.filter_by(category_id=category.id, is_approved=True).all()

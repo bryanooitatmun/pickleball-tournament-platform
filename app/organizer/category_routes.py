@@ -293,6 +293,9 @@ def manage_category(id, category_id):
 
         # --- Generate Bracket ---
         elif action == 'generate_bracket':
+            category.group_count = int(request.form.get('group_count', category.group_count or 4))
+            category.teams_per_group = int(request.form.get('teams_per_group', category.teams_per_group or 4))
+            category.teams_advancing_per_group = int(request.form.get('teams_advancing_per_group', category.teams_advancing_per_group or 2))
             bracket_type = request.form.get('bracket_type') # e.g., 'generate_groups', 'generate_knockout'
             success = False
             message = "Bracket generation failed."

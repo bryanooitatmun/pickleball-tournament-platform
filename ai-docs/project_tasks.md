@@ -1,52 +1,13 @@
-# Project Tasks
+app/helpers/tournament.py have to be enhanced.
+ Perhaps create all matches (including group stage and knockout) even ones that arent completed yet. Each team/player (team for doubles and player for singles) should have a code number assigned (example A1 for group A first placing, B2 for group B second placing). For incomplete matches (especially during the knockout stage) , the UI should show something like A1 vs B2. Even for knockout there should be a code. For quarters there are four matches, they could be named (1, 2, 3, 4), so that for semis, you can show 1 vs 2 (for the incomplete semis match). Once the code is setup, then the seeding can go in. I believe there isnt a page now to change seedings. There should be a page for the organizer to view the participant list alongside their seed, and they can drag and drop the teams/players to different seeds.  How about tiebreaks? Tiebreaker for groups should be number of h2h record with the other tied players followed by number of points. How about BYES? If two team is advancing per group of 5 groups, there will be 10 players. But a round of 16 needs to have 16 players, so there will be 6 BYES. Obviously the top 6 seed will be playing against the BYES and get a free entry to the quarters. This logic has to be coded in. 
 
-## Current Bug Fixes
+ I have pictures to show as example what the brackets should look like. Look at ppa bracket 1.jpg for desktop site, and look at ppa bracket 2.jpg for the mobile site. Perhaps the app/static/js/bracket-visualisation.js can also be change to fit the looks from the image
+ Enhance app/template/tournaments/brackets.html too afterwards to fit these changes. 
 
-1. [✅] **Report Button Issue**
-   - Report button works initially but doesn't work after scrolling at app/template/tournaments/participants.html
-   - Fixed by updating the toggleDropdown function to position the dropdown menu relative to the button using fixed positioning and window.scrollY
-   - Added scroll event listener to update dropdown position when scrolling
+ Then, update my tests in my tests file to test these changes. If there are existing test that already test similar/same requirements, then you dont have to add it.
 
-2. [✅] **Doubles Matches Display Issues in Live Views**
-   - Fixed issue where `match_detail.html` and `live_scoring.html` didn't properly display doubles matches
-   - Consolidated `live_match.html` into `match_detail.html` to eliminate redundancy
-   - Enhanced `match_detail.html` with live scoring functionality
-   - Updated templates to conditionally render singles or doubles matches based on match.is_doubles
-   - Improved display of team information in all match view templates
 
-3. [✅] **Live Courts Incorrect Next Match Display**
-   - Fixed issue with `app/templates/tournament/live_courts.html` not showing correct next match information
-   - Updated the route logic to properly identify current and upcoming matches based on scheduled time
-   - Fixed the template to properly display doubles matches with correctly nested team references
-   - Added better time difference display with "ago" for past times
+Actually I believe it's only necessary to have Number of groups and teams advancing per group. The teams per group can be calculated programmitically. I believe app/template/organizer/manage_tournament/manage_category.html, app/organizer/category_routes.py and perhaps app/helpers/tournament.py have to be changed to accomodate for this.
 
-4. [✅] **Live Scoring "No Matches" Issue**
-   - Fixed `live_scoring.html` incorrectly showing "no matches currently in progress" 
-   - Updated query to also account for doubles matches:
-     ```python
-     ongoing_matches = Match.query.join(TournamentCategory).filter(
-         TournamentCategory.tournament_id == id,
-         Match.completed == False,
-         # For singles matches OR doubles matches
-         ((Match.player1_id.isnot(None) & Match.player2_id.isnot(None)) |
-          (Match.team1_id.isnot(None) & Match.team2_id.isnot(None)))
-     ).all()
-     ```
-   - Updated template to render doubles matches properly, showing both team members
-   - Also updated API endpoint for scores to include doubles match information
+There must be an easy way to edit all the matches in bulk easily for the organizer. Right now in app/template/organizer/manage_tournament/manage_category.html, the organizer will have to go into each match one by one to edit the matches individually. I'm not sure, is a table to edit all of the match details for all matches a good way to go? Maybe a confirmation later in the ui to really make sure that the organizer can double check
 
-5. [✅] **Schedule Display Issues**
-   - Fixed `app/templates/tournament/schedule.html` display issues
-   - Added proper group stage display in the schedule table
-   - Fixed player list display for doubles matches using the proper team relationships
-   - Added category filtering functionality to allow viewing schedule by specific category
-
-6. [ ] **Manage Category Issues at app/template/organizer/manage_tournament/manage_category.html**
-   - ✅ Calculate placing form doesn't work (missing CSRF token) - Fixed by changing the template to use proper hidden input for CSRF token
-   - Difficult to view long lists of matches
-   - Need to improve organization - possibly view by groups, rounds, or player search
-   - Generate bracket functionality broken - routes and template are mismatched
-
-## Future Enhancements
-
-- To be determined after bug fixes are completed
