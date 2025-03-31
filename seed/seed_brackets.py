@@ -4,7 +4,7 @@ Generates groups and bracket matches for a tournament category.
 """
 
 from app.models import (
-    Tournament, TournamentCategory, Team, Match, MatchScore, Group, GroupStanding, Registration
+    Tournament, TournamentCategory, Team, Match, MatchScore, Group, GroupStanding, Registration, MatchStage
 )
 from .seed_base import app, db, commit_changes
 from datetime import datetime, timedelta
@@ -54,7 +54,7 @@ def create_group(category, name, teams=None, commit=True):
     
     return group
 
-def create_group_matches(group, teams, percentage_completed=80, commit=True):
+def create_group_matches(group, teams, percentage_completed=100, commit=True):
     """Create round-robin matches for a group"""
     # Check if matches already exist for this group
     existing_matches = Match.query.filter_by(group_id=group.id).count()
@@ -79,6 +79,7 @@ def create_group_matches(group, teams, percentage_completed=80, commit=True):
                 category_id=group.category_id,
                 group_id=group.id,
                 round=match_number,
+                stage=MatchStage.GROUP,
                 match_order=match_number,
                 team1_id=team1.id,
                 team2_id=team2.id,
@@ -219,6 +220,7 @@ def create_knockout_matches(category, group_qualifiers, percentage_completed=75,
         match = Match(
             category_id=category.id,
             round=4,  # Quarterfinals
+            stage=MatchStage.KNOCKOUT,
             match_order=idx + 1,
             team1_id=team1.id,
             team2_id=team2.id,
@@ -379,7 +381,7 @@ def seed_mens_doubles_bracket(category_name="Men's Doubles Open", commit=True):
             groups.append(group)
             
             # Create group matches
-            create_group_matches(group, group_teams, percentage_completed=80, commit=False)
+            create_group_matches(group, group_teams, percentage_completed=100, commit=False)
             
             # Calculate standings
             calculate_group_standings(group, commit=False)

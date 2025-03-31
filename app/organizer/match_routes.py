@@ -334,7 +334,7 @@ def update_seeds(id, category_id):
     
     return redirect(url_for('organizer.manage_category', id=id, category_id=category_id))
 
-@bp.route('/tournament/<int:id>/category/<int:category_id>/generate_bracket', methods=['POST'])
+@bp.route('/tournament/<int:id>/category/<int:category_id>/generate_bracket', methods=['GET', 'POST'])
 @login_required
 @organizer_required
 def generate_bracket(id, category_id):

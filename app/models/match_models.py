@@ -133,6 +133,8 @@ class Match(db.Model):
 
     player1 = db.relationship('PlayerProfile', foreign_keys=[player1_id], backref=db.backref('matches_as_player1_alt', lazy='dynamic'))
     player2 = db.relationship('PlayerProfile', foreign_keys=[player2_id], backref=db.backref('matches_as_player2_alt', lazy='dynamic'))
+    team1 = db.relationship('Team', foreign_keys=[team1_id], backref=db.backref('matches_as_team1_alt', lazy='dynamic'))
+    team2 = db.relationship('Team', foreign_keys=[team2_id], backref=db.backref('matches_as_team2_alt', lazy='dynamic'))
 
     @property
     def is_doubles(self):

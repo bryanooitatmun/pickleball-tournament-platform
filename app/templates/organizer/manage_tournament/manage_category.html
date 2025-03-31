@@ -50,18 +50,17 @@
                 </div>
                 
                 <div>
-                    <span class="text-gray-500 text-sm">Maximum Participants</span>
-                    <div class="font-medium">{{ category.max_participants }}</div>
-                </div>
-                
-                <div>
                     <span class="text-gray-500 text-sm">Points Awarded</span>
                     <div class="font-medium">{{ category.points_awarded }}</div>
                 </div>
-                
+            
                 <div>
                     <span class="text-gray-500 text-sm">Registrations</span>
+                    {% if category.is_doubles() %}
+                    <div class="font-medium">{{ registrations|length * 2 }} / {{ category.max_participants }}</div>
+                    {% else %}
                     <div class="font-medium">{{ registrations|length }} / {{ category.max_participants }}</div>
+                    {% endif %} 
                 </div>
             </div>
             
