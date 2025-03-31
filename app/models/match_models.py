@@ -131,6 +131,9 @@ class Match(db.Model):
     # Self-referential relationship for bracket progression
     next_match = db.relationship('Match', remote_side=[id], backref='previous_matches')
 
+    player1 = db.relationship('PlayerProfile', foreign_keys=[player1_id], backref=db.backref('matches_as_player1_alt', lazy='dynamic'))
+    player2 = db.relationship('PlayerProfile', foreign_keys=[player2_id], backref=db.backref('matches_as_player2_alt', lazy='dynamic'))
+
     @property
     def is_doubles(self):
         """Check if this is a doubles match based on category type"""

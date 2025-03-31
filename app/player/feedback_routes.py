@@ -4,7 +4,7 @@ from datetime import datetime
 
 from app import db
 from app.player import bp
-from app.models import Feedback, Tournament, User, UserRole
+from app.models import Feedback, Tournament, User, UserRole, Registration, TournamentCategory, TournamentStatus
 from app.decorators import player_required
 from app.player.feedback_forms import FeedbackForm
 
@@ -14,6 +14,25 @@ from app.player.feedback_forms import FeedbackForm
 def submit_tournament_feedback(tournament_id):
     """Submit feedback for a tournament"""
     tournament = Tournament.query.get_or_404(tournament_id)
+    
+    # Check if tournament is completed - only allow feedback for completed tournaments
+    if tournament.status != TournamentStatus.COMPLETED:
+        flash('Feedback can only be submitted after tournament completion.', 'warning')
+        return redirect(url_for('main.tournament_detail', id=tournament_id))
+    
+    # Check if user is a participant in the tournament
+    categories = TournamentCategory.query.filter_by(tournament_id=tournament_id).all()
+    category_ids = [category.id for category in categories]
+    
+    # Check if the current user has a registration in any of the tournament's categories
+    is_participant = Registration.query.filter(
+        Registration.category_id.in_(category_ids),
+        Registration.player_id == current_user.id
+    ).first() is not None
+    
+    if not is_participant:
+        flash('You are not a registered participant in this tournament. Only participants can submit feedback.', 'warning')
+        return redirect(url_for('main.tournament_detail', id=tournament_id))
     
     # Check if user has already submitted feedback for this tournament
     existing_feedback = Feedback.query.filter_by(
@@ -92,7 +111,7 @@ def submit_organizer_feedback(organizer_id):
             flash(f'Error submitting feedback: {e}', 'danger')
     
     return render_template('player/submit_feedback.html',
-                          title=f'Feedback for {organizer.full_name}',
+                          title=f'Feedback for {organizer.username}',
                           form=form,
                           organizer=organizer)
 

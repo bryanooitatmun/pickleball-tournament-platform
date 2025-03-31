@@ -20,17 +20,22 @@ def verify_match(match_id):
     
     if not profile:
         flash('You need a player profile to verify match results.', 'danger')
-        return redirect(url_for('main.match_detail', id=match.category.tournament_id, match_id=match_id))
+        return redirect(url_for('tournament.match_detail', id=match.category.tournament_id, match_id=match_id))
     
-    # Make sure match has a referee verification first
+    #Make sure match has a referee verification first
     if not match.referee_verified:
         flash('This match must be verified by a referee before player verification.', 'danger')
-        return redirect(url_for('main.match_detail', id=match.category.tournament_id, match_id=match_id))
+        return redirect(url_for('tournament.match_detail', id=match.category.tournament_id, match_id=match_id))
     
     # Make sure match has scores and is marked as completed
-    if not match.completed or match.scores.count() == 0:
+    # if not match.completed or match.scores.count() == 0:
+    #     flash('Match must be completed with scores before verification.', 'danger')
+    #     return redirect(url_for('tournament.match_detail', id=match.category.tournament_id, match_id=match_id))
+
+    # Make sure match has scores 
+    if match.scores.count() == 0:
         flash('Match must be completed with scores before verification.', 'danger')
-        return redirect(url_for('main.match_detail', id=match.category.tournament_id, match_id=match_id))
+        return redirect(url_for('tournament.match_detail', id=match.category.tournament_id, match_id=match_id))
     
     # Check if the current user is a player in this match
     is_authorized = False
@@ -51,18 +56,19 @@ def verify_match(match_id):
     
     if not is_authorized:
         flash('You are not authorized to verify this match.', 'danger')
-        return redirect(url_for('main.match_detail', id=match.category.tournament_id, match_id=match_id))
+        return redirect(url_for('tournament.match_detail', id=match.category.tournament_id, match_id=match_id))
     
     # Digital signature verification if enabled
     signature = request.form.get('digital_signature')
     if current_user.digital_signature_hash and signature:
         if not current_user.verify_digital_signature(signature):
             flash('Invalid digital signature. Please try again.', 'danger')
-            return redirect(url_for('main.match_detail', id=match.category.tournament_id, match_id=match_id))
+            return redirect(url_for('tournament.match_detail', id=match.category.tournament_id, match_id=match_id))
     
     try:
         # Update match verification status
         match.player_verified = True
+        match.completed = True
         db.session.commit()
         
         # Emit socket.io event for real-time updates
@@ -84,7 +90,7 @@ def verify_match(match_id):
         db.session.rollback()
         flash(f'Error verifying match: {e}', 'danger')
     
-    return redirect(url_for('main.match_detail', id=match.category.tournament_id, match_id=match_id))
+    return redirect(url_for('tournament.match_detail', id=match.category.tournament_id, match_id=match_id))
 
 @bp.route('/api/next_match')
 @login_required

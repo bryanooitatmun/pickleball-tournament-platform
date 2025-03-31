@@ -35,10 +35,22 @@
                 <div class="flex justify-center items-center">
                     <div class="text-right mr-3">
                         {% if next_match.is_doubles %}
-                            {% if next_match.team1.player1_id == profile.id or next_match.team1.player2_id == profile.id %}
-                                <span class="font-bold">You & {{ next_match.team1.player1_id == profile.id ? next_match.team1.player2_profile.full_name : next_match.team1.player1_profile.full_name }}</span>
+                            {% if next_match.team1_profile.player1_id == profile.id or next_match.team1_profile.player2_id == profile.id %}
+                                <span class="font-bold">You & 
+                                    {% if next_match.team1_profile.player1_id == profile.id %}
+                                        {{ next_match.team1_profile.player2.full_name }}
+                                    {% else %}
+                                        {{ next_match.team1_profile.player1.full_name }}
+                                    {% endif %}
+                                </span>
                             {% else %}
-                                <span class="font-bold">You & {{ next_match.team2.player1_id == profile.id ? next_match.team2.player2_profile.full_name : next_match.team2.player1_profile.full_name }}</span>
+                                <span class="font-bold">You & 
+                                    {% if next_match.team2_profile.player1_id == profile.id %}
+                                        {{ next_match.team2_profile.player2.full_name }}
+                                    {% else %}
+                                        {{ next_match.team2_profile.player1.full_name }}
+                                    {% endif %}
+                                </span>
                             {% endif %}
                         {% else %}
                             <span class="font-bold">You</span>
@@ -47,10 +59,10 @@
                     <div class="text-center text-xl font-bold mx-3">VS</div>
                     <div class="text-left ml-3">
                         {% if next_match.is_doubles %}
-                            {% if next_match.team1.player1_id == profile.id or next_match.team1.player2_id == profile.id %}
-                                <span class="font-bold">{{ next_match.team2.player1_profile.full_name }} & {{ next_match.team2.player2_profile.full_name }}</span>
+                            {% if next_match.team1_profile.player1_id == profile.id or next_match.team1_profile.player2_id == profile.id %}
+                                <span class="font-bold">{{ next_match.team2_profile.player1.full_name }} & {{ next_match.team2_profile.player2.full_name }}</span>
                             {% else %}
-                                <span class="font-bold">{{ next_match.team1.player1_profile.full_name }} & {{ next_match.team1.player2_profile.full_name }}</span>
+                                <span class="font-bold">{{ next_match.team1_profile.player1.full_name }} & {{ next_match.team1_profile.player2.full_name }}</span>
                             {% endif %}
                         {% else %}
                             {% if next_match.player1_id == profile.id %}
@@ -67,7 +79,7 @@
                 <div class="mr-4">
                     <span class="bg-indigo-800 text-white px-3 py-1 rounded text-sm">{{ next_match.court or 'Court TBD' }}</span>
                 </div>
-                <a href="{{ url_for('main.match_detail', match_id=next_match.id) }}" class="bg-white text-indigo-700 px-4 py-2 rounded hover:bg-indigo-100 transition">
+                <a href="{{ url_for('tournament.match_detail', match_id=next_match.id) }}" class="bg-white text-indigo-700 px-4 py-2 rounded hover:bg-indigo-100 transition">
                     View Match
                 </a>
             </div>

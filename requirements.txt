@@ -32,3 +32,6 @@ requests==2.32.3
 # Deployment
 gunicorn==21.2.0
 eventlet==0.35.2  # Added as WebSocket server for Flask-SocketIO
+
+# Testing
+pytest==8.1.1 # Or latest version

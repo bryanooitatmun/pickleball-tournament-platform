@@ -658,23 +658,23 @@
                                             </td>
                                             <td class="px-4 py-4 whitespace-nowrap">
                                                 {% if selected_category.is_doubles() %}
-                                                    {% if match.winning_team %}
+                                                    {% if match.winner %}
                                                         <div class="text-sm font-medium text-green-600">
-                                                            <a href="{{ url_for('main.player_detail', id=match.winning_team.player1_id) }}" class="hover:text-green-800">
-                                                                {{ match.winning_team.player1.full_name }}
+                                                            <a href="{{ url_for('main.player_detail', id=match.winner.player1_id) }}" class="hover:text-green-800">
+                                                                {{ match.winner.player1.full_name }}
                                                             </a>
                                                             /
-                                                            <a href="{{ url_for('main.player_detail', id=match.winning_team.player2_id) }}" class="hover:text-green-800">
-                                                                {{ match.winning_team.player2.full_name }}
+                                                            <a href="{{ url_for('main.player_detail', id=match.winner.player2_id) }}" class="hover:text-green-800">
+                                                                {{ match.winner.player2.full_name }}
                                                             </a>
                                                         </div>
                                                     {% else %}
                                                         <span class="text-sm text-gray-500">N/A</span>
                                                     {% endif %}
                                                 {% else %}
-                                                    {% if match.winning_player %}
-                                                        <a href="{{ url_for('main.player_detail', id=match.winning_player.id) }}" class="text-sm font-medium text-green-600 hover:text-green-800">
-                                                            {{ match.winning_player.full_name }}
+                                                    {% if match.winner %}
+                                                        <a href="{{ url_for('main.player_detail', id=match.winner.id) }}" class="text-sm font-medium text-green-600 hover:text-green-800">
+                                                            {{ match.winner.full_name }}
                                                         </a>
                                                     {% else %}
                                                         <span class="text-sm text-gray-500">N/A</span>

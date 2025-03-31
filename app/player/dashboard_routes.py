@@ -6,7 +6,7 @@ import json
 from app import db # Might not be needed if only reading
 from app.player import bp # Import the blueprint
 # Import necessary models using the new structure
-from app.models import PlayerProfile, Registration, TournamentStatus, TournamentCategory, Match
+from app.models import PlayerProfile, Registration, TournamentStatus, TournamentCategory, Match, Team
 
 
 @bp.route('/dashboard')
@@ -107,14 +107,22 @@ def dashboard():
     ).order_by(Match.scheduled_time.desc()).limit(10).all()
     
     # Doubles matches where player is in team1 or team2
-    # This is a bit more complex, depending on your database structure
-    # This is a placeholder based on the current database structure
-    doubles_matches = Match.query.join('team1').filter(
-        ((Match.team1.has(player1_id=profile.id)) | 
-         (Match.team1.has(player2_id=profile.id)) |
-         (Match.team2.has(player1_id=profile.id)) |
-         (Match.team2.has(player2_id=profile.id))),
-        Match.is_doubles == True
+    # First find all teams that include the player
+    player_teams = Team.query.filter(
+        db.or_(
+            Team.player1_id == profile.id,
+            Team.player2_id == profile.id
+        )
+    ).all()
+
+    team_ids = [team.id for team in player_teams]
+
+    # Find matches where these teams participate (either as team1 or team2)
+    doubles_matches = Match.query.filter(
+        db.or_(
+            Match.team1_id.in_(team_ids),
+            Match.team2_id.in_(team_ids)
+        )
     ).order_by(Match.scheduled_time.desc()).limit(10).all()
     
     # Combine and sort by date
@@ -131,13 +139,30 @@ def dashboard():
     stats['total_tournaments'] = len(tournament_reg_map)
     
     # Next upcoming match
-    next_match = Match.query.filter(
-        ((Match.player1_id == profile.id) | (Match.player2_id == profile.id) |
-        (Match.team1.has(player1_id=profile.id)) | (Match.team1.has(player2_id=profile.id)) |
-        (Match.team2.has(player1_id=profile.id)) | (Match.team2.has(player2_id=profile.id))),
+    # Singles matches
+    singles_match = Match.query.filter(
+        db.or_(Match.player1_id == profile.id, Match.player2_id == profile.id),
         Match.scheduled_time > datetime.utcnow(),
-        Match.winner_id.is_(None)
+        Match.completed == False
     ).order_by(Match.scheduled_time).first()
+
+    # Doubles matches
+    doubles_match = Match.query.join(
+        Team, 
+        ((Match.team1_id == Team.id) | (Match.team2_id == Team.id))
+    ).filter(
+        ((Team.player1_id == profile.id) | (Team.player2_id == profile.id)),
+        Match.scheduled_time > datetime.utcnow(),
+        Match.completed == False
+    ).order_by(Match.scheduled_time).first()
+
+    # Compare and select the earlier match
+    if singles_match and doubles_match:
+        next_match = singles_match if singles_match.scheduled_time <= doubles_match.scheduled_time else doubles_match
+    elif singles_match:
+        next_match = singles_match
+    else:
+        next_match = doubles_match
 
     return render_template('player/dashboard.html',
                            title='Player Dashboard',

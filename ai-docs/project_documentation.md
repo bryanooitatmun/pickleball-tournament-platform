@@ -160,6 +160,7 @@ pickleball-tournament-platform/
 │       ├── forms.py
 │       └── routes.py
 └── venv/                     # Virtual environment directory (if created)
+└── tests/                     # Tests file directory
 ```
 
 ## 5. Configuration (`config.py`)

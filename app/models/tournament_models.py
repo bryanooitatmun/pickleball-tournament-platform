@@ -105,25 +105,25 @@ class Tournament(db.Model):
 
                 # Get winners (1st place)
                 if is_doubles:
-                    if final_match.winning_team:
+                    if final_match.winner:
                         category_results[1] = [
-                            final_match.winning_team.player1,
-                            final_match.winning_team.player2
+                            final_match.winner.player1,
+                            final_match.winner.player2
                         ]
                 else:
-                    if final_match.winning_player:
-                        category_results[1] = final_match.winning_player
+                    if final_match.winner:
+                        category_results[1] = final_match.winner
 
                 # Get runners-up (2nd place)
                 if is_doubles:
-                    if final_match.losing_team:
+                    if final_match.loser:
                         category_results[2] = [
-                            final_match.losing_team.player1,
-                            final_match.losing_team.player2
+                            final_match.loser.player1,
+                            final_match.loser.player2
                         ]
                 else:
-                    if final_match.losing_player:
-                        category_results[2] = final_match.losing_player
+                    if final_match.loser:
+                        category_results[2] = final_match.loser
 
                 # TODO: Handle semifinalists (3rd/4th place) - requires querying previous rounds or playoff matches
 

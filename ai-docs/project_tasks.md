@@ -15,7 +15,7 @@ This document outlines the development tasks required to implement the new featu
 3.  ✅ **Update Database Models (in `app/models/` package):**
     *   ✅ **`match_models.py` (Match):** Add `court` (String, renamed from `court_assignment`), `scheduled_time` (DateTime), `referee_verified` (Boolean), `player_verified` (Boolean), `livestream_url` (String).
     *   ✅ **`registration_models.py` (Registration):** Add `checked_in` (Boolean), `check_in_time` (DateTime).
-    *   ✅ **`user_models.py` (PlayerProfile):** Add fields for `coach_academy` (String), `social_tiktok` (String), `social_xiaohongshu` (String). Add fields for detailed stats (consider JSON or separate related table if complex: `matches_won`, `matches_lost`, `avg_match_duration`, etc.).
+    *   ✅ **`user_models.py` (PlayerProfile):** Add fields for `coach_academy` (String), `tiktok` (String), `xiaohongshu` (String). Add fields for detailed stats (consider JSON or separate related table if complex: `matches_won`, `matches_lost`, `avg_match_duration`, etc.).
     *   ✅ **`user_models.py` (User):** Add `digital_signature_hash` (String, optional for verification) or similar mechanism if needed.
     *   ✅ **New `feedback_models.py`:** Create `Feedback` model (fields: `user_id`, `tournament_id`, `organizer_id`, `rating` (Integer), `comment` (Text), `is_anonymous` (Boolean), `created_at`).
 4.  ✅ **Create Database Migrations:**
@@ -87,18 +87,17 @@ This document outlines the development tasks required to implement the new featu
 
 ## Phase 5: Roles, Permissions & Testing
 
-1.  **Refine Roles & Permissions:**
-    *   **Backend:** Add `Referee` role (`UserRole.REFEREE`). Ensure all relevant routes are protected with appropriate decorators (`@login_required`, `@organizer_required`, `@admin_required`, potentially a new `@referee_required`). Add specific checks within routes where needed (e.g., checking if user is referee or organizer for score entry).
-2.  **Testing:**
-    *   Write unit and integration tests for :
-        *   Service logic (Bracket generation, seeding, placing). Please be comphensive on the tests and look for edge cases and go through all possible conditionals.
-        *   Form validation.
-        *   Route access control and permissions.
-        *   Feedback submission.
-        *   Score verification workflow.
-        *   SocketIO event handling (basic tests).
-        *   Notification task triggering (basic tests).
-        *   Any other complex tasks/workflow in the codebase.
+1.  ✅ **Refine Roles & Permissions:**
+    *   ✅ **Backend:** Add `Referee` role (`UserRole.REFEREE`). Ensure all relevant routes are protected with appropriate decorators (`@login_required`, `@organizer_required`, `@admin_required`, potentially a new `@referee_required`). Add specific checks within routes where needed (e.g., checking if user is referee or organizer for score entry).
+2.  ✅ **Testing:**
+    *   ✅ Write unit and integration tests for:
+        *   ✅ Service logic (Bracket generation, seeding, placing)
+        *   ✅ Form validation
+        *   ✅ Route access control and permissions
+        *   ✅ Feedback submission
+        *   ✅ Score verification workflow
+        *   ✅ SocketIO event handling
+        *   ✅ Notification task triggering
 3.  **Code Review & Refactoring:**
     *   Review code against preferences (simplicity, DRY, file size).
     *   Refactor large files or complex functions.

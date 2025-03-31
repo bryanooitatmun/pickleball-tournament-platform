@@ -6,7 +6,7 @@ from flask_socketio import emit
 from app import db, socketio
 from app.organizer import bp # Import the blueprint
 # Import necessary models using the new structure
-from app.models import Tournament, TournamentCategory, Match, MatchScore, TournamentStatus, TournamentFormat, Registration
+from app.models import Tournament, TournamentCategory, Match, MatchScore, TournamentStatus, TournamentFormat, Registration, UserRole
 from app.decorators import organizer_required, referee_required, referee_or_organizer_required
 # Import services or helpers needed for bracket generation, placing, etc.
 from app.services import BracketService, PlacingService
@@ -53,7 +53,7 @@ def update_match(id, match_id):
                 form.scores[i].player1_score.data = score.player1_score
                 form.scores[i].player2_score.data = score.player2_score
         
-        return render_template('organizer/edit_match.html', 
+        return render_template('organizer/manage_tournament/edit_match.html', 
                               title=f"Edit Match",
                               tournament=tournament,
                               match=match,
@@ -158,9 +158,9 @@ def update_match(id, match_id):
 
             # --- Verification ---
             # Set referee verification based on current user role
-            if current_user.role == 'REFEREE':
+            if current_user.role == UserRole.REFEREE:
                 match.referee_verified = True
-            elif current_user.role == 'ORGANIZER' or current_user.role == 'ADMIN':
+            elif current_user.role == UserRole.ORGANIZER or current_user.role == UserRole.ADMIN:
                 # Organizers can set both verifications
                 match.referee_verified = form.referee_verified.data
                 match.player_verified = form.player_verified.data
@@ -217,9 +217,9 @@ def update_match(id, match_id):
                 # If knockout, advance winner to next match
                 elif match.next_match_id:
                      BracketService.advance_winner(match)
-
+            
             flash('Match updated successfully.', 'success')
-            return redirect(url_for('organizer.manage_category', id=id, category_id=match.category_id))
+            return redirect(url_for('organizer.update_match', id=tournament.id, match_id=match.id))
 
         except ValueError as e:
              db.session.rollback()
@@ -229,7 +229,7 @@ def update_match(id, match_id):
             flash(f'Error updating match: {e}', 'danger')
 
     # If form validation failed
-    return render_template('organizer/edit_match.html', 
+    return render_template('organizer/manage_tournament/edit_match.html', 
                           title=f"Edit Match",
                           tournament=tournament,
                           match=match,

@@ -51,7 +51,7 @@ class TournamentForm(FlaskForm):
                         choices=[(status.name, status.value) for status in TournamentStatus], 
                         validators=[DataRequired()])
     
-    prize_pool = FloatField('Prize Pool (RM)', validators=[Optional(), NumberRange(min=0)])
+    prize_pool = FloatField('Prize Pool (RM)', validators=[NumberRange(min=0)])
     
     # Upload fields
     logo = FileField('Tournament Logo', validators=[
@@ -120,7 +120,7 @@ class MatchForm(FlaskForm):
     """Form for editing match details"""
     court = StringField('Court Assignment', validators=[Optional(), Length(max=50)])
     scheduled_time = DateTimeField('Scheduled Time', format='%Y-%m-%dT%H:%M', validators=[Optional()])
-    livestream_url = URLField('Livestream URL', validators=[Optional(), URL()])
+    livestream_url = URLField('Livestream URL', validators=[URL()])  # Will fail on invalid URLs
     
     # Score information
     set_count = IntegerField('Number of Sets', validators=[NumberRange(min=0, max=5)], default=0)
@@ -167,6 +167,8 @@ class BracketGenerationForm(FlaskForm):
     submit = SubmitField('Generate Bracket')
 
 class CategoryForm(FlaskForm):
+    name = StringField('Category Name', validators=[Length(max=100)])
+
     category_type = SelectField('Category Type', choices=[
         (CategoryType.MENS_SINGLES.name, 'Men\'s Singles'),
         (CategoryType.WOMENS_SINGLES.name, 'Women\'s Singles'),
@@ -182,7 +184,7 @@ class CategoryForm(FlaskForm):
     points_awarded = IntegerField('Points Awarded', validators=[DataRequired()], default=100)
     
     registration_fee = DecimalField('Registration Fee', 
-                                   validators=[Optional(), NumberRange(min=0)],
+                                   validators=[NumberRange(min=0)],
                                    default=0.0)
     
     # Format options

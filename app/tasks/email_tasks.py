@@ -115,7 +115,7 @@ def send_schedule_change_email(match_id, changes):
     
     Args:
         match_id: The ID of the match that was changed
-        changes: Dictionary of changed attributes (e.g. {'court': 'Court 3', 'scheduled_time': '2023-10-01 15:00'})
+        changes: Dictionary of changed attributes (e.g. {'court': 'Court 3', 'scheduled_time': datetime object})
     """
     with current_app.app_context():
         match = Match.query.get(match_id)

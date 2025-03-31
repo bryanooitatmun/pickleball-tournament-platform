@@ -11,7 +11,8 @@ def init_scheduler(app):
         app: Flask application instance
     """
     # Configure the scheduler with Flask app
-    scheduler.init_app(app)
+    if not scheduler.running:
+        scheduler.init_app(app)
     
     # Add scheduled jobs
     if not scheduler.get_job('check_upcoming_matches'):
@@ -24,6 +25,9 @@ def init_scheduler(app):
         )
     
     # Start the scheduler
-    scheduler.start()
+    if not scheduler.running:
+        scheduler.start()
+    
+    app.scheduler = scheduler
     
     app.logger.info("APScheduler initialized and started")

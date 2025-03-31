@@ -202,14 +202,14 @@ class PlacingService:
                 if hasattr(final, 'winning_team_id') and final.winning_team_id:
                     placings.append({
                         'place': 1,
-                        'participant': final.winning_team,
+                        'participant': final.winner,
                         'is_team': True
                     })
             else:
                 if hasattr(final, 'winning_player_id') and final.winning_player_id:
                     placings.append({
                         'place': 1,
-                        'participant': final.winning_player,
+                        'participant': final.winner,
                         'is_team': False
                     })
             
@@ -218,14 +218,14 @@ class PlacingService:
                 if hasattr(final, 'losing_team_id') and final.losing_team_id:
                     placings.append({
                         'place': 2,
-                        'participant': final.losing_team,
+                        'participant': final.loser,
                         'is_team': True
                     })
             else:
                 if hasattr(final, 'losing_player_id') and final.losing_player_id:
                     placings.append({
                         'place': 2,
-                        'participant': final.losing_player,
+                        'participant': final.loser,
                         'is_team': False
                     })
     
@@ -245,14 +245,14 @@ class PlacingService:
                 if hasattr(third_place_match, 'winning_team_id') and third_place_match.winning_team_id:
                     placings.append({
                         'place': 3,
-                        'participant': third_place_match.winning_team,
+                        'participant': third_place_match.winner,
                         'is_team': True
                     })
             else:
                 if hasattr(third_place_match, 'winning_player_id') and third_place_match.winning_player_id:
                     placings.append({
                         'place': 3,
-                        'participant': third_place_match.winning_player,
+                        'participant': third_place_match.winner,
                         'is_team': False
                     })
             
@@ -261,14 +261,14 @@ class PlacingService:
                 if hasattr(third_place_match, 'losing_team_id') and third_place_match.losing_team_id:
                     placings.append({
                         'place': 4,
-                        'participant': third_place_match.losing_team,
+                        'participant': third_place_match.loser,
                         'is_team': True
                     })
             else:
                 if hasattr(third_place_match, 'losing_player_id') and third_place_match.losing_player_id:
                     placings.append({
                         'place': 4,
-                        'participant': third_place_match.losing_player,
+                        'participant': third_place_match.loser,
                         'is_team': False
                     })
         elif 2 in matches_by_round:
@@ -280,14 +280,14 @@ class PlacingService:
                     if hasattr(match, 'losing_team_id') and match.losing_team_id:
                         semifinal_losers.append({
                             'place': 3,  # Tied for 3rd
-                            'participant': match.losing_team,
+                            'participant': match.loser,
                             'is_team': True
                         })
                 else:
                     if hasattr(match, 'losing_player_id') and match.losing_player_id:
                         semifinal_losers.append({
                             'place': 3,  # Tied for 3rd
-                            'participant': match.losing_player,
+                            'participant': match.loser,
                             'is_team': False
                         })
             
@@ -304,14 +304,14 @@ class PlacingService:
                     if hasattr(match, 'losing_team_id') and match.losing_team_id:
                         quarterfinal_losers.append({
                             'place': 5,  # Tied for 5th
-                            'participant': match.losing_team,
+                            'participant': match.loser,
                             'is_team': True
                         })
                 else:
                     if hasattr(match, 'losing_player_id') and match.losing_player_id:
                         quarterfinal_losers.append({
                             'place': 5,  # Tied for 5th
-                            'participant': match.losing_player,
+                            'participant': match.loser,
                             'is_team': False
                         })
             
@@ -334,14 +334,14 @@ class PlacingService:
                     if hasattr(match, 'losing_team_id') and match.losing_team_id:
                         round_losers.append({
                             'place': place,
-                            'participant': match.losing_team,
+                            'participant': match.loser,
                             'is_team': True
                         })
                 else:
                     if hasattr(match, 'losing_player_id') and match.losing_player_id:
                         round_losers.append({
                             'place': place,
-                            'participant': match.losing_player,
+                            'participant': match.loser,
                             'is_team': False
                         })
             
