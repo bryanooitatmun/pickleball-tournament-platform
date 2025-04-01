@@ -21,14 +21,16 @@ def _format_match_for_api(match):
             match_info['team1_name'] = f"{match.team1.player1.full_name}/{match.team1.player2.full_name}"
             match_info['team1_id'] = match.team1_id
         else:
-            match_info['team1_name'] = "TBD"
+            # Use position code if available, otherwise TBD
+            match_info['team1_name'] = match.player1_code if match.player1_code else "TBD"
             match_info['team1_id'] = None
         
         if match.team2:
             match_info['team2_name'] = f"{match.team2.player1.full_name}/{match.team2.player2.full_name}"
             match_info['team2_id'] = match.team2_id
         else:
-            match_info['team2_name'] = "TBD"
+            # Use position code if available, otherwise TBD
+            match_info['team2_name'] = match.player2_code if match.player2_code else "TBD"
             match_info['team2_id'] = None
         
         if hasattr(match, 'winner') and match.winner:
@@ -40,21 +42,34 @@ def _format_match_for_api(match):
             match_info['player1_name'] = match.player1.full_name
             match_info['player1_id'] = match.player1_id
         else:
-            match_info['player1_name'] = "TBD"
+            # Use position code if available, otherwise TBD
+            match_info['player1_name'] = match.player1_code if match.player1_code else "TBD"
             match_info['player1_id'] = None
         
         if match.player2:
             match_info['player2_name'] = match.player2.full_name
             match_info['player2_id'] = match.player2_id
         else:
-            match_info['player2_name'] = "TBD"
+            # Use position code if available, otherwise TBD
+            match_info['player2_name'] = match.player2_code if match.player2_code else "TBD"
             match_info['player2_id'] = None
         
         if hasattr(match, 'winner') and match.winner:
             match_info['winner_name'] = match.winner.full_name
             match_info['winner_id'] = match.winner_id
     
+    # Add codes if available
+    if hasattr(match, 'player1_code') and match.player1_code:
+        match_info['player1_code'] = match.player1_code
+    if hasattr(match, 'player2_code') and match.player2_code:
+        match_info['player2_code'] = match.player2_code
+    
     # Add scores
+    if hasattr(match, 'player1_code') and match.player1_code:
+        match_info['player1_code'] = match.player1_code
+    if hasattr(match, 'player2_code') and match.player2_code:
+        match_info['player2_code'] = match.player2_code
+
     for score in match.scores:
         match_info['scores'].append({
             'player1_score': score.player1_score,
@@ -83,7 +98,12 @@ def _generate_group_stage(category):
     if not category.group_count:
         category.group_count = 4  # Default to 4 groups
     if not category.teams_per_group:
-        category.teams_per_group = 4  # Default to 4 teams per group
+        # Calculate teams per group if not specified
+        registrations_count = Registration.query.filter_by(category_id=category.id, is_approved=True).count()
+        if registrations_count > 0 and category.group_count > 0:
+            category.teams_per_group = (registrations_count + category.group_count - 1) // category.group_count
+        else:
+            category.teams_per_group = 4  # Default to 4 teams per group
     
     # Get registrations
     registrations = Registration.query.filter_by(category_id=category.id, is_approved=True).all()
@@ -153,8 +173,11 @@ def _generate_group_stage(category):
     
     # Create group standings and matches
     for i, group in enumerate(groups):
-        # Create standings
-        for participant in group_participants[i]:
+        # Create standings with position codes
+        for j, participant in enumerate(group_participants[i]):
+            # Create position code based on group name and position (e.g., A1, B2)
+            position_code = f"{group.name}{j+1}"
+            
             standing = GroupStanding(group_id=group.id)
             
             if is_doubles:
@@ -162,9 +185,12 @@ def _generate_group_stage(category):
             else:
                 standing.player_id = participant.id
             
+            # Store the initial position in the standings (1-based)
+            standing.position = j + 1
+            
             db.session.add(standing)
         
-        # Create round-robin matches
+        # Create round-robin matches with position codes
         _create_round_robin_matches(group, group_participants[i], is_doubles)
     
     db.session.commit()
@@ -199,12 +225,22 @@ def _create_round_robin_matches(group, participants, is_doubles):
                     match_order=(round_num * 10) + i  # Ensures unique ordering
                 )
                 
+                # Assign player/team IDs
                 if is_doubles:
                     match.team1_id = team1.id
                     match.team2_id = team2.id
                 else:
                     match.player1_id = team1.id
                     match.player2_id = team2.id
+                
+                # Assign position codes based on group and index
+                # Get index of participants in the group for position codes
+                team1_index = participants.index(team1)
+                team2_index = participants.index(team2)
+                
+                # Create position codes (e.g., A1, B2)
+                match.player1_code = f"{group.name}{team1_index+1}"
+                match.player2_code = f"{group.name}{team2_index+1}"
                 
                 db.session.add(match)
         
@@ -224,23 +260,47 @@ def _generate_knockout_from_groups(category):
     advancing_participants = []
     is_doubles = category.is_doubles()
     
+    # Check if group standings are available (group stage might be in progress or not started)
+    has_standings = False
     for group in groups:
-        # Get standings sorted by position
-        standings = GroupStanding.query.filter_by(group_id=group.id)\
-            .order_by(GroupStanding.position).limit(category.teams_advancing_per_group).all()
-        
-        for standing in standings:
-            if is_doubles:
+        standings = GroupStanding.query.filter_by(group_id=group.id).all()
+        if standings:
+            has_standings = True
+            break
+    
+    # Generate actual or placeholder participants
+    if has_standings:
+        # Use actual standings if available
+        for group in groups:
+            standings = GroupStanding.query.filter_by(group_id=group.id)\
+                .order_by(GroupStanding.position).limit(category.teams_advancing_per_group).all()
+            
+            for standing in standings:
+                if is_doubles:
+                    advancing_participants.append({
+                        'team': standing.team,
+                        'group': group.name,
+                        'position': standing.position,
+                        'code': f"{group.name}{standing.position}"  # Position code (e.g., A1, B2)
+                    })
+                else:
+                    advancing_participants.append({
+                        'player': standing.player,
+                        'group': group.name,
+                        'position': standing.position,
+                        'code': f"{group.name}{standing.position}"  # Position code (e.g., A1, B2)
+                    })
+    else:
+        # Create placeholder participants with codes if standings aren't available
+        for group_idx, group in enumerate(groups):
+            for pos in range(1, category.teams_advancing_per_group + 1):
+                code = f"{group.name}{pos}"
                 advancing_participants.append({
-                    'team': standing.team,
+                    'team': None if is_doubles else None,
+                    'player': None if not is_doubles else None,
                     'group': group.name,
-                    'position': standing.position
-                })
-            else:
-                advancing_participants.append({
-                    'player': standing.player,
-                    'group': group.name,
-                    'position': standing.position
+                    'position': pos,
+                    'code': code
                 })
     
     # Clear existing knockout matches
@@ -271,7 +331,7 @@ def _generate_knockout_from_groups(category):
     while len(seeded_participants) < bracket_size:
         seeded_participants.append(None)
     
-    # Generate knockout matches
+    # Generate knockout matches with codes
     _create_knockout_matches(category, seeded_participants, is_doubles)
     
     db.session.commit()
@@ -334,16 +394,28 @@ def _generate_single_elimination(category, use_seeding=True, third_place_match=T
         # Extract just the player/team from each entry
         for p in sorted_participants:
             if is_doubles:
-                seeded_participants.append(p['team'])
+                seeded_participants.append({
+                    'participant': p['team'],
+                    'code': f"S{p['seed']}" if p['seed'] is not None else None  # Add seed code
+                })
             else:
-                seeded_participants.append(p['player'])
+                seeded_participants.append({
+                    'participant': p['player'],
+                    'code': f"S{p['seed']}" if p['seed'] is not None else None  # Add seed code
+                })
     else:
         # No seeding, just extract players/teams
-        for p in participants:
+        for i, p in enumerate(participants):
             if is_doubles:
-                seeded_participants.append(p['team'])
+                seeded_participants.append({
+                    'participant': p['team'],
+                    'code': f"P{i+1}"  # Player/team number as code
+                })
             else:
-                seeded_participants.append(p['player'])
+                seeded_participants.append({
+                    'participant': p['player'],
+                    'code': f"P{i+1}"  # Player/team number as code
+                })
     
     # Determine bracket size (next power of 2)
     bracket_size = 1
@@ -385,16 +457,41 @@ def _create_knockout_matches(category, seeded_participants, is_doubles, third_pl
             match_order=i // 2
         )
         
-        participant1 = seeded_participants[i]
-        participant2 = seeded_participants[i + 1] if i + 1 < n else None
-        
+        # Assign participants based on format (singles or doubles)
+        if i < len(seeded_participants) and seeded_participants[i]:
+            if isinstance(seeded_participants[i], dict):  # New format with codes
+                participant1 = seeded_participants[i]['participant']
+                code1 = seeded_participants[i]['code']
+            else:  # Old format without codes (for backward compatibility)
+                participant1 = seeded_participants[i]
+                code1 = f"R{first_round}-{i+1}"  # Generate code like R6-1
+        else:
+            participant1 = None
+            code1 = f"R{first_round}-{i+1}"  # Generate code for byes/TBD
+            
+        if (i + 1) < len(seeded_participants) and seeded_participants[i + 1]:
+            if isinstance(seeded_participants[i + 1], dict):  # New format with codes
+                participant2 = seeded_participants[i + 1]['participant']
+                code2 = seeded_participants[i + 1]['code']
+            else:  # Old format without codes (for backward compatibility)
+                participant2 = seeded_participants[i + 1]
+                code2 = f"R{first_round}-{i+2}"  # Generate code like R6-2
+        else:
+            participant2 = None
+            code2 = f"R{first_round}-{i+2}"  # Generate code for byes/TBD
+            
+        # Assign IDs and codes
         if is_doubles:
             match.team1_id = participant1.id if participant1 else None
             match.team2_id = participant2.id if participant2 else None
         else:
             match.player1_id = participant1.id if participant1 else None
             match.player2_id = participant2.id if participant2 else None
-        
+            
+        # Set position codes - ensure we always have codes even for empty slots
+        match.player1_code = code1
+        match.player2_code = code2
+            
         db.session.add(match)
         matches.append(match)
     
@@ -413,6 +510,31 @@ def _create_knockout_matches(category, seeded_participants, is_doubles, third_pl
                 round=r,
                 match_order=i // 2
             )
+            
+            # Generate position codes for future matches based on round
+            if r == 1:  # Finals
+                match.player1_code = "SF1"  # Winner of first semi
+                match.player2_code = "SF2"  # Winner of second semi
+            elif r == 2:  # Semifinals
+                if i == 0:
+                    match.player1_code = "QF1"  # Winner of first quarter
+                    match.player2_code = "QF2"  # Winner of second quarter
+                else:
+                    match.player1_code = "QF3"  # Winner of third quarter
+                    match.player2_code = "QF4"  # Winner of fourth quarter
+            elif r == 3:  # Quarterfinals
+                match.player1_code = f"R16-{i*2+1}"  # Round of 16 winners
+                match.player2_code = f"R16-{i*2+2}"
+            elif r == 4:  # Round of 16
+                match.player1_code = f"R32-{i*2+1}"
+                match.player2_code = f"R32-{i*2+2}"
+            elif r == 5:  # Round of 32
+                match.player1_code = f"R64-{i*2+1}"
+                match.player2_code = f"R64-{i*2+2}"
+            else:  # Generic code for deeper rounds
+                match.player1_code = f"R{r+1}-{i*2+1}"
+                match.player2_code = f"R{r+1}-{i*2+2}"
+            
             db.session.add(match)
             db.session.flush()
             
@@ -440,7 +562,9 @@ def _create_knockout_matches(category, seeded_participants, is_doubles, third_pl
                 category_id=category.id,
                 stage=MatchStage.PLAYOFF,
                 round=1.5,  # Between final and semifinal
-                match_order=0
+                match_order=0,
+                player1_code="L-SF1",  # Loser of first semifinal
+                player2_code="L-SF2"   # Loser of second semifinal
             )
             db.session.add(match)
     

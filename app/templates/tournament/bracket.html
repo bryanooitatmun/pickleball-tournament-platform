@@ -40,6 +40,17 @@
         background-color: #f0fdf4;
     }
     
+    /* Position codes */
+    .position-code {
+        display: inline-block;
+        padding: 2px 6px;
+        background-color: #f3f4f6;
+        color: #4b5563;
+        border-radius: 4px;
+        font-weight: 500;
+        font-size: 0.75rem;
+    }
+    
     /* Group stage specific styling */
     .group-stage {
         margin-bottom: 40px;
@@ -205,6 +216,7 @@
                                                                     {% endif %}
                                                                 </div>
                                                                 {{ standing.team.player1.full_name.split()[-1] }}/{{ standing.team.player2.full_name.split()[-1] }}
+                                                                <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position }}</span>
                                                             </div>
                                                         {% else %}
                                                             TBD
@@ -222,6 +234,7 @@
                                                                     {% endif %}
                                                                 </div>
                                                                 {{ standing.player.full_name }}
+                                                                <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position }}</span>
                                                             </div>
                                                         {% else %}
                                                             TBD
@@ -248,14 +261,16 @@
                                                     {% if selected_category.is_doubles() %}
                                                         {% if match.team1 %}
                                                             {{ match.team1.player1.full_name.split()[-1] }}/{{ match.team1.player2.full_name.split()[-1] }}
+                                                            {% if match.player1_code %}<span class="position-code">{{ match.player1_code }}</span>{% endif %}
                                                         {% else %}
-                                                            TBD
+                                                            {% if match.player1_code %}<span class="position-code">{{ match.player1_code }}</span>{% else %}TBD{% endif %}
                                                         {% endif %}
                                                     {% else %}
                                                         {% if match.player1 %}
                                                             {{ match.player1.full_name }}
+                                                            {% if match.player1_code %}<span class="position-code">{{ match.player1_code }}</span>{% endif %}
                                                         {% else %}
-                                                            TBD
+                                                            {% if match.player1_code %}<span class="position-code">{{ match.player1_code }}</span>{% else %}TBD{% endif %}
                                                         {% endif %}
                                                     {% endif %}
                                                 </div>
@@ -277,14 +292,16 @@
                                                     {% if selected_category.is_doubles() %}
                                                         {% if match.team2 %}
                                                             {{ match.team2.player1.full_name.split()[-1] }}/{{ match.team2.player2.full_name.split()[-1] }}
+                                                            {% if match.player2_code %}<span class="position-code">{{ match.player2_code }}</span>{% endif %}
                                                         {% else %}
-                                                            TBD
+                                                            {% if match.player2_code %}<span class="position-code">{{ match.player2_code }}</span>{% else %}TBD{% endif %}
                                                         {% endif %}
                                                     {% else %}
                                                         {% if match.player2 %}
                                                             {{ match.player2.full_name }}
+                                                            {% if match.player2_code %}<span class="position-code">{{ match.player2_code }}</span>{% endif %}
                                                         {% else %}
-                                                            TBD
+                                                            {% if match.player2_code %}<span class="position-code">{{ match.player2_code }}</span>{% else %}TBD{% endif %}
                                                         {% endif %}
                                                     {% endif %}
                                                 </div>
@@ -357,7 +374,11 @@
                                                     {{ match.team1.player2.full_name.split()[-1] }}
                                                 </a>
                                             {% else %}
-                                                <span class="text-sm text-gray-500">TBD</span>
+                                                {% if match.player1_code %}
+                                                    <span class="position-code">{{ match.player1_code }}</span>
+                                                {% else %}
+                                                    <span class="text-sm text-gray-500">TBD</span>
+                                                {% endif %}
                                             {% endif %}                                
                                         {% else %}
                                             {% if match.player1 %}
@@ -374,7 +395,11 @@
                                                     {{ match.player1.full_name }}
                                                 </a>
                                             {% else %}
-                                                <span class="text-sm text-gray-500">TBD</span>
+                                                {% if match.player1_code %}
+                                                    <span class="position-code">{{ match.player1_code }}</span>
+                                                {% else %}
+                                                    <span class="text-sm text-gray-500">TBD</span>
+                                                {% endif %}
                                             {% endif %}
                                         {% endif %}
                                         </div>
@@ -414,7 +439,11 @@
                                                         {{ match.team2.player2.full_name.split()[-1] }}
                                                     </a>
                                                 {% else %}
-                                                    <span class="text-sm text-gray-500">TBD</span>
+                                                    {% if match.player2_code %}
+                                                        <span class="position-code">{{ match.player2_code }}</span>
+                                                    {% else %}
+                                                        <span class="text-sm text-gray-500">TBD</span>
+                                                    {% endif %}
                                                 {% endif %}                                    
                                             {% else %}
                                                 {% if match.player2 %}
@@ -431,7 +460,11 @@
                                                         {{ match.player2.full_name }}
                                                     </a>
                                                 {% else %}
-                                                    <span class="text-sm text-gray-500">TBD</span>
+                                                    {% if match.player2_code %}
+                                                        <span class="position-code">{{ match.player2_code }}</span>
+                                                    {% else %}
+                                                        <span class="text-sm text-gray-500">TBD</span>
+                                                    {% endif %}
                                                 {% endif %}
                                             {% endif %}
                                         </div>
@@ -515,7 +548,11 @@
                                             {{ match.team1.player2.full_name.split()[-1] }}
                                         </a>
                                     {% else %}
-                                        <span class="text-sm text-gray-500">TBD</span>
+                                        {% if match.player1_code %}
+                                            <span class="position-code">{{ match.player1_code }}</span>
+                                        {% else %}
+                                            <span class="text-sm text-gray-500">TBD</span>
+                                        {% endif %}
                                     {% endif %}                                
                                 {% else %}
                                     {% if match.player1 %}
@@ -532,7 +569,11 @@
                                             {{ match.player1.full_name }}
                                         </a>
                                     {% else %}
-                                        <span class="text-sm text-gray-500">TBD</span>
+                                        {% if match.player1_code %}
+                                            <span class="position-code">{{ match.player1_code }}</span>
+                                        {% else %}
+                                            <span class="text-sm text-gray-500">TBD</span>
+                                        {% endif %}
                                     {% endif %}
                                 {% endif %}
                                 </div>
@@ -572,7 +613,11 @@
                                                 {{ match.team2.player2.full_name.split()[-1] }}
                                             </a>
                                         {% else %}
-                                            <span class="text-sm text-gray-500">TBD</span>
+                                            {% if match.player2_code %}
+                                                <span class="position-code">{{ match.player2_code }}</span>
+                                            {% else %}
+                                                <span class="text-sm text-gray-500">TBD</span>
+                                            {% endif %}
                                         {% endif %}                                    
                                     {% else %}
                                         {% if match.player2 %}
@@ -589,7 +634,11 @@
                                                 {{ match.player2.full_name }}
                                             </a>
                                         {% else %}
-                                            <span class="text-sm text-gray-500">TBD</span>
+                                            {% if match.player2_code %}
+                                                <span class="position-code">{{ match.player2_code }}</span>
+                                            {% else %}
+                                                <span class="text-sm text-gray-500">TBD</span>
+                                            {% endif %}
                                         {% endif %}
                                     {% endif %}
                                 </div>

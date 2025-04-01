@@ -114,6 +114,10 @@ class Match(db.Model):
     # Verification flags (added from requirements)
     referee_verified = db.Column(db.Boolean, default=False)
     player_verified = db.Column(db.Boolean, default=False)
+    
+    # Position codes for players/teams (e.g., "A1", "B2" for groups, "1", "2" for knockout)
+    player1_code = db.Column(db.String(10), nullable=True)
+    player2_code = db.Column(db.String(10), nullable=True)
 
     # Relationships (use strings)
     scores = db.relationship('MatchScore', backref='match', lazy='dynamic', cascade='all, delete-orphan')
