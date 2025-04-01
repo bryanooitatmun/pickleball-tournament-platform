@@ -226,7 +226,6 @@ def manage_category(id, category_id):
                 # Format-specific settings (only if applicable)
                 if tournament.format == TournamentFormat.GROUP_KNOCKOUT:
                     category.group_count = int(request.form.get('group_count', category.group_count or 0))
-                    category.teams_per_group = int(request.form.get('teams_per_group', category.teams_per_group or 0))
                     category.teams_advancing_per_group = int(request.form.get('teams_advancing_per_group', category.teams_advancing_per_group or 0))
 
                 db.session.commit()

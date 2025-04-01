@@ -129,12 +129,6 @@
                                                 class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                                         </div>
                                         
-                                        <div>
-                                            <label for="teams_per_group" class="block text-sm font-medium text-gray-700">Teams Per Group</label>
-                                            <input type="number" name="teams_per_group" id="teams_per_group" min="2"
-                                                value="{{ category.teams_per_group or 4 }}" 
-                                                class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                        </div>
                                         
                                         <div>
                                             <label for="teams_advancing_per_group" class="block text-sm font-medium text-gray-700">Teams Advancing Per Group</label>
@@ -308,6 +302,13 @@
                     View Participants
                 </a>
                 
+                {% if tournament.status.value == 'ongoing' and matches %}
+                    <a href="{{ url_for('tournament.bracket', id=tournament.id) }}" class="block w-full text-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                        View Public Bracket
+                    </a>
+                {% endif %}
+                
+
                 {% if tournament.status.value == 'ongoing' and matches %}
                     <a href="{{ url_for('tournament.live_scoring', id=tournament.id) }}" class="block w-full text-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
                         Live Scoring

@@ -44,7 +44,7 @@
 ✅ Implement team/player coding system in brackets
 ✅ Create match visualization with code-based future matches (A1 vs B2)
 ✅ Implement knockout stage coding (1, 2, 3, 4)
-🔄 Update bracket visualization to match PPA bracket design
+✅ Update bracket visualization to match PPA bracket design
 ❓ Create seeding UI for drag and drop functionality
 ❓ Implement back-end for storing seed changes
 ❓ Update tiebreaking logic for group standings
@@ -60,7 +60,7 @@
 - ✅ Update the `tournament.py` helpers to assign codes based on group/position
 - ✅ Modify the bracket generation code to include these codes
 - ✅ Update `bracket.html` template to show codes for TBD matches
-- 🔄 Update `bracket-visualization.js` to handle and display codes
+- ✅ Update `bracket-visualization.js` to handle and display codes
 
 #### 2. Seeding Interface
 

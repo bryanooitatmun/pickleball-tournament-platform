@@ -44,12 +44,45 @@
     .position-code {
         display: inline-block;
         padding: 2px 6px;
-        background-color: #f3f4f6;
-        color: #4b5563;
+        background-color: #f1f5f9;
+        color: #4475C2;
         border-radius: 4px;
-        font-weight: 500;
+        font-weight: 600;
         font-size: 0.75rem;
+        margin-left: 4px;
     }
+
+    /* Special match styles for finals/third place */
+    .gold-match {
+        background-color: #fefce8 !important; 
+        border-color: #fbbf24 !important;
+        box-shadow: 0 1px 3px rgba(251, 191, 36, 0.3) !important;
+    }
+    
+    .bronze-match {
+        background-color: #fef3f2 !important;
+        border-color: #fdba74 !important;
+        box-shadow: 0 1px 3px rgba(253, 186, 116, 0.3) !important;
+    }
+    
+    /* Round indicators */
+    .round-indicator {
+        height: 4px;
+        width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+    }
+    
+    .round-indicator-r1 { background-color: #4475C2; }
+    .round-indicator-r2 { background-color: #6366f1; }
+    .round-indicator-r3 { background-color: #8b5cf6; }
+    .round-indicator-r4 { background-color: #ec4899; }
+    .round-indicator-r5 { background-color: #f59e0b; }
+    .round-indicator-r6 { background-color: #f97316; }
     
     /* Group stage specific styling */
     .group-stage {
@@ -352,7 +385,9 @@
                             </h3>
                             
                             {% for match in bracket_data.knockout_rounds[round_num]|sort(attribute='match_order') %}
-                                <div id="match-{{ match.id }}" class="bracket-match">
+                                <div id="match-{{ match.id }}" class="bracket-match {% if round_num == 1 %}gold-match{% elif round_num == 1.5 %}bronze-match{% endif %}">
+                                    <!-- Round indicator bar -->
+                                    <div class="round-indicator round-indicator-r{{ round_num|int }}"></div>
                                     <div class="bracket-team {% if match.winner_id == match.player1_id or match.winning_team_id == match.team1_id %}bracket-winner{% endif %}">
                                         <div class="flex items-center">
                                         {% if selected_category.is_doubles() %}
@@ -526,7 +561,9 @@
                     </h3>
                     
                     {% for match in bracket_data.knockout_rounds[round_num]|sort(attribute='match_order') %}
-                        <div id="match-{{ match.id }}" class="bracket-match">
+                        <div id="match-{{ match.id }}" class="bracket-match {% if round_num == 1 %}gold-match{% elif round_num == 1.5 %}bronze-match{% endif %}">
+                            <!-- Round indicator bar -->
+                            <div class="round-indicator round-indicator-r{{ round_num|int }}"></div>
                             <div class="bracket-team {% if match.winner_id == match.player1_id or match.winning_team_id == match.team1_id %}bracket-winner{% endif %}">
                                 <div class="flex items-center">
                                 {% if selected_category.is_doubles() %}

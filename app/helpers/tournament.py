@@ -251,6 +251,8 @@ def _create_round_robin_matches(group, participants, is_doubles):
 
 def _generate_knockout_from_groups(category):
     """Generate knockout stage based on group results"""
+
+    
     # Ensure groups exist
     groups = Group.query.filter_by(category_id=category.id).all()
     if not groups or len(groups) < 2:
@@ -260,21 +262,25 @@ def _generate_knockout_from_groups(category):
     advancing_participants = []
     is_doubles = category.is_doubles()
     
-    # Check if group standings are available (group stage might be in progress or not started)
-    has_standings = False
+    group_stage_complete = True
     for group in groups:
-        standings = GroupStanding.query.filter_by(group_id=group.id).all()
-        if standings:
-            has_standings = True
+        # Check if all group matches are completed
+        group_matches = Match.query.filter_by(
+            group_id=group.id, 
+            stage=MatchStage.GROUP
+        ).all()
+        
+        # If no matches or any match is not completed, group stage isn't complete
+        if not group_matches or any(not m.completed for m in group_matches):
+            group_stage_complete = False
             break
-    
-    # Generate actual or placeholder participants
-    if has_standings:
-        # Use actual standings if available
+
+    if group_stage_complete:
+        # Use actual standings if group stage is complete
         for group in groups:
             standings = GroupStanding.query.filter_by(group_id=group.id)\
                 .order_by(GroupStanding.position).limit(category.teams_advancing_per_group).all()
-            
+        
             for standing in standings:
                 if is_doubles:
                     advancing_participants.append({
@@ -291,8 +297,8 @@ def _generate_knockout_from_groups(category):
                         'code': f"{group.name}{standing.position}"  # Position code (e.g., A1, B2)
                     })
     else:
-        # Create placeholder participants with codes if standings aren't available
-        for group_idx, group in enumerate(groups):
+        # Create placeholder participants with codes if group stage not complete
+        for group in groups:
             for pos in range(1, category.teams_advancing_per_group + 1):
                 code = f"{group.name}{pos}"
                 advancing_participants.append({
@@ -457,40 +463,57 @@ def _create_knockout_matches(category, seeded_participants, is_doubles, third_pl
             match_order=i // 2
         )
         
-        # Assign participants based on format (singles or doubles)
-        if i < len(seeded_participants) and seeded_participants[i]:
-            if isinstance(seeded_participants[i], dict):  # New format with codes
-                participant1 = seeded_participants[i]['participant']
-                code1 = seeded_participants[i]['code']
-            else:  # Old format without codes (for backward compatibility)
-                participant1 = seeded_participants[i]
-                code1 = f"R{first_round}-{i+1}"  # Generate code like R6-1
-        else:
-            participant1 = None
-            code1 = f"R{first_round}-{i+1}"  # Generate code for byes/TBD
+        # Handle first participant (can be None)
+        if i < len(seeded_participants):
+            # Extract from the dictionary format
+            participant_dict = seeded_participants[i]
             
-        if (i + 1) < len(seeded_participants) and seeded_participants[i + 1]:
-            if isinstance(seeded_participants[i + 1], dict):  # New format with codes
-                participant2 = seeded_participants[i + 1]['participant']
-                code2 = seeded_participants[i + 1]['code']
-            else:  # Old format without codes (for backward compatibility)
-                participant2 = seeded_participants[i + 1]
-                code2 = f"R{first_round}-{i+2}"  # Generate code like R6-2
+            # Get the participant entity based on doubles/singles
+            if is_doubles:
+                participant1 = participant_dict.get('team')  # Can be None
+                participant1_id = participant1.id if participant1 else None
+                match.team1_id = participant1_id
+            else:
+                participant1 = participant_dict.get('player')  # Can be None
+                participant1_id = participant1.id if participant1 else None
+                match.player1_id = participant1_id
+                
+            # Always set the code if available
+            code1 = participant_dict.get('code')
+            match.player1_code = code1
         else:
-            participant2 = None
-            code2 = f"R{first_round}-{i+2}"  # Generate code for byes/TBD
+            # No participant for this position
+            if is_doubles:
+                match.team1_id = None
+            else:
+                match.player1_id = None
+            match.player1_code = f"R{first_round}-{i+1}"
+
+        # Handle second participant (can be None)
+        if (i + 1) < len(seeded_participants):
+            # Extract from the dictionary format
+            participant_dict = seeded_participants[i + 1]
             
-        # Assign IDs and codes
-        if is_doubles:
-            match.team1_id = participant1.id if participant1 else None
-            match.team2_id = participant2.id if participant2 else None
+            # Get the participant entity based on doubles/singles
+            if is_doubles:
+                participant2 = participant_dict.get('team')  # Can be None
+                participant2_id = participant2.id if participant2 else None
+                match.team2_id = participant2_id
+            else:
+                participant2 = participant_dict.get('player')  # Can be None
+                participant2_id = participant2.id if participant2 else None
+                match.player2_id = participant2_id
+                
+            # Always set the code if available
+            code2 = participant_dict.get('code')
+            match.player2_code = code2
         else:
-            match.player1_id = participant1.id if participant1 else None
-            match.player2_id = participant2.id if participant2 else None
-            
-        # Set position codes - ensure we always have codes even for empty slots
-        match.player1_code = code1
-        match.player2_code = code2
+            # No participant for this position
+            if is_doubles:
+                match.team2_id = None
+            else:
+                match.player2_id = None
+            match.player2_code = f"R{first_round}-{i+2}"
             
         db.session.add(match)
         matches.append(match)

@@ -281,6 +281,7 @@ def create_knockout_matches(category, group_qualifiers, percentage_completed=75,
             sf1 = Match(
                 category_id=category.id,
                 round=2,  # Semifinals
+                stage=MatchStage.KNOCKOUT,
                 match_order=1,
                 team1_id=completed_qfs[0].winning_team_id,
                 team2_id=completed_qfs[1].winning_team_id,
@@ -288,7 +289,9 @@ def create_knockout_matches(category, group_qualifiers, percentage_completed=75,
                 court="Court 1",
                 scheduled_time=datetime.now() + timedelta(hours=48),
                 referee_verified=False,
-                player_verified=False
+                player_verified=False,
+                player1_code="SF1",  # Add position code
+                player2_code="SF2"   # Add position code
             )
             db.session.add(sf1)
             sf_matches.append(sf1)
@@ -299,6 +302,7 @@ def create_knockout_matches(category, group_qualifiers, percentage_completed=75,
             sf2 = Match(
                 category_id=category.id,
                 round=2,  # Semifinals
+                stage=MatchStage.KNOCKOUT,
                 match_order=2,
                 team1_id=completed_qfs[2].winning_team_id,
                 team2_id=completed_qfs[3].winning_team_id,
@@ -306,7 +310,9 @@ def create_knockout_matches(category, group_qualifiers, percentage_completed=75,
                 court="Court 2",
                 scheduled_time=datetime.now() + timedelta(hours=48),
                 referee_verified=False,
-                player_verified=False
+                player_verified=False,
+                player1_code="SF3",  # Add position code
+                player2_code="SF4"   # Add position code
             )
             db.session.add(sf2)
             sf_matches.append(sf2)
@@ -314,7 +320,36 @@ def create_knockout_matches(category, group_qualifiers, percentage_completed=75,
     if sf_matches and commit:
         commit_changes(f"Created {len(sf_matches)} semifinal matches for {category.name}")
     
-    return qf_matches + sf_matches
+    # Create the final match
+    final_match = None
+    
+    # Create final match based on available semifinals
+    if len(sf_matches) >= 2:
+        final_match = Match(
+            category_id=category.id,
+            round=1,  # Finals
+            stage=MatchStage.KNOCKOUT,
+            match_order=1,
+            # Don't set team IDs yet - they'll be determined by semifinal winners
+            completed=False,
+            court="Center Court",
+            scheduled_time=datetime.now() + timedelta(hours=72),  # 3 days from now
+            referee_verified=False,
+            player_verified=False,
+            player1_code="W-SF1",  # Winner of first semifinal
+            player2_code="W-SF2",  # Winner of second semifinal
+            livestream_url=f"https://youtube.com/watch?v=pickleball_finals_{random.randint(5000, 6000)}"
+        )
+        db.session.add(final_match)
+        
+        if commit:
+            commit_changes(f"Created final match for {category.name}")
+    
+    result_matches = qf_matches + sf_matches
+    if final_match:
+        result_matches.append(final_match)
+    
+    return result_matches
 
 def seed_mens_doubles_bracket(category_name="Men's Doubles Open", commit=True):
     """Seed Men's Doubles bracket with groups and knockout stage"""
