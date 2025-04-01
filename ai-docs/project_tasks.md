@@ -61,6 +61,7 @@
 - ✅ Modify the bracket generation code to include these codes
 - ✅ Update `bracket.html` template to show codes for TBD matches
 - ✅ Update `bracket-visualization.js` to handle and display codes
+- ❓ Create thorough unit and integration tests _generate_cross_group_seeding in `tournament.py`.
 
 #### 2. Seeding Interface
 

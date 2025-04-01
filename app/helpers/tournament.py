@@ -249,100 +249,6 @@ def _create_round_robin_matches(group, participants, is_doubles):
     
     db.session.flush()
 
-def _generate_knockout_from_groups(category):
-    """Generate knockout stage based on group results"""
-
-    
-    # Ensure groups exist
-    groups = Group.query.filter_by(category_id=category.id).all()
-    if not groups or len(groups) < 2:
-        return False
-    
-    # Get advancing teams from each group
-    advancing_participants = []
-    is_doubles = category.is_doubles()
-    
-    group_stage_complete = True
-    for group in groups:
-        # Check if all group matches are completed
-        group_matches = Match.query.filter_by(
-            group_id=group.id, 
-            stage=MatchStage.GROUP
-        ).all()
-        
-        # If no matches or any match is not completed, group stage isn't complete
-        if not group_matches or any(not m.completed for m in group_matches):
-            group_stage_complete = False
-            break
-
-    if group_stage_complete:
-        # Use actual standings if group stage is complete
-        for group in groups:
-            standings = GroupStanding.query.filter_by(group_id=group.id)\
-                .order_by(GroupStanding.position).limit(category.teams_advancing_per_group).all()
-        
-            for standing in standings:
-                if is_doubles:
-                    advancing_participants.append({
-                        'team': standing.team,
-                        'group': group.name,
-                        'position': standing.position,
-                        'code': f"{group.name}{standing.position}"  # Position code (e.g., A1, B2)
-                    })
-                else:
-                    advancing_participants.append({
-                        'player': standing.player,
-                        'group': group.name,
-                        'position': standing.position,
-                        'code': f"{group.name}{standing.position}"  # Position code (e.g., A1, B2)
-                    })
-    else:
-        # Create placeholder participants with codes if group stage not complete
-        for group in groups:
-            for pos in range(1, category.teams_advancing_per_group + 1):
-                code = f"{group.name}{pos}"
-                advancing_participants.append({
-                    'team': None if is_doubles else None,
-                    'player': None if not is_doubles else None,
-                    'group': group.name,
-                    'position': pos,
-                    'code': code
-                })
-    
-    # Clear existing knockout matches
-    Match.query.filter_by(
-        category_id=category.id, 
-        stage=MatchStage.KNOCKOUT
-    ).delete(synchronize_session=False)
-    
-    # Determine bracket size (next power of 2)
-    bracket_size = 1
-    while bracket_size < len(advancing_participants):
-        bracket_size *= 2
-    
-    # Generate seeding based on group results
-    # Top teams from each group are seeded, then second place, etc.
-    seeded_participants = []
-    
-    # Sort by position first, then by group
-    sorted_participants = sorted(
-        advancing_participants,
-        key=lambda p: (p['position'], p['group'])
-    )
-    
-    # Add sorted participants to seeded list
-    seeded_participants.extend(sorted_participants)
-    
-    # Add byes to fill bracket
-    while len(seeded_participants) < bracket_size:
-        seeded_participants.append(None)
-    
-    # Generate knockout matches with codes
-    _create_knockout_matches(category, seeded_participants, is_doubles)
-    
-    db.session.commit()
-    return True
-
 def _generate_single_elimination(category, use_seeding=True, third_place_match=True):
     """Generate single elimination bracket from registrations"""
     # Get registrations
@@ -438,6 +344,176 @@ def _generate_single_elimination(category, use_seeding=True, third_place_match=T
     db.session.commit()
     return True
 
+def _generate_knockout_from_groups(category):
+    """Generate knockout stage based on group results"""
+    # Ensure groups exist
+    groups = Group.query.filter_by(category_id=category.id).all()
+    if not groups or len(groups) < 2:
+        return False
+    
+    # Get advancing teams from each group
+    advancing_participants = []
+    is_doubles = category.is_doubles()
+    
+    group_stage_complete = True
+    for group in groups:
+        # Check if all group matches are completed
+        group_matches = Match.query.filter_by(
+            group_id=group.id, 
+            stage=MatchStage.GROUP
+        ).all()
+        
+        # If no matches or any match is not completed, group stage isn't complete
+        if not group_matches or any(not m.completed for m in group_matches):
+            group_stage_complete = False
+            break
+
+    if group_stage_complete:
+        # Use actual standings if group stage is complete
+        for group in groups:
+            standings = GroupStanding.query.filter_by(group_id=group.id)\
+                .order_by(GroupStanding.position).limit(category.teams_advancing_per_group).all()
+        
+            for standing in standings:
+                if is_doubles:
+                    advancing_participants.append({
+                        'team': standing.team,
+                        'group': group.name,
+                        'position': standing.position,
+                        'code': f"{group.name}{standing.position}"  # Position code (e.g., A1, B2)
+                    })
+                else:
+                    advancing_participants.append({
+                        'player': standing.player,
+                        'group': group.name,
+                        'position': standing.position,
+                        'code': f"{group.name}{standing.position}"  # Position code (e.g., A1, B2)
+                    })
+    else:
+        # Create placeholder participants with codes if group stage not complete
+        for group in groups:
+            for pos in range(1, category.teams_advancing_per_group + 1):
+                code = f"{group.name}{pos}"
+                advancing_participants.append({
+                    'team': None if is_doubles else None,
+                    'player': None if not is_doubles else None,
+                    'group': group.name,
+                    'position': pos,
+                    'code': code
+                })
+    
+    # Clear existing knockout matches
+    Match.query.filter_by(
+        category_id=category.id, 
+        stage=MatchStage.KNOCKOUT
+    ).delete(synchronize_session=False)
+    
+    # Determine bracket size (next power of 2)
+    bracket_size = 1
+    while bracket_size < len(advancing_participants):
+        bracket_size *= 2
+    
+    # Generate cross-group seeding to create optimal matchups
+    num_groups = len(groups)
+    teams_per_group = category.teams_advancing_per_group
+    seeded_participants = _generate_cross_group_seeding(
+        advancing_participants, 
+        num_groups, 
+        teams_per_group
+    )
+    
+    # Add byes to fill bracket if needed
+    while len(seeded_participants) < bracket_size:
+        seeded_participants.append(None)
+    
+    # Generate knockout matches with codes
+    _create_knockout_matches(category, seeded_participants, is_doubles)
+    
+    db.session.commit()
+    return True
+
+def _generate_cross_group_seeding(participants, num_groups, teams_per_group):
+    """
+    Generate optimal cross-group seeding to ensure top teams from each group
+    don't meet until later rounds.
+    
+    For example with 4 groups (A-D) and 2 advancing teams:
+    - A1 vs D2
+    - B1 vs C2
+    - C1 vs B2
+    - D1 vs A2
+    """
+    if not participants:
+        return []
+    
+    # Sort participants by group and position for easier processing
+    participants_by_position = {}
+    
+    # Group participants by their position
+    for p in participants:
+        position = p['position']
+        if position not in participants_by_position:
+            participants_by_position[position] = []
+        participants_by_position[position].append(p)
+    
+    # Sort each position group appropriate for cross-group matchups
+    for position in participants_by_position:
+        if position % 2 == 1:  # Odd positions (1st, 3rd, etc.)
+            # Sort by group alphabetically (A, B, C, D)
+            participants_by_position[position].sort(key=lambda p: p['group'])
+        else:  # Even positions (2nd, 4th, etc.)
+            # Sort by group reverse alphabetically (D, C, B, A)
+            participants_by_position[position].sort(key=lambda p: p['group'], reverse=True)
+    
+    # Create seeded list for cross-group matchups
+    seeded_list = []
+    
+    # Number of matches in the first round
+    match_count = (num_groups * teams_per_group) // 2
+    
+    # Create the seeded bracket by pairing 1st place with last advancing place
+    for match_idx in range(match_count):
+        # For first half of matches: pair 1st places with last places
+        if match_idx < match_count // 2:
+            # Add 1st place team from appropriate group
+            first_pos_teams = participants_by_position.get(1, [])
+            if match_idx < len(first_pos_teams):
+                seeded_list.append(first_pos_teams[match_idx])
+            else:
+                seeded_list.append(None)  # Bye
+            
+            # Add last place team from appropriate group
+            last_pos_teams = participants_by_position.get(teams_per_group, [])
+            if match_idx < len(last_pos_teams):
+                # For cross-group matching, get the corresponding team from the reversed list
+                rev_idx = len(last_pos_teams) - 1 - match_idx
+                if 0 <= rev_idx < len(last_pos_teams):
+                    seeded_list.append(last_pos_teams[rev_idx])
+                else:
+                    seeded_list.append(None)  # Bye
+            else:
+                seeded_list.append(None)  # Bye
+        
+        # For second half of matches: pair middle positions appropriately
+        elif teams_per_group > 2:  # Only if we have more than 2 teams per group
+            middle_positions = list(range(2, teams_per_group))
+            for pos_idx, pos in enumerate(middle_positions):
+                # Similar logic for middle positions
+                pos_teams = participants_by_position.get(pos, [])
+                if pos_idx % 2 == 0:  # For even indices
+                    idx = (match_idx - match_count // 2) % len(pos_teams)
+                    seeded_list.append(pos_teams[idx])
+                else:  # For odd indices
+                    rev_idx = len(pos_teams) - 1 - ((match_idx - match_count // 2) % len(pos_teams))
+                    seeded_list.append(pos_teams[rev_idx])
+    
+    # Ensure the list length is what we expect
+    expected_length = num_groups * teams_per_group
+    while len(seeded_list) < expected_length:
+        seeded_list.append(None)  # Add byes if needed
+    
+    return seeded_list
+
 def _create_knockout_matches(category, seeded_participants, is_doubles, third_place_match=True):
     """Create knockout bracket matches based on seeded participants"""
     n = len(seeded_participants)
@@ -463,58 +539,46 @@ def _create_knockout_matches(category, seeded_participants, is_doubles, third_pl
             match_order=i // 2
         )
         
-        # Handle first participant (can be None)
-        if i < len(seeded_participants):
-            # Extract from the dictionary format
+        # Handle participant 1
+        participant1 = None
+        code1 = None
+        
+        if i < len(seeded_participants) and seeded_participants[i]:
             participant_dict = seeded_participants[i]
-            
-            # Get the participant entity based on doubles/singles
-            if is_doubles:
-                participant1 = participant_dict.get('team')  # Can be None
-                participant1_id = participant1.id if participant1 else None
-                match.team1_id = participant1_id
-            else:
-                participant1 = participant_dict.get('player')  # Can be None
-                participant1_id = participant1.id if participant1 else None
-                match.player1_id = participant1_id
-                
-            # Always set the code if available
             code1 = participant_dict.get('code')
-            match.player1_code = code1
-        else:
-            # No participant for this position
+            
             if is_doubles:
-                match.team1_id = None
+                team1 = participant_dict.get('team')
+                if team1:
+                    match.team1_id = team1.id
             else:
-                match.player1_id = None
-            match.player1_code = f"R{first_round}-{i+1}"
-
-        # Handle second participant (can be None)
-        if (i + 1) < len(seeded_participants):
-            # Extract from the dictionary format
+                player1 = participant_dict.get('player')
+                if player1:
+                    match.player1_id = player1.id
+        
+        # Always set the code
+        match.player1_code = code1 if code1 else f"R{first_round}-{i+1}"
+        
+        # Handle participant 2
+        participant2 = None
+        code2 = None
+        
+        if (i + 1) < len(seeded_participants) and seeded_participants[i + 1]:
             participant_dict = seeded_participants[i + 1]
-            
-            # Get the participant entity based on doubles/singles
-            if is_doubles:
-                participant2 = participant_dict.get('team')  # Can be None
-                participant2_id = participant2.id if participant2 else None
-                match.team2_id = participant2_id
-            else:
-                participant2 = participant_dict.get('player')  # Can be None
-                participant2_id = participant2.id if participant2 else None
-                match.player2_id = participant2_id
-                
-            # Always set the code if available
             code2 = participant_dict.get('code')
-            match.player2_code = code2
-        else:
-            # No participant for this position
-            if is_doubles:
-                match.team2_id = None
-            else:
-                match.player2_id = None
-            match.player2_code = f"R{first_round}-{i+2}"
             
+            if is_doubles:
+                team2 = participant_dict.get('team')
+                if team2:
+                    match.team2_id = team2.id
+            else:
+                player2 = participant_dict.get('player')
+                if player2:
+                    match.player2_id = player2.id
+        
+        # Always set the code
+        match.player2_code = code2 if code2 else f"R{first_round}-{i+2}"
+        
         db.session.add(match)
         matches.append(match)
     
@@ -592,6 +656,161 @@ def _create_knockout_matches(category, seeded_participants, is_doubles, third_pl
             db.session.add(match)
     
     db.session.flush()
+
+# def _create_knockout_matches(category, seeded_participants, is_doubles, third_place_match=True):
+#     """Create knockout bracket matches based on seeded participants"""
+#     n = len(seeded_participants)
+#     if n < 2:
+#         return
+    
+#     # Determine number of rounds
+#     round_count = 0
+#     temp = n
+#     while temp > 1:
+#         temp //= 2
+#         round_count += 1
+    
+#     # Create matches for first round
+#     first_round = round_count
+#     matches = []
+    
+#     for i in range(0, n, 2):
+#         match = Match(
+#             category_id=category.id,
+#             stage=MatchStage.KNOCKOUT,
+#             round=first_round,
+#             match_order=i // 2
+#         )
+        
+#         # Handle first participant (can be None)
+#         if i < len(seeded_participants):
+#             # Extract from the dictionary format
+#             participant_dict = seeded_participants[i]
+            
+#             # Get the participant entity based on doubles/singles
+#             if is_doubles:
+#                 participant1 = participant_dict.get('team')  # Can be None
+#                 participant1_id = participant1.id if participant1 else None
+#                 match.team1_id = participant1_id
+#             else:
+#                 participant1 = participant_dict.get('player')  # Can be None
+#                 participant1_id = participant1.id if participant1 else None
+#                 match.player1_id = participant1_id
+                
+#             # Always set the code if available
+#             code1 = participant_dict.get('code')
+#             match.player1_code = code1
+#         else:
+#             # No participant for this position
+#             if is_doubles:
+#                 match.team1_id = None
+#             else:
+#                 match.player1_id = None
+#             match.player1_code = f"R{first_round}-{i+1}"
+
+#         # Handle second participant (can be None)
+#         if (i + 1) < len(seeded_participants):
+#             # Extract from the dictionary format
+#             participant_dict = seeded_participants[i + 1]
+            
+#             # Get the participant entity based on doubles/singles
+#             if is_doubles:
+#                 participant2 = participant_dict.get('team')  # Can be None
+#                 participant2_id = participant2.id if participant2 else None
+#                 match.team2_id = participant2_id
+#             else:
+#                 participant2 = participant_dict.get('player')  # Can be None
+#                 participant2_id = participant2.id if participant2 else None
+#                 match.player2_id = participant2_id
+                
+#             # Always set the code if available
+#             code2 = participant_dict.get('code')
+#             match.player2_code = code2
+#         else:
+#             # No participant for this position
+#             if is_doubles:
+#                 match.team2_id = None
+#             else:
+#                 match.player2_id = None
+#             match.player2_code = f"R{first_round}-{i+2}"
+            
+#         db.session.add(match)
+#         matches.append(match)
+    
+#     db.session.flush()
+    
+#     # Create subsequent rounds
+#     prev_round_matches = matches
+    
+#     for r in range(first_round - 1, 0, -1):
+#         next_round_matches = []
+        
+#         for i in range(0, len(prev_round_matches), 2):
+#             match = Match(
+#                 category_id=category.id,
+#                 stage=MatchStage.KNOCKOUT,
+#                 round=r,
+#                 match_order=i // 2
+#             )
+            
+#             # Generate position codes for future matches based on round
+#             if r == 1:  # Finals
+#                 match.player1_code = "SF1"  # Winner of first semi
+#                 match.player2_code = "SF2"  # Winner of second semi
+#             elif r == 2:  # Semifinals
+#                 if i == 0:
+#                     match.player1_code = "QF1"  # Winner of first quarter
+#                     match.player2_code = "QF2"  # Winner of second quarter
+#                 else:
+#                     match.player1_code = "QF3"  # Winner of third quarter
+#                     match.player2_code = "QF4"  # Winner of fourth quarter
+#             elif r == 3:  # Quarterfinals
+#                 match.player1_code = f"R16-{i*2+1}"  # Round of 16 winners
+#                 match.player2_code = f"R16-{i*2+2}"
+#             elif r == 4:  # Round of 16
+#                 match.player1_code = f"R32-{i*2+1}"
+#                 match.player2_code = f"R32-{i*2+2}"
+#             elif r == 5:  # Round of 32
+#                 match.player1_code = f"R64-{i*2+1}"
+#                 match.player2_code = f"R64-{i*2+2}"
+#             else:  # Generic code for deeper rounds
+#                 match.player1_code = f"R{r+1}-{i*2+1}"
+#                 match.player2_code = f"R{r+1}-{i*2+2}"
+            
+#             db.session.add(match)
+#             db.session.flush()
+            
+#             # Link previous matches to this one
+#             if i < len(prev_round_matches):
+#                 prev_round_matches[i].next_match_id = match.id
+            
+#             if i + 1 < len(prev_round_matches):
+#                 prev_round_matches[i + 1].next_match_id = match.id
+            
+#             next_round_matches.append(match)
+        
+#         prev_round_matches = next_round_matches
+    
+#     # Create 3rd place match if needed
+#     if third_place_match and round_count >= 2:  # At least semifinal round exists
+#         semifinal_matches = Match.query.filter_by(
+#             category_id=category.id,
+#             stage=MatchStage.KNOCKOUT,
+#             round=2
+#         ).all()
+        
+#         if len(semifinal_matches) == 2:
+#             match = Match(
+#                 category_id=category.id,
+#                 stage=MatchStage.PLAYOFF,
+#                 round=1.5,  # Between final and semifinal
+#                 match_order=0,
+#                 player1_code="L-SF1",  # Loser of first semifinal
+#                 player2_code="L-SF2"   # Loser of second semifinal
+#             )
+#             db.session.add(match)
+    
+#     db.session.flush()
 
 def update_match_seeds(category_id, seed_data):
     """
