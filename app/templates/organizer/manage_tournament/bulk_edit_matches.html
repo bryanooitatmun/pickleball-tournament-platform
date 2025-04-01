@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">{{ title }}</h1>
+        <p class="text-gray-600">
+            Tournament: <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:underline">{{ tournament.name }}</a> |
+            Category: <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" class="text-blue-600 hover:underline">{{ category.name }}</a>
+        </p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <form method="POST" class="space-y-6">
+            {{ form.hidden_tag() }}
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Court Assignment Section -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-700 border-b pb-2">Court Assignment</h2>
+                    <div class="form-group">
+                        {{ form.court.label(class="block text-sm font-medium text-gray-700") }}
+                        {{ form.court(class="mt-1 block p-2 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm") }}
+                        {% for error in form.court.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Scheduling Section -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-700 border-b pb-2">Schedule</h2>
+                    <div class="form-group">
+                        {{ form.scheduled_date.label(class="block text-sm font-medium text-gray-700") }}
+                        {{ form.scheduled_date(class="mt-1 block p-2 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm", type="date") }}
+                        {% for error in form.scheduled_date.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="form-group">
+                        {{ form.scheduled_time.label(class="block text-sm font-medium text-gray-700") }}
+                        {{ form.scheduled_time(class="mt-1 block p-2 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm", type="time") }}
+                        {% for error in form.scheduled_time.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Instructions Section -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-700 border-b pb-2">Instructions</h2>
+                    <div class="bg-blue-50 p-4 rounded-md">
+                        <p class="text-sm text-blue-800">
+                            <strong>How to use:</strong>
+                            <ol class="list-decimal list-inside mt-2 space-y-1">
+                                <li>Select the matches you want to edit using the checkboxes</li>
+                                <li>Specify the court and/or scheduled time you want to apply to all selected matches</li>
+                                <li>Click "Preview Changes" to review your changes before applying</li>
+                                <li>Confirm the changes on the next screen</li>
+                            </ol>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Match Selection Section -->
+            <div class="mt-8">
+                <div class="flex items-center justify-between border-b pb-2 mb-4">
+                    <h2 class="text-xl font-semibold text-gray-700">Match Selection</h2>
+                    <div class="flex items-center">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" id="select-all" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded" onchange="toggleAllMatches()">
+                            <span class="ml-2 text-sm font-medium text-gray-700">Select All</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full table-auto text-sm">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-4 py-2 text-left">Select</th>
+                                <th class="px-4 py-2 text-left">ID</th>
+                                <th class="px-4 py-2 text-left">Round</th>
+                                <th class="px-4 py-2 text-left">Participants</th>
+                                <th class="px-4 py-2 text-left">Current Court</th>
+                                <th class="px-4 py-2 text-left">Current Scheduled Time</th>
+                                <th class="px-4 py-2 text-left">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for match in matches %}
+                                <tr class="{% if loop.index % 2 == 0 %}bg-gray-50{% endif %} hover:bg-gray-100">
+                                    <td class="px-4 py-2">
+                                        {{ form.match_ids[loop.index0](type="hidden") }}
+                                        {{ form.selected_matches[loop.index0](class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded") }}
+                                    </td>
+                                    <td class="px-4 py-2">{{ match.id }}</td>
+                                    <td class="px-4 py-2">{{ match.round_name }}</td>
+                                    <td class="px-4 py-2">
+                                        {% if match.is_doubles %}
+                                            {% if match.team1 %}
+                                                <div>Team 1: {{ match.team1.player1.full_name }} / {{ match.team1.player2.full_name }}</div>
+                                            {% else %}
+                                                <div>Team 1: {% if match.player1_code %}{{ match.player1_code }}{% else %}TBD{% endif %}</div>
+                                            {% endif %}
+                                            
+                                            {% if match.team2 %}
+                                                <div>Team 2: {{ match.team2.player1.full_name }} / {{ match.team2.player2.full_name }}</div>
+                                            {% else %}
+                                                <div>Team 2: {% if match.player2_code %}{{ match.player2_code }}{% else %}TBD{% endif %}</div>
+                                            {% endif %}
+                                        {% else %}
+                                            {% if match.player1 %}
+                                                <div>Player 1: {{ match.player1.full_name }}</div>
+                                            {% else %}
+                                                <div>Player 1: {% if match.player1_code %}{{ match.player1_code }}{% else %}TBD{% endif %}</div>
+                                            {% endif %}
+                                            
+                                            {% if match.player2 %}
+                                                <div>Player 2: {{ match.player2.full_name }}</div>
+                                            {% else %}
+                                                <div>Player 2: {% if match.player2_code %}{{ match.player2_code }}{% else %}TBD{% endif %}</div>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-2">{{ match.court or 'Not assigned' }}</td>
+                                    <td class="px-4 py-2">{{ match.scheduled_time.strftime('%Y-%m-%d %H:%M') if match.scheduled_time else 'Not scheduled' }}</td>
+                                    <td class="px-4 py-2">
+                                        <span class="px-2 py-1 rounded-full text-xs 
+                                        {% if match.completed %}bg-green-100 text-green-800
+                                        {% elif match.referee_verified %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {% if match.completed %}Completed
+                                            {% elif match.referee_verified %}Referee Verified
+                                            {% else %}Pending{% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Confirmation and Actions -->
+            <div class="flex justify-between pt-6 border-t">
+                <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Cancel
+                </a>
+                <div class="space-x-4">
+                    {{ form.preview(class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500") }}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleAllMatches() {
+        const selectAllCheckbox = document.getElementById('select-all');
+        const isChecked = selectAllCheckbox.checked;
+        const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = isChecked;
+        });
+    }
+    
+    // Enable direct submit button only when there's a confirmation
+    document.addEventListener('DOMContentLoaded', function() {
+        const confirmCheckbox = document.getElementById('confirm');
+        const submitButton = document.querySelector('input[type="submit"][name="submit"]');
+        
+        if (confirmCheckbox && submitButton) {
+            submitButton.disabled = !confirmCheckbox.checked;
+            
+            confirmCheckbox.addEventListener('change', function() {
+                submitButton.disabled = !this.checked;
+            });
+        }
+    });
+</script>
+{% endblock %}

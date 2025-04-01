@@ -104,14 +104,17 @@
                 <div class="space-y-4">
                     <h3 class="font-medium text-gray-700">Bracket Generation</h3>
                     
-                    <div class="flex space-x-2">
+                    <div class="space-x-2">
+                            <div class="inline-block p-3">
+                                <a href="{{ url_for('organizer.manage_seeding', tournament_id=tournament.id, category_id=category.id) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Manage seeding</a>
+                            </div>
                         {% if category.format.value == 'Group Stage + Knockout' %}
                             {# Check if group stage matches exist already #}
                             {% set has_group_matches = matches|selectattr('stage.name', 'eq', 'GROUP')|list|length > 0 %}
                             {% set has_knockout_matches = matches|selectattr('stage.name', 'eq', 'KNOCKOUT')|list|length > 0 %}
                             
 
-                            <form action="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" method="POST" class="inline-block">
+                            <form action="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" method="POST" class="my-3 p-3 inline-block border rounded-lg border-gray-900">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="action" value="generate_bracket">
                                 <input type="hidden" name="bracket_type" value="generate_groups">
@@ -120,7 +123,7 @@
                                     <h3 class="text-lg font-medium text-gray-800">Group Stage Settings</h3>
                                     <p class="text-sm text-gray-500 mb-3">Configure group stage parameters for this category</p>
                                     
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label for="group_count" class="block text-sm font-medium text-gray-700">Number of Groups</label>
                                             <input type="number" name="group_count" id="group_count" min="2" 
@@ -137,7 +140,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <button type="submit" class="inline-flex items-center px-4 py-2 my-3 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                     </svg>
@@ -148,7 +151,7 @@
                             
                             {# Only show Knockout button if group matches exist but knockout matches don't #}
                             {% if has_group_matches %}
-                            <form action="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" method="POST" class="inline-block">
+                            <form action="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" method="POST" class="inline-block p-3">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="action" value="generate_bracket">
                                 <input type="hidden" name="bracket_type" value="generate_knockout">
@@ -169,7 +172,7 @@
                             
                             {# Only show Bracket button if no knockout matches exist #}
                             {% if not has_knockout_matches %}
-                            <form action="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" method="POST" class="inline-block">
+                            <form action="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" method="POST" class="inline-block p-3">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="action" value="generate_bracket">
                                 <input type="hidden" name="bracket_type" value="generate_knockout">
@@ -361,14 +364,23 @@
     {% if matches %}
         <!-- Match filtering and search options -->
         <div class="flex justify-between items-center mb-4">
-            <div class="flex space-x-2">
-                <button class="filter-tab px-3 py-1 rounded-md active" data-filter="all">All</button>
-                {% if groups %}
-                    <button class="filter-tab px-3 py-1 rounded-md bg-gray-100" data-filter="group">Group Stage</button>
-                {% endif %}
-                <button class="filter-tab px-3 py-1 rounded-md bg-gray-100" data-filter="knockout">Knockout</button>
-                <button class="filter-tab px-3 py-1 rounded-md bg-gray-100" data-filter="completed">Completed</button>
-                <button class="filter-tab px-3 py-1 rounded-md bg-gray-100" data-filter="pending">Pending</button>
+            <div class="flex items-center space-x-4">
+                <div class="flex space-x-2">
+                    <button class="filter-tab px-3 py-1 rounded-md active" data-filter="all">All</button>
+                    {% if groups %}
+                        <button class="filter-tab px-3 py-1 rounded-md bg-gray-100" data-filter="group">Group Stage</button>
+                    {% endif %}
+                    <button class="filter-tab px-3 py-1 rounded-md bg-gray-100" data-filter="knockout">Knockout</button>
+                    <button class="filter-tab px-3 py-1 rounded-md bg-gray-100" data-filter="completed">Completed</button>
+                    <button class="filter-tab px-3 py-1 rounded-md bg-gray-100" data-filter="pending">Pending</button>
+                </div>
+                
+                <a href="{{ url_for('organizer.bulk_edit_matches', id=tournament.id, category_id=category.id) }}" class="inline-flex items-center px-3 py-1 border border-gray-300 text-sm leading-5 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Bulk Edit Matches
+                </a>
             </div>
             <div class="search-container">
                 <span class="search-icon">

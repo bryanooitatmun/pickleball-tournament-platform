@@ -1,6 +1,6 @@
-from flask import render_template, redirect, url_for, flash, request, jsonify, current_app
+from flask import render_template, redirect, url_for, flash, request, jsonify, current_app, session
 from flask_login import current_user, login_required
-from datetime import datetime
+from datetime import datetime, date, time
 from flask_socketio import emit
 
 from app import db, socketio
@@ -18,7 +18,7 @@ from app.helpers.tournament import (
     update_match_seeds
 )
 # Import forms
-from app.organizer.forms import MatchForm, ScoreForm, CompleteMatchForm
+from app.organizer.forms import MatchForm, ScoreForm, CompleteMatchForm, BulkMatchForm
 
 # --- Match Management ---
 
@@ -425,4 +425,234 @@ def calculate_placings(id, category_id):
         # No rollback needed usually for calculation, unless it tries to store results
 
     # Redirect to results page or category management
+    return redirect(url_for('organizer.manage_category', id=id, category_id=category_id))
+
+
+@bp.route('/tournament/<int:id>/category/<int:category_id>/bulk_edit_matches', methods=['GET', 'POST'])
+@login_required
+@organizer_required
+def bulk_edit_matches(id, category_id):
+    """Edit multiple matches at once for a category"""
+    tournament = Tournament.query.get_or_404(id)
+    category = TournamentCategory.query.get_or_404(category_id)
+    
+    # Permission check
+    if not current_user.is_admin() and tournament.organizer_id != current_user.id:
+        flash('You do not have permission to edit matches for this tournament.', 'danger')
+        return redirect(url_for('organizer.tournament_detail', id=id))
+        
+    if category.tournament_id != tournament.id:
+        flash('Category does not belong to this tournament.', 'danger')
+        return redirect(url_for('organizer.tournament_detail', id=id))
+    
+    # Get all matches for this category
+    matches = Match.query.filter_by(category_id=category_id).order_by(
+        Match.stage, Match.round, Match.match_order
+    ).all()
+    
+    form = BulkMatchForm()
+    
+    # Handle form submission
+    if request.method == 'POST':
+        # Store form data in session for preview/confirmation
+        session_data = {
+            'court': form.court.data,
+            'scheduled_date': form.scheduled_date.data.isoformat() if form.scheduled_date.data else None,
+            'scheduled_time': form.scheduled_time.data.isoformat() if form.scheduled_time.data else None,
+            'selected_matches': []
+        }
+        
+        selected_match_ids = []
+        
+        # Get selected matches from form
+        for i, match_id_field in enumerate(form.match_ids):
+            if i < len(form.selected_matches) and form.selected_matches[i].data:
+                match_id = int(match_id_field.data)
+                selected_match_ids.append(match_id)
+                session_data['selected_matches'].append(match_id)
+        
+        # Store in session
+        session['bulk_edit_data'] = session_data
+        
+        # If no matches selected
+        if not selected_match_ids:
+            flash('Please select at least one match to edit.', 'warning')
+            return redirect(url_for('organizer.bulk_edit_matches', id=id, category_id=category_id))
+        
+        # If preview was clicked, show confirmation page
+        if form.preview.data:
+            # Get details of selected matches for preview
+            selected_matches = Match.query.filter(Match.id.in_(selected_match_ids)).all()
+            
+            # Format datetime from separate date and time fields
+            scheduled_datetime = None
+            if form.scheduled_date.data and form.scheduled_time.data:
+                scheduled_datetime = datetime.combine(form.scheduled_date.data, form.scheduled_time.data)
+            
+            return render_template('organizer/manage_tournament/confirm_bulk_edit.html',
+                                  title='Confirm Bulk Match Edit',
+                                  tournament=tournament,
+                                  category=category,
+                                  matches=selected_matches,
+                                  court=form.court.data,
+                                  scheduled_datetime=scheduled_datetime)
+        
+        # If confirmed, apply changes
+        if form.confirm.data and form.submit.data:
+            try:
+                matches_updated = 0
+                schedule_changed_matches = []
+                
+                # Format datetime from separate date and time fields
+                scheduled_datetime = None
+                if form.scheduled_date.data and form.scheduled_time.data:
+                    scheduled_datetime = datetime.combine(form.scheduled_date.data, form.scheduled_time.data)
+                
+                # Update each selected match
+                for match_id in selected_match_ids:
+                    match = Match.query.get(match_id)
+                    if match and match.category_id == category_id:
+                        old_court = match.court
+                        old_time = match.scheduled_time
+                        
+                        # Update court if provided
+                        if form.court.data:
+                            match.court = form.court.data
+                        
+                        # Update schedule if both date and time provided
+                        if scheduled_datetime:
+                            match.scheduled_time = scheduled_datetime
+                        
+                        # Check if changes were made
+                        if old_court != match.court or old_time != match.scheduled_time:
+                            matches_updated += 1
+                            
+                            # Track changes for notifications
+                            if old_court != match.court or old_time != match.scheduled_time:
+                                schedule_changed_matches.append({
+                                    'match_id': match.id,
+                                    'changes': {
+                                        'court': match.court if old_court != match.court else None,
+                                        'scheduled_time': match.scheduled_time.strftime('%Y-%m-%d %H:%M') if old_time != match.scheduled_time else None
+                                    }
+                                })
+                
+                # Commit changes
+                db.session.commit()
+                
+                # Send notifications for schedule changes
+                if schedule_changed_matches:
+                    from app.tasks.email_tasks import send_schedule_change_email
+                    for match_data in schedule_changed_matches:
+                        send_schedule_change_email(match_data['match_id'], match_data['changes'])
+                
+                # Clear session data
+                if 'bulk_edit_data' in session:
+                    session.pop('bulk_edit_data')
+                
+                flash(f'Successfully updated {matches_updated} matches.', 'success')
+                return redirect(url_for('organizer.manage_category', id=id, category_id=category_id))
+                
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error updating matches: {e}', 'danger')
+                return redirect(url_for('organizer.bulk_edit_matches', id=id, category_id=category_id))
+    
+    # For GET request, initialize form
+    # Add all matches to the form
+    for match in matches:
+        form.match_ids.append_entry(match.id)
+        form.selected_matches.append_entry(False)
+    
+    return render_template('organizer/manage_tournament/bulk_edit_matches.html',
+                          title='Bulk Edit Matches',
+                          tournament=tournament,
+                          category=category,
+                          matches=matches,
+                          form=form)
+
+
+@bp.route('/tournament/<int:id>/category/<int:category_id>/confirm_bulk_edit', methods=['POST'])
+@login_required
+@organizer_required
+def confirm_bulk_edit(id, category_id):
+    """Confirm and apply bulk match edits"""
+    tournament = Tournament.query.get_or_404(id)
+    category = TournamentCategory.query.get_or_404(category_id)
+    
+    # Permission check
+    if not current_user.is_admin() and tournament.organizer_id != current_user.id:
+        flash('You do not have permission to edit matches for this tournament.', 'danger')
+        return redirect(url_for('organizer.tournament_detail', id=id))
+        
+    if category.tournament_id != tournament.id:
+        flash('Category does not belong to this tournament.', 'danger')
+        return redirect(url_for('organizer.tournament_detail', id=id))
+    
+    # Ensure we have session data
+    if 'bulk_edit_data' not in session:
+        flash('No pending bulk edit data found. Please start again.', 'warning')
+        return redirect(url_for('organizer.bulk_edit_matches', id=id, category_id=category_id))
+    
+    data = session['bulk_edit_data']
+    selected_match_ids = data.get('selected_matches', [])
+    
+    try:
+        matches_updated = 0
+        schedule_changed_matches = []
+        
+        # Format datetime from stored date and time
+        scheduled_datetime = None
+        if data.get('scheduled_date') and data.get('scheduled_time'):
+            scheduled_date = date.fromisoformat(data['scheduled_date'])
+            scheduled_time = time.fromisoformat(data['scheduled_time'])
+            scheduled_datetime = datetime.combine(scheduled_date, scheduled_time)
+        
+        # Update each selected match
+        for match_id in selected_match_ids:
+            match = Match.query.get(match_id)
+            if match and match.category_id == category_id:
+                old_court = match.court
+                old_time = match.scheduled_time
+                
+                # Update court if provided
+                if data.get('court'):
+                    match.court = data['court']
+                
+                # Update schedule if both date and time were provided
+                if scheduled_datetime:
+                    match.scheduled_time = scheduled_datetime
+                
+                # Check if changes were made
+                if old_court != match.court or old_time != match.scheduled_time:
+                    matches_updated += 1
+                    
+                    # Track changes for notifications
+                    if old_court != match.court or old_time != match.scheduled_time:
+                        schedule_changed_matches.append({
+                            'match_id': match.id,
+                            'changes': {
+                                'court': match.court if old_court != match.court else None,
+                                'scheduled_time': match.scheduled_time.strftime('%Y-%m-%d %H:%M') if old_time != match.scheduled_time else None
+                            }
+                        })
+        
+        # Commit changes
+        db.session.commit()
+        
+        # Send notifications for schedule changes
+        if schedule_changed_matches:
+            from app.tasks.email_tasks import send_schedule_change_email
+            for match_data in schedule_changed_matches:
+                send_schedule_change_email(match_data['match_id'], match_data['changes'])
+        
+        # Clear session data
+        session.pop('bulk_edit_data')
+        
+        flash(f'Successfully updated {matches_updated} matches.', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating matches: {e}', 'danger')
+    
     return redirect(url_for('organizer.manage_category', id=id, category_id=category_id))

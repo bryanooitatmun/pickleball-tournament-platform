@@ -916,6 +916,9 @@ def update_match_seeds(category_id, seed_data):
     Returns:
         Boolean indicating success
     """
+    
+    seed_data = {x['registration_id']:x['seed'] for x in seed_data}
+
     try:
         for reg_id, seed_val in seed_data.items():
             try:

@@ -154,6 +154,22 @@ class CompleteMatchForm(FlaskForm):
         while len(self.scores) < 3:
             self.scores.append_entry()
 
+class BulkMatchForm(FlaskForm):
+    """Form for bulk editing matches"""
+    court = StringField('Court Assignment', validators=[Optional(), Length(max=50)])
+    scheduled_date = DateField('Scheduled Date', format='%Y-%m-%d', validators=[Optional()])
+    scheduled_time = TimeField('Scheduled Time', format='%H:%M', validators=[Optional()])
+    
+    # Selection fields
+    select_all = BooleanField('Select All', default=False)
+    match_ids = FieldList(HiddenField('Match ID'), min_entries=0)
+    selected_matches = FieldList(BooleanField('Select'), min_entries=0)
+    
+    # Confirmation step
+    confirm = BooleanField('Confirm Changes', validators=[Optional()])
+    
+    preview = SubmitField('Preview Changes')
+
 class BracketGenerationForm(FlaskForm):
     """Form for generating tournament brackets"""
     bracket_type = SelectField('Bracket Type', choices=[

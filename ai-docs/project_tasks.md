@@ -50,8 +50,8 @@
 ✅ Update tiebreaking logic for group standings
 ✅ Implement bye logic for incomplete brackets
 ✅ Simplify category configuration inputs
-❓ Implement bulk match editing functionality
-❓ Add confirmation step for bulk edits
+✅ Implement bulk match editing functionality
+✅ Add confirmation step for bulk edits
 
 ### Implementation Tasks Breakdown
 
@@ -93,10 +93,10 @@
 
 #### 6. Bulk Match Editing
 
-- ❓ Design and implement UI for editing multiple matches
-- ❓ Create new route for handling bulk updates
-- ❓ Add confirmation step before applying changes
-- ❓ Update templates and JavaScript for the new functionality
+- ✅ Design and implement UI for editing multiple matches
+- ✅ Create new route for handling bulk updates
+- ✅ Add confirmation step before applying changes
+- ✅ Update templates and JavaScript for the new functionality
 
 ### Notes
 
