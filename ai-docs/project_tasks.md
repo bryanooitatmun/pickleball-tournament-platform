@@ -45,9 +45,9 @@
 ✅ Create match visualization with code-based future matches (A1 vs B2)
 ✅ Implement knockout stage coding (1, 2, 3, 4)
 ✅ Update bracket visualization to match PPA bracket design
-❓ Create seeding UI for drag and drop functionality
-❓ Implement back-end for storing seed changes
-❓ Update tiebreaking logic for group standings
+✅ Create seeding UI for drag and drop functionality
+✅ Implement back-end for storing seed changes
+✅ Update tiebreaking logic for group standings
 ❓ Implement bye logic for incomplete brackets
 ✅ Simplify category configuration inputs
 ❓ Implement bulk match editing functionality
@@ -65,17 +65,18 @@
 
 #### 2. Seeding Interface
 
-- ❓ Create new route and template for seeding management
-- ❓ Implement drag and drop UI with JavaScript
-- ❓ Update the back-end to store the seed changes
-- ❓ Integrate with existing bracket generation code
+- ✅ Create new route and template for seeding management
+- ✅ Implement drag and drop UI with JavaScript
+- ✅ Update the back-end to store the seed changes
+- ✅ Integrate with existing bracket generation code
+- ✅ Consolidate JavaScript into HTML template for better Jinja2 integration
 
 #### 3. Tiebreak Implementation
 
-- ❓ Update the `_calculate_group_positions` method in `bracket_service.py`
-- ❓ Add head-to-head comparison as primary tiebreaker
-- ❓ Use point differential as secondary tiebreaker
-- ❓ Add tests for the new tiebreaking logic
+- ✅ Update the `_calculate_group_positions` method in `bracket_service.py`
+- ✅ Add head-to-head comparison as primary tiebreaker
+- ✅ Use point differential as secondary tiebreaker
+- ✅ Add tests for the new tiebreaking logic
 
 #### 4. Bye Logic
 
@@ -110,3 +111,6 @@
 - Added automatic code generation for TBD matches in all tournament rounds
 - Added test to verify knockout bracket generation works without completed group standings
 - All TBD matches now display appropriate position codes (e.g., "A1 vs B2", "QF1 vs QF2")
+- Implemented seeding interface with drag and drop functionality for reordering participants
+- Added backend for storing seed changes and integrating with bracket generation
+- Enhanced tiebreaking logic with head-to-head record as primary tiebreaker and point differential as secondary

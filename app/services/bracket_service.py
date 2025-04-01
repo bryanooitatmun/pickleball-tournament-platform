@@ -299,18 +299,132 @@ class BracketService:
     
     @staticmethod
     def _calculate_group_positions(standings):
-        """Sort and assign positions to standings within a group"""
-        # Sort by matches won, then by set differential, then by point differential
-        sorted_standings = sorted(
-            standings,
+        """
+        Sort and assign positions to standings within a group.
+        Uses the following tiebreak criteria in order:
+        1. Matches won
+        2. Head-to-head record with other tied players
+        3. Point differential
+        """
+        if not standings:
+            return
+        
+        # Step 1: Group standings by matches won (to identify ties)
+        standings_by_wins = {}
+        for standing in standings:
+            wins = standing.matches_won
+            if wins not in standings_by_wins:
+                standings_by_wins[wins] = []
+            standings_by_wins[wins].append(standing)
+        
+        # Step 2: Process each win group, applying tiebreakers where needed
+        final_standings = []
+        
+        # Process win groups in descending order (most wins first)
+        for wins in sorted(standings_by_wins.keys(), reverse=True):
+            tied_standings = standings_by_wins[wins]
+            
+            # If only one participant with this win count, no tiebreaker needed
+            if len(tied_standings) == 1:
+                final_standings.append(tied_standings[0])
+                continue
+            
+            # We have multiple participants with the same win count
+            # Apply head-to-head tiebreaker
+            sorted_tied = BracketService._apply_tiebreakers(tied_standings)
+            final_standings.extend(sorted_tied)
+        
+        # Assign positions based on final order
+        for i, standing in enumerate(final_standings, 1):
+            standing.position = i
+
+    @staticmethod
+    def _apply_tiebreakers(tied_standings):
+        """
+        Apply tiebreakers to a group of standings with equal matches won.
+        Primary: Head-to-head record
+        Secondary: Point differential
+        """
+        if len(tied_standings) <= 1:
+            return tied_standings
+        
+        # Get group ID (should be the same for all tied standings)
+        group_id = tied_standings[0].group_id
+        
+        # Create a dictionary to track head-to-head records
+        h2h_records = {}
+        
+        # Initialize head-to-head records
+        for s in tied_standings:
+            key = ('player', s.player_id) if s.player_id else ('team', s.team_id)
+            h2h_records[key] = {
+                'h2h_wins': 0,
+                'original_standing': s
+            }
+        
+        # Get all participant IDs for query
+        player_ids = [s.player_id for s in tied_standings if s.player_id is not None]
+        team_ids = [s.team_id for s in tied_standings if s.team_id is not None]
+        
+        # Query matches between tied participants
+        all_h2h_matches = []
+        
+        # Get singles matches between tied players
+        if player_ids:
+            player_matches = Match.query.filter_by(
+                group_id=group_id,
+                completed=True
+            ).filter(
+                Match.player1_id.in_(player_ids),
+                Match.player2_id.in_(player_ids)
+            ).all()
+            all_h2h_matches.extend(player_matches)
+        
+        # Get doubles matches between tied teams
+        if team_ids:
+            team_matches = Match.query.filter_by(
+                group_id=group_id,
+                completed=True
+            ).filter(
+                Match.team1_id.in_(team_ids),
+                Match.team2_id.in_(team_ids)
+            ).all()
+            all_h2h_matches.extend(team_matches)
+        
+        # Process head-to-head matches
+        for match in all_h2h_matches:
+            # Singles match
+            if match.player1_id and match.player2_id and match.player1_id in player_ids and match.player2_id in player_ids:
+                p1_key = ('player', match.player1_id)
+                p2_key = ('player', match.player2_id)
+                
+                # Only count if both players are in tied group (should always be true due to our filter)
+                if p1_key in h2h_records and p2_key in h2h_records:
+                    if match.winning_player_id == match.player1_id:
+                        h2h_records[p1_key]['h2h_wins'] += 1
+                    elif match.winning_player_id == match.player2_id:
+                        h2h_records[p2_key]['h2h_wins'] += 1
+            
+            # Doubles match
+            elif match.team1_id and match.team2_id and match.team1_id in team_ids and match.team2_id in team_ids:
+                t1_key = ('team', match.team1_id)
+                t2_key = ('team', match.team2_id)
+                
+                # Only count if both teams are in tied group (should always be true due to our filter)
+                if t1_key in h2h_records and t2_key in h2h_records:
+                    if match.winning_team_id == match.team1_id:
+                        h2h_records[t1_key]['h2h_wins'] += 1
+                    elif match.winning_team_id == match.team2_id:
+                        h2h_records[t2_key]['h2h_wins'] += 1
+        
+        # Sort by head-to-head wins (primary), then point differential (secondary)
+        sorted_tied = sorted(
+            tied_standings,
             key=lambda s: (
-                s.matches_won,
-                s.sets_won - s.sets_lost,
+                h2h_records[('player', s.player_id) if s.player_id else ('team', s.team_id)]['h2h_wins'],
                 s.points_won - s.points_lost
             ),
             reverse=True
         )
         
-        # Assign positions
-        for i, standing in enumerate(sorted_standings, 1):
-            standing.position = i
+        return sorted_tied
