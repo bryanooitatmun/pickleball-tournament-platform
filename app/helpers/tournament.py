@@ -421,7 +421,7 @@ def _generate_knockout_from_groups(category):
         num_groups, 
         teams_per_group
     )
-    
+
     # Add byes to fill bracket if needed
     while len(seeded_participants) < bracket_size:
         seeded_participants.append(None)
@@ -465,55 +465,75 @@ def _generate_cross_group_seeding(participants, num_groups, teams_per_group):
             # Sort by group reverse alphabetically (D, C, B, A)
             participants_by_position[position].sort(key=lambda p: p['group'], reverse=True)
     
-    # Create seeded list for cross-group matchups
-    seeded_list = []
-    
-    # Number of matches in the first round
-    match_count = (num_groups * teams_per_group) // 2
-    
-    # Create the seeded bracket by pairing 1st place with last advancing place
-    for match_idx in range(match_count):
-        # For first half of matches: pair 1st places with last places
-        if match_idx < match_count // 2:
-            # Add 1st place team from appropriate group
-            first_pos_teams = participants_by_position.get(1, [])
-            if match_idx < len(first_pos_teams):
-                seeded_list.append(first_pos_teams[match_idx])
-            else:
-                seeded_list.append(None)  # Bye
-            
-            # Add last place team from appropriate group
-            last_pos_teams = participants_by_position.get(teams_per_group, [])
-            if match_idx < len(last_pos_teams):
-                # For cross-group matching, get the corresponding team from the reversed list
-                rev_idx = len(last_pos_teams) - 1 - match_idx
-                if 0 <= rev_idx < len(last_pos_teams):
-                    seeded_list.append(last_pos_teams[rev_idx])
-                else:
-                    seeded_list.append(None)  # Bye
-            else:
-                seeded_list.append(None)  # Bye
-        
-        # For second half of matches: pair middle positions appropriately
-        elif teams_per_group > 2:  # Only if we have more than 2 teams per group
-            middle_positions = list(range(2, teams_per_group))
-            for pos_idx, pos in enumerate(middle_positions):
-                # Similar logic for middle positions
-                pos_teams = participants_by_position.get(pos, [])
-                if pos_idx % 2 == 0:  # For even indices
-                    idx = (match_idx - match_count // 2) % len(pos_teams)
-                    seeded_list.append(pos_teams[idx])
-                else:  # For odd indices
-                    rev_idx = len(pos_teams) - 1 - ((match_idx - match_count // 2) % len(pos_teams))
-                    seeded_list.append(pos_teams[rev_idx])
-    
-    # Ensure the list length is what we expect
-    expected_length = num_groups * teams_per_group
-    while len(seeded_list) < expected_length:
-        seeded_list.append(None)  # Add byes if needed
-    
-    return seeded_list
+    if not participants:
+        return []
 
+    total_participants = num_groups * teams_per_group
+    seeded_list = [None] * total_participants
+
+    # 1. Separate by Position and Sort by Group, padding with None
+    sorted_pos_lists = {}
+    for pos in range(1, teams_per_group + 1):
+        pos_list = participants_by_position.get(pos, [])
+        # Sort alphabetically by group name
+        pos_list.sort(key=lambda p: p['group'] if p else '') # Handle potential None entries if input is sparse
+        # Pad with None to ensure length is num_groups
+        while len(pos_list) < num_groups:
+            pos_list.append(None)
+        sorted_pos_lists[pos] = pos_list
+
+    # 2. Pairing Logic
+    seeded_idx = 0
+    match_pairs = [] # Store pairs before flattening
+
+    # Iterate through position pairings (1 vs T, 2 vs T-1, etc.)
+    for pos1 in range(1, (teams_per_group // 2) + 1):
+        pos2 = teams_per_group - pos1 + 1
+
+        list1 = sorted_pos_lists.get(pos1, [None] * num_groups)
+        list2 = sorted_pos_lists.get(pos2, [None] * num_groups)
+
+        # Pair groups across the draw (Group i vs Group N-1-i)
+        for i in range(num_groups):
+            participant1 = list1[i]
+            # For the second list, pair with the opposite end of the group list
+            participant2 = list2[num_groups - 1 - i]
+            match_pairs.append((participant1, participant2))
+
+    # Handle the middle position if teams_per_group is odd
+    if teams_per_group % 2 == 1:
+        middle_pos = (teams_per_group // 2) + 1
+        middle_list = sorted_pos_lists.get(middle_pos, [None] * num_groups)
+
+        # Pair middle position teams against each other across the draw (Group i vs Group N-1-i)
+        # Only need to iterate through half the groups
+        for i in range(num_groups // 2):
+             participant1 = middle_list[i]
+             participant2 = middle_list[num_groups - 1 - i]
+             match_pairs.append((participant1, participant2))
+
+    # 3. Construct final seeded list by flattening pairs
+    seeded_idx = 0
+    for p1, p2 in match_pairs:
+        if seeded_idx < total_participants:
+            seeded_list[seeded_idx] = p1
+            seeded_idx += 1
+        if seeded_idx < total_participants:
+            seeded_list[seeded_idx] = p2
+            seeded_idx += 1
+        else:
+            # This case might occur if total_participants is odd, which shouldn't happen for knockout stages
+            current_app.logger.warning("Odd number of participants encountered during seeding list construction.")
+            break
+
+    # Final check for correct length (should already be correct)
+    if len(seeded_list) != total_participants:
+         current_app.logger.error(f"Generated seeded list length ({len(seeded_list)}) != expected ({total_participants}). Adjusting.")
+         while len(seeded_list) < total_participants: seeded_list.append(None)
+         seeded_list = seeded_list[:total_participants] # Truncate if too long
+
+    return seeded_list
+    
 def _create_knockout_matches(category, seeded_participants, is_doubles, third_place_match=True):
     """Create knockout bracket matches based on seeded participants"""
     n = len(seeded_participants)

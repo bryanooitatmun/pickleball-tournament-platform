@@ -110,8 +110,7 @@
                             {% set has_group_matches = matches|selectattr('stage.name', 'eq', 'GROUP')|list|length > 0 %}
                             {% set has_knockout_matches = matches|selectattr('stage.name', 'eq', 'KNOCKOUT')|list|length > 0 %}
                             
-                            {# Only show Group Stage button if no group matches exist #}
-                            {% if not has_group_matches %}
+
                             <form action="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" method="POST" class="inline-block">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="action" value="generate_bracket">
@@ -145,10 +144,10 @@
                                     Generate Group Stage
                                 </button>
                             </form>
-                            {% endif %}
+
                             
                             {# Only show Knockout button if group matches exist but knockout matches don't #}
-                            {% if has_group_matches and not has_knockout_matches %}
+                            {% if has_group_matches %}
                             <form action="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" method="POST" class="inline-block">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="action" value="generate_bracket">
@@ -162,15 +161,7 @@
                             </form>
                             {% endif %}
                             
-                            {# Show status messages if both are already generated #}
-                            {% if has_group_matches and has_knockout_matches %}
-                            <div class="text-green-600 p-2 bg-green-50 rounded flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                </svg>
-                                All brackets generated
-                            </div>
-                            {% endif %}
+
                         
                         {% elif category.format.value == 'Single Elimination' %}
                             {# Check if knockout matches exist already #}

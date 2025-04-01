@@ -10,5 +10,6 @@ from app.organizer import prize_routes
 from app.organizer import venue_routes
 from app.organizer import sponsor_routes
 from app.organizer import match_routes
+from app.organizer import seeding_routes
 
 # The old 'from app.organizer import routes' is no longer needed
