@@ -309,7 +309,6 @@ def manage_category(id, category_id):
                         success = _generate_knockout_from_groups(category)
                         message = 'Knockout bracket generated from groups successfully.' if success else 'Failed to generate knockout from groups.'
                     elif tournament.format == TournamentFormat.SINGLE_ELIMINATION:
-                        # TODO: Add options for seeding, 3rd place match from form
                         use_seeding = request.form.get('use_seeding') == 'on'
                         third_place = request.form.get('third_place_match') == 'on'
                         success = _generate_single_elimination(category, use_seeding=use_seeding, third_place_match=third_place)

@@ -249,8 +249,83 @@ def _create_round_robin_matches(group, participants, is_doubles):
     
     db.session.flush()
 
+def _distribute_byes_in_bracket(participants, bracket_size):
+    """
+    Distribute participants in a bracket following standard seeding with byes allocated
+    to top seeds.
+    
+    Args:
+        participants: List of participant dictionaries (sorted by seed)
+        bracket_size: Size of the bracket (power of 2)
+    
+    Returns:
+        List of participants with optimal bye distribution (None for empty slots)
+    """
+    num_participants = len(participants)
+    num_byes = bracket_size - num_participants
+    
+    if num_byes <= 0:
+        # No byes needed, just return the original list
+        return participants
+    
+    # Create a list of positions in the bracket (0 to bracket_size-1)
+    positions = list(range(bracket_size))
+    
+    # Apply the standard seeding pattern to these positions
+    seeded_positions = _apply_standard_seeding(positions, bracket_size)
+    
+    # Create the result array (all None initially)
+    result = [None] * bracket_size
+    
+    # First, assign the actual participants to their positions
+    # We assign participants to all positions EXCEPT the first num_byes positions in the seeded order
+    participant_positions = seeded_positions[num_byes:]
+    for i, pos in enumerate(participant_positions):
+        if i < len(participants):
+            result[pos] = participants[i]
+    
+    return result
+
+def _apply_standard_seeding(positions, bracket_size):
+    """
+    Apply the standard seeding pattern to a list of positions.
+    
+    This implements the standard tournament seeding algorithm:
+    - Seed 1 plays the lowest seed
+    - Seed 2 plays the second lowest seed
+    - Etc.
+    
+    The pattern ensures top seeds only meet in later rounds if both advance.
+    
+    Args:
+        positions: List of positions to reorder
+        bracket_size: Size of the bracket (power of 2)
+    
+    Returns:
+        Reordered list of positions following standard seeding
+    """
+    if bracket_size <= 1:
+        return positions
+    
+    # Split the list in half
+    half_size = bracket_size // 2
+    top_half = positions[:half_size]
+    bottom_half = positions[half_size:]
+    
+    # Recursively apply seeding to each half
+    seeded_top = _apply_standard_seeding(top_half, half_size)
+    seeded_bottom = _apply_standard_seeding(bottom_half, half_size)
+    
+    # Interleave the results following standard seeding pattern
+    result = []
+    for i in range(half_size):
+        result.append(seeded_top[i])
+        result.append(seeded_bottom[half_size - 1 - i])
+    
+    return result
+
 def _generate_single_elimination(category, use_seeding=True, third_place_match=True):
-    """Generate single elimination bracket from registrations"""
+    """Generate single elimination bracket from registrations with optimal bye allocation"""
     # Get registrations
     registrations = Registration.query.filter_by(category_id=category.id, is_approved=True).all()
     if not registrations:
@@ -334,9 +409,8 @@ def _generate_single_elimination(category, use_seeding=True, third_place_match=T
     while bracket_size < len(seeded_participants):
         bracket_size *= 2
     
-    # Add byes to fill bracket
-    while len(seeded_participants) < bracket_size:
-        seeded_participants.append(None)
+    # Distribute participants with optimal bye allocation
+    seeded_participants = _distribute_byes_in_bracket(seeded_participants, bracket_size)
     
     # Generate knockout matches
     _create_knockout_matches(category, seeded_participants, is_doubles, third_place_match)
@@ -345,7 +419,7 @@ def _generate_single_elimination(category, use_seeding=True, third_place_match=T
     return True
 
 def _generate_knockout_from_groups(category):
-    """Generate knockout stage based on group results"""
+    """Generate knockout stage based on group results with optimal bye allocation"""
     # Ensure groups exist
     groups = Group.query.filter_by(category_id=category.id).all()
     if not groups or len(groups) < 2:
@@ -422,12 +496,11 @@ def _generate_knockout_from_groups(category):
         teams_per_group
     )
 
-    # Add byes to fill bracket if needed
-    while len(seeded_participants) < bracket_size:
-        seeded_participants.append(None)
+    # Apply optimal bye distribution
+    distributed_participants = _distribute_byes_in_bracket(seeded_participants, bracket_size)
     
     # Generate knockout matches with codes
-    _create_knockout_matches(category, seeded_participants, is_doubles)
+    _create_knockout_matches(category, distributed_participants, is_doubles)
     
     db.session.commit()
     return True
