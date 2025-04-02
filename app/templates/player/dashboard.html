@@ -6,12 +6,86 @@
 <div class="container mx-auto px-4 py-6">
     <div class="flex flex-wrap justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Player Dashboard</h1>
-        {# <div>
+        <div>
             <a href="{{ url_for('main.events') }}" class="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                 Browse Tournaments
             </a>
-        </div> #}
+        </div>
     </div>
+    
+    {% if next_match %}
+    <!-- Next Upcoming Match Persistent Bar -->
+    <div class="bg-indigo-700 text-white rounded-lg shadow-md mb-6 p-4">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center mb-3 md:mb-0">
+                <i class="fas fa-calendar-alt text-2xl mr-3"></i>
+                <div>
+                    <h3 class="font-bold">Next Match</h3>
+                    <p class="text-indigo-200">
+                        {% if next_match.scheduled_time %}
+                            {{ next_match.scheduled_time.strftime('%b %d, %Y at %H:%M') }}
+                        {% else %}
+                            Time TBD
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex-grow px-4">
+                <div class="flex justify-center items-center">
+                    <div class="text-right mr-3">
+                        {% if next_match.is_doubles %}
+                            {% if next_match.team1_profile.player1_id == profile.id or next_match.team1_profile.player2_id == profile.id %}
+                                <span class="font-bold">You & 
+                                    {% if next_match.team1_profile.player1_id == profile.id %}
+                                        {{ next_match.team1_profile.player2.full_name }}
+                                    {% else %}
+                                        {{ next_match.team1_profile.player1.full_name }}
+                                    {% endif %}
+                                </span>
+                            {% else %}
+                                <span class="font-bold">You & 
+                                    {% if next_match.team2_profile.player1_id == profile.id %}
+                                        {{ next_match.team2_profile.player2.full_name }}
+                                    {% else %}
+                                        {{ next_match.team2_profile.player1.full_name }}
+                                    {% endif %}
+                                </span>
+                            {% endif %}
+                        {% else %}
+                            <span class="font-bold">You</span>
+                        {% endif %}
+                    </div>
+                    <div class="text-center text-xl font-bold mx-3">VS</div>
+                    <div class="text-left ml-3">
+                        {% if next_match.is_doubles %}
+                            {% if next_match.team1_profile.player1_id == profile.id or next_match.team1_profile.player2_id == profile.id %}
+                                <span class="font-bold">{{ next_match.team2_profile.player1.full_name }} & {{ next_match.team2_profile.player2.full_name }}</span>
+                            {% else %}
+                                <span class="font-bold">{{ next_match.team1_profile.player1.full_name }} & {{ next_match.team1_profile.player2.full_name }}</span>
+                            {% endif %}
+                        {% else %}
+                            {% if next_match.player1_id == profile.id %}
+                                <span class="font-bold">{{ next_match.player2_profile.full_name }}</span>
+                            {% else %}
+                                <span class="font-bold">{{ next_match.player1_profile.full_name }}</span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center mt-3 md:mt-0">
+                <div class="mr-4">
+                    <span class="bg-indigo-800 text-white px-3 py-1 rounded text-sm">{{ next_match.court or 'Court TBD' }}</span>
+                </div>
+                <a href="{{ url_for('tournament.match_detail', match_id=next_match.id) }}" class="bg-white text-indigo-700 px-4 py-2 rounded hover:bg-indigo-100 transition">
+                    View Match
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
     
     <!-- Player Profile Summary -->
     <div class="bg-white rounded-lg shadow-sm mb-8">
@@ -49,6 +123,11 @@
                             <i class="fas fa-hand-paper mr-2 text-blue-500"></i> Plays: {{ profile.plays }}
                         </p>
                         {% endif %}
+                        {% if profile.coach_academy %}
+                        <p class="text-gray-600 mb-1">
+                            <i class="fas fa-user-tie mr-2 text-blue-500"></i> Coach/Academy: {{ profile.coach_academy }}
+                        </p>
+                        {% endif %}
                     </div>
                     <div>
                         {% if profile.paddle %}
@@ -64,11 +143,44 @@
                     </div>
                 </div>
                 
+                <!-- Social Media Links -->
+                <div class="mt-3 flex flex-wrap">
+                    {% if profile.instagram %}
+                    <a href="{{ profile.instagram|safe }}" target="_blank" class="mr-3 mb-2 text-gray-600 hover:text-pink-600">
+                        <i class="fab fa-instagram text-xl"></i>
+                    </a>
+                    {% endif %}
+                    
+                    {% if profile.facebook %}
+                    <a href="{{ profile.facebook|safe }}" target="_blank" class="mr-3 mb-2 text-gray-600 hover:text-blue-600">
+                        <i class="fab fa-facebook text-xl"></i>
+                    </a>
+                    {% endif %}
+                    
+                    {% if profile.twitter %}
+                    <a href="{{ profile.twitter|safe }}" target="_blank" class="mr-3 mb-2 text-gray-600 hover:text-blue-400">
+                        <i class="fab fa-twitter text-xl"></i>
+                    </a>
+                    {% endif %}
+                    
+                    {% if profile.tiktok %}
+                    <a href="{{ profile.tiktok|safe }}" target="_blank" class="mr-3 mb-2 text-gray-600 hover:text-black">
+                        <i class="fab fa-tiktok text-xl"></i>
+                    </a>
+                    {% endif %}
+                    
+                    {% if profile.xiaohongshu %}
+                    <a href="{{ profile.xiaohongshu|safe }}" target="_blank" class="mr-3 mb-2 text-gray-600 hover:text-red-600">
+                        <i class="fas fa-book text-xl"></i> <!-- Using a book icon for XiaoHongShu -->
+                    </a>
+                    {% endif %}
+                </div>
+                
                 <div class="mt-3">
-                    {# <a href="{{ url_for('player.edit_profile') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    <a href="{{ url_for('player.edit_profile') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                         <i class="fas fa-pencil-alt mr-1"></i> Edit Profile
-                    </a> #}
-                    <a href="{{ url_for('player.change_password') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    </a>
+                    <a href="{{ url_for('player.change_password') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium ml-4">
                         <i class="fas fa-key mr-1"></i> Change Password
                     </a>
                     {% if profile.dupr_rating %}
@@ -132,51 +244,165 @@
             </div>
         </div>
         
-        <!-- Quick Stats -->
+        <!-- Detailed Stats -->
         <div class="grid grid-cols-2 md:grid-cols-4 p-4 gap-4">
             <div class="text-center">
                 <div class="text-2xl font-bold text-blue-600">{{ stats.total_tournaments }}</div>
                 <div class="text-sm text-gray-500">Tournaments</div>
             </div>
             <div class="text-center">
-                <div class="text-2xl font-bold text-green-600">{{ stats.completed_tournaments }}</div>
-                <div class="text-sm text-gray-500">Completed</div>
+                <div class="text-2xl font-bold text-green-600">{{ stats.matches_won }}</div>
+                <div class="text-sm text-gray-500">Matches Won</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-red-600">{{ stats.matches_lost }}</div>
+                <div class="text-sm text-gray-500">Matches Lost</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-purple-600">{{ stats.win_loss_ratio }}%</div>
+                <div class="text-sm text-gray-500">Win Ratio</div>
             </div>
             <div class="text-center">
                 <div class="text-2xl font-bold text-orange-600">{{ stats.upcoming_tournaments }}</div>
                 <div class="text-sm text-gray-500">Upcoming</div>
             </div>
             <div class="text-center">
-                <div class="text-2xl font-bold text-purple-600">{{ stats.pending_payments }}</div>
+                <div class="text-2xl font-bold text-green-600">{{ stats.completed_tournaments }}</div>
+                <div class="text-sm text-gray-500">Completed</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-indigo-600">{{ stats.avg_match_duration }}</div>
+                <div class="text-sm text-gray-500">Avg Duration (min)</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-yellow-600">{{ stats.pending_payments }}</div>
                 <div class="text-sm text-gray-500">Pending Payments</div>
             </div>
         </div>
     </div>
     
+    <!-- Match History -->
+    <div class="bg-white rounded-lg shadow-sm mb-8">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-xl font-bold">Recent Match History</h2>
+        </div>
+        
+        {% if match_history %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Date
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Tournament
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Category
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Opponent
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Score
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Result
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for match in match_history %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {% if match.scheduled_time %}
+                                        {{ match.scheduled_time.strftime('%b %d, %Y') }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ match.tournament.name }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ match.category.category_type.value }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {% if match.is_doubles %}
+                                        {% if match.team1.player1_id == profile.id or match.team1.player2_id == profile.id %}
+                                            {{ match.team2.player1_profile.full_name }} & {{ match.team2.player2_profile.full_name }}
+                                        {% else %}
+                                            {{ match.team1.player1_profile.full_name }} & {{ match.team1.player2_profile.full_name }}
+                                        {% endif %}
+                                    {% else %}
+                                        {% if match.player1_id == profile.id %}
+                                            {{ match.player2_profile.full_name }}
+                                        {% else %}
+                                            {{ match.player1_profile.full_name }}
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {% if match.scores %}
+                                        {% for score in match.scores %}
+                                            {% if not loop.first %} / {% endif %}
+                                            {{ score.team1_score }}-{{ score.team2_score }}
+                                        {% endfor %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if match.winner_id or match.winning_team_id %}
+                                        {% if match.is_doubles %}
+                                            {% if match.winning_team_id %}
+                                                {% if (match.team1_id == match.winning_team_id and (match.team1.player1_id == profile.id or match.team1.player2_id == profile.id)) or
+                                                      (match.team2_id == match.winning_team_id and (match.team2.player1_id == profile.id or match.team2.player2_id == profile.id)) %}
+                                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                        Win
+                                                    </span>
+                                                {% else %}
+                                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                        Loss
+                                                    </span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                                    Incomplete
+                                                </span>
+                                            {% endif %}
+                                        {% else %}
+                                            {% if match.winner_id == profile.id %}
+                                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                    Win
+                                                </span>
+                                            {% else %}
+                                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                    Loss
+                                                </span>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                            Pending
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="p-6 text-center text-gray-500">
+                <p>You don't have any match history yet.</p>
+            </div>
+        {% endif %}
+    </div>
+    
     <!-- Registration Actions & Alerts -->
     <div class="mb-8">
-        {# {% if stats.pending_payments > 0 %}
-        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4">
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm text-yellow-700">
-                        You have {{ stats.pending_payments }} pending payment{% if stats.pending_payments > 1 %}s{% endif %} that need to be completed.
-                    </p>
-                    <p class="mt-2">
-                        <a href="{{ url_for('player.my_registrations') }}" class="text-yellow-800 font-medium underline hover:text-yellow-600">
-                            View and complete your payments
-                        </a>
-                    </p>
-                </div>
-            </div>
-        </div>
-        {% endif %} #}
-        
         {% if stats.rejected_payments > 0 %}
         <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
             <div class="flex">
@@ -314,9 +540,9 @@
         {% else %}
             <div class="p-6 text-center text-gray-500">
                 <p>You don't have any upcoming tournaments.</p>
-                {# <a href="{{ url_for('main.events') }}" class="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <a href="{{ url_for('main.events') }}" class="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                     Browse Tournaments
-                </a> #}
+                </a>
             </div>
         {% endif %}
     </div>

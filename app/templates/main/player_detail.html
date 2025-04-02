@@ -48,18 +48,28 @@
                     <h2 class="text-2xl font-bold text-gray-800">QUICK INFO</h2>
                     <div class="flex space-x-4">
                         {% if player.instagram %}
-                            <a href="{{ player.instagram }}" class="text-blue-500 hover:text-blue-600" target="_blank">
+                            <a href="{{ player.instagram }}" class="text-blue-500 hover:text-blue-600" target="_blank" title="Instagram">
                                 <i class="fab fa-instagram text-xl"></i>
                             </a>
                         {% endif %}
                         {% if player.facebook %}
-                            <a href="{{ player.facebook }}" class="text-blue-500 hover:text-blue-600" target="_blank">
+                            <a href="{{ player.facebook }}" class="text-blue-500 hover:text-blue-600" target="_blank" title="Facebook">
                                 <i class="fab fa-facebook text-xl"></i>
                             </a>
                         {% endif %}
                         {% if player.twitter %}
-                            <a href="{{ player.twitter }}" class="text-blue-500 hover:text-blue-600" target="_blank">
+                            <a href="{{ player.twitter }}" class="text-blue-500 hover:text-blue-600" target="_blank" title="Twitter">
                                 <i class="fab fa-twitter text-xl"></i>
+                            </a>
+                        {% endif %}
+                        {% if player.tiktok %}
+                            <a href="{{ player.tiktok }}" class="text-blue-500 hover:text-blue-600" target="_blank" title="TikTok">
+                                <i class="fab fa-tiktok text-xl"></i>
+                            </a>
+                        {% endif %}
+                        {% if player.xiaohongshu %}
+                            <a href="{{ player.xiaohongshu }}" class="text-blue-500 hover:text-blue-600" target="_blank" title="XiaoHongShu">
+                                <span class="text-xl font-bold">小红书</span>
                             </a>
                         {% endif %}
                     </div>
@@ -89,6 +99,12 @@
                         <span class="font-semibold block">Paddle:</span>
                         <span>{{ player.paddle }}</span>
                     </div>
+                    {% if player.coach_academy %}
+                    <div>
+                        <span class="font-semibold block">Coach/Academy:</span>
+                        <span>{{ player.coach_academy }}</span>
+                    </div>
+                    {% endif %}
                 </div>
                 
                 {% if player.bio %}
@@ -142,6 +158,41 @@
                         <div class="text-sm text-gray-500">points</div>
                     </div>
                 {% endif %}
+            </div>
+        </div>
+
+        <!-- Statistics Section -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">PLAYER STATISTICS</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="border border-gray-200 rounded-lg p-4 text-center">
+                    <h3 class="font-medium text-gray-700 mb-1">Matches Won</h3>
+                    <div class="text-3xl font-bold text-green-600">{{ player.matches_won }}</div>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-4 text-center">
+                    <h3 class="font-medium text-gray-700 mb-1">Matches Lost</h3>
+                    <div class="text-3xl font-bold text-red-600">{{ player.matches_lost }}</div>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-4 text-center">
+                    <h3 class="font-medium text-gray-700 mb-1">Win Rate</h3>
+                    <div class="text-3xl font-bold text-blue-600">
+                        {% if player.matches_won + player.matches_lost > 0 %}
+                            {{ ((player.matches_won / (player.matches_won + player.matches_lost)) * 100)|round|int }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-4 text-center">
+                    <h3 class="font-medium text-gray-700 mb-1">Avg. Match Duration</h3>
+                    <div class="text-3xl font-bold text-purple-600">
+                        {% if player.avg_match_duration %}
+                            {{ player.avg_match_duration }} min
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -261,4 +312,3 @@
     });
 </script>
 {% endblock %}
-

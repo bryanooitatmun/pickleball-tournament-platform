@@ -269,14 +269,6 @@
                 </svg>
                 <span>Sponsors</span>
             </button>
-            {% if tournament.status.value in ['ongoing', 'completed'] %}
-            <button class="tab-button px-5 py-3 font-medium rounded-lg mx-1 transition-all" data-target="matches-section">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-                <span>Matches</span>
-            </button>
-            {% endif %}
         </div>
     </div>
 </div>
@@ -327,6 +319,15 @@
                                 <span class="text-gray-700 group-hover:text-blue-700">View Participants</span>
                             </a>
                             
+                            {% if current_user.is_authenticated and tournament.status.value == 'completed' %}
+                            <a href="{{ url_for('player.submit_tournament_feedback', tournament_id=tournament.id) }}" class="flex items-center py-2 px-3 rounded-md hover:bg-gray-50 transition group">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-hover:text-blue-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                </svg>
+                                <span class="text-gray-700 group-hover:text-blue-700">Submit Feedback</span>
+                            </a>
+                            {% endif %}
+
                             {% if tournament.status.value in ['ongoing', 'completed'] %}
                                 <a href="{{ url_for('tournament.bracket', id=tournament.id) }}" class="flex items-center py-2 px-3 rounded-md hover:bg-gray-50 transition group">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-hover:text-blue-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -344,6 +345,22 @@
                                     </a>
                                 {% endif %}
                                 
+                                {% if tournament.status.value == 'ongoing' %}
+                                    <a href="{{ url_for('tournament.schedule', id=tournament.id) }}" class="flex items-center py-2 px-3 rounded-md hover:bg-gray-50 transition group">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-hover:text-blue-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                        </svg>
+                                        <span class="text-gray-700 group-hover:text-blue-700">Schedule</span>
+                                    </a>
+                                {% endif %}
+                                
+                                {% if tournament.status.value == 'ongoing' %}
+                                    <a href="{{ url_for('tournament.live_courts', id=tournament.id) }}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                                        <i class="fas fa-table-tennis mr-2"></i> Live Courts
+                                    </a>
+                                {% endif %}
+
+
                                 {% if tournament.status.value == 'completed' %}
                                     <a href="{{ url_for('tournament.results', id=tournament.id) }}" class="flex items-center py-2 px-3 rounded-md hover:bg-gray-50 transition group">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-hover:text-blue-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1183,126 +1200,6 @@
         </div>
     </div>
 
-    <!-- Matches Section -->
-    {% if tournament.status.value in ['ongoing', 'completed'] %}
-    <div id="matches-section" class="tab-content hidden">
-        <div class="bg-white p-8 rounded-xl shadow-md">
-            <h2 class="section-title text-2xl">Tournament Matches</h2>
-            
-            <!-- Category Selection Tabs -->
-            <div class="flex gap-2 mb-8 border-b border-gray-200 pb-2 overflow-x-auto">
-                {% for category in categories %}
-                    <button class="category-tab py-2 px-4 rounded-t-lg font-medium {% if loop.first %}bg-blue-800 text-white{% else %}bg-white text-gray-700 border border-gray-200 hover:bg-gray-50{% endif %}" 
-                        data-target="category-matches-{{ category.id }}">
-                        {{ category.name }}
-                    </button>
-                {% endfor %}
-            </div>
-            
-            <!-- Category Matches Content -->
-            {% for category in categories %}
-                <div id="category-matches-{{ category.id }}" class="category-content {% if not loop.first %}hidden{% endif %}">
-                    {% if matches and category.id in matches and matches[category.id] %}
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {% for match in matches[category.id] %}
-                                <!-- Match card content -->
-                                <div class="border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow">
-                                    <div class="flex justify-between items-center mb-3">
-                                        <span class="font-medium text-blue-600">{{ match.round_name }}</span>
-                                        <span class="text-sm text-gray-500">
-                                            {% if match.scheduled_time %}
-                                                {{ match.scheduled_time.strftime('%d %b, %I:%M %p') }}
-                                            {% else %}
-                                                Time TBD
-                                            {% endif %}
-                                        </span>
-                                    </div>
-                                    
-                                    <div class="space-y-3">
-                                        <!-- Match details would go here -->
-                                        <div class="flex justify-between items-center p-2 rounded bg-gray-50">
-                                            <div class="font-medium">
-                                                {% if match.is_doubles %}
-                                                    {% if match.team1 %}
-                                                        {{ match.team1.player1.full_name }} / {{ match.team1.player2.full_name }}
-                                                    {% else %}
-                                                        TBD
-                                                    {% endif %}
-                                                {% else %}
-                                                    {% if match.player1 %}
-                                                        {{ match.player1.full_name }}
-                                                    {% else %}
-                                                        TBD
-                                                    {% endif %}
-                                                {% endif %}
-                                            </div>
-                                            <div class="text-lg font-bold {% if match.completed and match.winner_id == (match.team1_id if match.is_doubles else match.player1_id) %}text-green-600{% endif %}">
-                                                {% if match.completed %}
-                                                    {% for score in match.scores %}
-                                                        {% if loop.index > 1 %} / {% endif %}
-                                                        {{ score.player1_score }}
-                                                    {% endfor %}
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="flex justify-between items-center p-2 rounded bg-gray-50">
-                                            <div class="font-medium">
-                                                {% if match.is_doubles %}
-                                                    {% if match.team2 %}
-                                                        {{ match.team2.player1.full_name }} / {{ match.team2.player2.full_name }}
-                                                    {% else %}
-                                                        TBD
-                                                    {% endif %}
-                                                {% else %}
-                                                    {% if match.player2 %}
-                                                        {{ match.player2.full_name }}
-                                                    {% else %}
-                                                        TBD
-                                                    {% endif %}
-                                                {% endif %}
-                                            </div>
-                                            <div class="text-lg font-bold {% if match.completed and match.winner_id == (match.team2_id if match.is_doubles else match.player2_id) %}text-green-600{% endif %}">
-                                                {% if match.completed %}
-                                                    {% for score in match.scores %}
-                                                        {% if loop.index > 1 %} / {% endif %}
-                                                        {{ score.player2_score }}
-                                                    {% endfor %}
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    {% if match.court %}
-                                    <div class="mt-3 text-sm text-gray-500">
-                                        Court: {{ match.court }}
-                                    </div>
-                                    {% endif %}
-                                    
-                                    {% if match.completed %}
-                                    <div class="mt-3 text-sm">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            Completed
-                                        </span>
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="text-center py-12 text-gray-500 bg-gray-50 rounded-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
-                            </svg>
-                            <p class="mt-2 text-xl font-medium">No matches available for this category.</p>
-                            <p class="mt-1">Check back once the tournament begins.</p>
-                        </div>
-                    {% endif %}
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
 </div>
 
 {% endblock %}

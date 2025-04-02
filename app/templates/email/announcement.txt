@@ -1,0 +1,8 @@
+Hello {{ user.username }},
+
+Announcement from {{ tournament.name }}:
+
+{{ message }}
+
+Best regards,
+{{ tournament.name }} Organizers

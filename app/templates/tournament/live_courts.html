@@ -1,0 +1,380 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block styles %}
+<style>
+    .court-card {
+        transition: all 0.3s ease;
+    }
+    .court-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    .match-score {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    .court-status-active {
+        background-color: #f0fdf4;
+        border-left: 4px solid #22c55e;
+    }
+    .court-status-upcoming {
+        background-color: #f0f9ff;
+        border-left: 4px solid #3b82f6;
+    }
+    .court-status-inactive {
+        background-color: #f9fafb;
+        border-left: 4px solid #9ca3af;
+    }
+    .pulse {
+        height: 10px;
+        width: 10px;
+        background-color: #22c55e;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+        animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow">
+    <!-- Tournament header with back button -->
+    <div class="p-6 border-b">
+        <div class="flex items-center mb-4">
+            <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="mr-4 text-gray-500 hover:text-blue-600">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900">{{ tournament.name }} - Live Courts</h1>
+        </div>
+        <div class="flex flex-wrap items-center gap-4">
+            <div class="flex items-center p-2 bg-gray-100 rounded-lg">
+                <i class="fas fa-calendar-alt mr-2 text-blue-600"></i>
+                <span>{{ tournament.start_date.strftime('%d %b') }} - {{ tournament.end_date.strftime('%d %b %Y') }}</span>
+            </div>
+            <div class="flex items-center p-2 bg-gray-100 rounded-lg">
+                <i class="fas fa-map-marker-alt mr-2 text-blue-600"></i>
+                <span>{{ tournament.location }}</span>
+            </div>
+            <div class="flex items-center p-2 bg-gray-100 rounded-lg">
+                <span class="pulse"></span>
+                <span>Live Updates</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Court grid -->
+    <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% if courts %}
+                {% for court_name, matches in courts.items() %}
+                    {% set ongoing_match = ongoing_matches.get(court_name) %}
+                    {% set upcoming_match = upcoming_matches.get(court_name) %}
+                    
+                    <div id="court-{{ court_name|replace(' ', '-')|lower }}" class="court-card rounded-lg border overflow-hidden {% if ongoing_match %}court-status-active{% elif upcoming_match %}court-status-upcoming{% else %}court-status-inactive{% endif %}">
+                        <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
+                            <h3 class="text-lg font-bold">{{ court_name }}</h3>
+                            {% if ongoing_match %}
+                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                                    <span class="pulse"></span>ACTIVE
+                                </span>
+                            {% elif upcoming_match %}
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">UPCOMING</span>
+                            {% else %}
+                                <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded-full">INACTIVE</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="p-4">
+                            {% if ongoing_match %}
+                                <div class="mb-3">
+                                    <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">CURRENT MATCH</h4>
+                                    <div class="bg-white p-3 rounded-lg shadow-sm">
+                                        <!-- Match details -->
+                                        <p class="text-sm text-gray-600 mb-2">
+                                            {{ ongoing_match.category.category_type.value }} - {{ ongoing_match.round_name }}
+                                        </p>
+                                        
+                                        <!-- Players/Teams -->
+                                        <div class="flex flex-col mb-3">
+                                            <div class="flex justify-between items-center mb-2">
+                                                <div class="flex-1">
+                                                    {% if ongoing_match.is_doubles %}
+                                                        <p class="font-medium">
+                                                            {% if ongoing_match.team1_id %}
+                                                                {% if ongoing_match.team1 %}
+                                                                    {{ ongoing_match.team1.player1.full_name if ongoing_match.team1.player1 else 'TBD' }} /
+                                                                    {{ ongoing_match.team1.player2.full_name if ongoing_match.team1.player2 else 'TBD' }}
+                                                                {% else %}
+                                                                    Team 1 (TBD)
+                                                                {% endif %}
+                                                            {% else %}
+                                                                Team 1 (TBD)
+                                                            {% endif %}
+                                                        </p>
+                                                    {% else %}
+                                                        <p class="font-medium">
+                                                            {{ ongoing_match.player1.full_name if ongoing_match.player1 else 'TBD' }}
+                                                        </p>
+                                                    {% endif %}
+                                                </div>
+                                                
+                                                <!-- Score -->
+                                                <div class="match-score" id="score-{{ ongoing_match.id }}-player1">
+                                                    {% set match_scores = scores.get(ongoing_match.id, []) %}
+                                                    {% if match_scores %}
+                                                        {{ match_scores[-1].player1_score if match_scores[-1].player1_score is not none else 0 }}
+                                                    {% else %}
+                                                        0
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex justify-between items-center">
+                                                <div class="flex-1">
+                                                    {% if ongoing_match.is_doubles %}
+                                                        <p class="font-medium">
+                                                            {% if ongoing_match.team2_id %}
+                                                                {% if ongoing_match.team2 %}
+                                                                    {{ ongoing_match.team2.player1.full_name if ongoing_match.team2.player1 else 'TBD' }} /
+                                                                    {{ ongoing_match.team2.player2.full_name if ongoing_match.team2.player2 else 'TBD' }}
+                                                                {% else %}
+                                                                    Team 2 (TBD)
+                                                                {% endif %}
+                                                            {% else %}
+                                                                Team 2 (TBD)
+                                                            {% endif %}
+                                                        </p>
+                                                    {% else %}
+                                                        <p class="font-medium">
+                                                            {{ ongoing_match.player2.full_name if ongoing_match.player2 else 'TBD' }}
+                                                        </p>
+                                                    {% endif %}
+                                                </div>
+                                                
+                                                <!-- Score -->
+                                                <div class="match-score" id="score-{{ ongoing_match.id }}-player2">
+                                                    {% set match_scores = scores.get(ongoing_match.id, []) %}
+                                                    {% if match_scores %}
+                                                        {{ match_scores[-1].player2_score if match_scores[-1].player2_score is not none else 0 }}
+                                                    {% else %}
+                                                        0
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Set details -->
+                                        <div class="text-sm text-gray-500">
+                                            {% set match_scores = scores.get(ongoing_match.id, []) %}
+                                            {% if match_scores %}
+                                                <p>Set {{ match_scores[-1].set_number }} in progress</p>
+                                                
+                                                {% if match_scores|length > 1 %}
+                                                    <p class="mt-1">Previous sets:
+                                                    {% for score in match_scores[:-1] %}
+                                                        {{ score.player1_score }}-{{ score.player2_score }}{% if not loop.last %}, {% endif %}
+                                                    {% endfor %}
+                                                    </p>
+                                                {% endif %}
+                                            {% else %}
+                                                <p>Match in progress</p>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Action buttons -->
+                                        <div class="mt-3 flex">
+                                            <a href="{{ url_for('tournament.match_detail', id=tournament.id, match_id=ongoing_match.id) }}" class="text-blue-600 text-sm hover:text-blue-800">
+                                                <i class="fas fa-eye mr-1"></i> View Match
+                                            </a>
+                                            {% if ongoing_match.livestream_url %}
+                                                <a href="{{ ongoing_match.livestream_url }}" target="_blank" class="ml-4 text-red-600 text-sm hover:text-red-800">
+                                                    <i class="fas fa-video mr-1"></i> Livestream
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if upcoming_match %}
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">NEXT MATCH</h4>
+                                    <div class="bg-white p-3 rounded-lg shadow-sm">
+                                        <!-- Match details -->
+                                        <p class="text-sm text-gray-600 mb-2">
+                                            {{ upcoming_match.category.category_type.value }} - {{ upcoming_match.round_name }}
+                                        </p>
+                                        
+                                        <!-- Scheduled time -->
+                                        <div class="mb-3">
+                                            <p class="text-sm font-medium text-gray-800">
+                                                <i class="far fa-clock mr-1"></i>
+                                                {{ upcoming_match.scheduled_time.strftime('%H:%M') }}
+                                                {% set time_diff = (upcoming_match.scheduled_time - now).total_seconds() // 60 %}
+                                                ({% if time_diff > 0 %}in {{ time_diff }}{% else %}{{ time_diff * -1 }} ago{% endif %} mins)
+                                            </p>
+                                        </div>
+                                        
+                                        <!-- Players/Teams -->
+                                        <div class="flex flex-col">
+                                            <div class="mb-2">
+                                                {% if upcoming_match.is_doubles %}
+                                                    <p class="font-medium">
+                                                        {% if upcoming_match.team1_id %}
+                                                            {% if upcoming_match.team1 %}
+                                                                {{ upcoming_match.team1.player1.full_name if upcoming_match.team1.player1 else 'TBD' }} /
+                                                                {{ upcoming_match.team1.player2.full_name if upcoming_match.team1.player2 else 'TBD' }}
+                                                            {% else %}
+                                                                Team 1 (TBD)
+                                                            {% endif %}
+                                                        {% else %}
+                                                            Team 1 (TBD)
+                                                        {% endif %}
+                                                    </p>
+                                                {% else %}
+                                                    <p class="font-medium">
+                                                        {{ upcoming_match.player1.full_name if upcoming_match.player1 else 'TBD' }}
+                                                    </p>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <div>
+                                                {% if upcoming_match.is_doubles %}
+                                                    <p class="font-medium">
+                                                        {% if upcoming_match.team2_id %}
+                                                            {% if upcoming_match.team2 %}
+                                                                {{ upcoming_match.team2.player1.full_name if upcoming_match.team2.player1 else 'TBD' }} /
+                                                                {{ upcoming_match.team2.player2.full_name if upcoming_match.team2.player2 else 'TBD' }}
+                                                            {% else %}
+                                                                Team 2 (TBD)
+                                                            {% endif %}
+                                                        {% else %}
+                                                            Team 2 (TBD)
+                                                        {% endif %}
+                                                    </p>
+                                                {% else %}
+                                                    <p class="font-medium">
+                                                        {{ upcoming_match.player2.full_name if upcoming_match.player2 else 'TBD' }}
+                                                    </p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if not ongoing_match and not upcoming_match %}
+                                <div class="p-4 text-gray-500 text-center">
+                                    <i class="fas fa-pause-circle text-4xl mb-2"></i>
+                                    <p>No matches currently scheduled for this court</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-span-3 p-8 text-center">
+                    <p class="text-gray-500 text-lg">No courts have been assigned to matches yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Connect to SocketIO
+    const socket = io();
+    
+    // Join the courts view room for this tournament
+    socket.emit('join_courts_view', {
+        tournament_id: {{ tournament.id }}
+    });
+    
+    // Join the tournament room for general updates
+    socket.emit('join_tournament', {
+        tournament_id: {{ tournament.id }}
+    });
+    
+    // Handle score updates
+    socket.on('score_update', function(data) {
+        // Update the score display if the match is on a court we're displaying
+        const player1ScoreEl = document.getElementById(`score-${data.match_id}-player1`);
+        const player2ScoreEl = document.getElementById(`score-${data.match_id}-player2`);
+        
+        if (player1ScoreEl && player2ScoreEl) {
+            player1ScoreEl.textContent = data.player1_score;
+            player2ScoreEl.textContent = data.player2_score;
+            
+            // Add a brief highlight effect
+            player1ScoreEl.classList.add('text-green-600');
+            player2ScoreEl.classList.add('text-green-600');
+            
+            setTimeout(function() {
+                player1ScoreEl.classList.remove('text-green-600');
+                player2ScoreEl.classList.remove('text-green-600');
+            }, 2000);
+        }
+    });
+    
+    // Handle court status updates
+    socket.on('court_update', function(data) {
+        // Refresh the whole page if court status changes
+        // This could be enhanced to update the DOM directly for a smoother experience
+        location.reload();
+    });
+    
+    // Handle match status updates (completion, verification)
+    socket.on('match_update', function(data) {
+        // Refresh if a match is completed
+        if (data.status === 'completed') {
+            location.reload();
+        }
+    });
+    /*
+    // Periodically update court data via API
+    function updateCourtData() {
+        fetch(`/tournament/api/{{ tournament.id }}/courts_data`)
+            .then(response => response.json())
+            .then(data => {
+                // Process the courts data
+                // This could be enhanced to update the DOM directly
+                // For simplicity, we're just checking for changes and reloading if needed
+                
+                // Simplified approach: check for any updates by comparing timestamps
+                // In a real implementation, we'd compare actual data
+                const now = new Date().getTime();
+                const lastCheck = parseInt(localStorage.getItem('lastCourtCheck') || '0');
+                
+                // Only reload if it's been more than 30 seconds since the last reload
+                if (now - lastCheck > 30000) {
+                    localStorage.setItem('lastCourtCheck', now.toString());
+                    location.reload();
+                }
+            })
+            .catch(error => console.error('Error updating court data:', error));
+    }
+    
+    // Update court data every 60 seconds
+    setInterval(updateCourtData, 60000);
+    */
+});
+</script>
+{% endblock %}

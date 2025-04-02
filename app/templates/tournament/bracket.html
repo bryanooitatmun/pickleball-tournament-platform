@@ -5,7 +5,7 @@
 {% block styles %}
 {{ super() }}
 <style>
-    /* Bracket styling */
+    /* Bracket styling - Desktop */
     .bracket-container {
         width: 100%;
         position: relative;
@@ -25,6 +25,7 @@
         border-radius: 0.375rem;
         margin-bottom: 1rem;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        position: relative;
     }
     
     .bracket-team {
@@ -39,6 +40,50 @@
     .bracket-winner {
         background-color: #f0fdf4;
     }
+    
+    /* Position codes */
+    .position-code {
+        display: inline-block;
+        padding: 2px 6px;
+        background-color: #f1f5f9;
+        color: #4475C2;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        margin-left: 4px;
+    }
+
+    /* Special match styles for finals/third place */
+    .gold-match {
+        background-color: #fefce8 !important; 
+        border-color: #fbbf24 !important;
+        box-shadow: 0 1px 3px rgba(251, 191, 36, 0.3) !important;
+    }
+    
+    .bronze-match {
+        background-color: #fef3f2 !important;
+        border-color: #fdba74 !important;
+        box-shadow: 0 1px 3px rgba(253, 186, 116, 0.3) !important;
+    }
+    
+    /* Round indicators */
+    .round-indicator {
+        height: 4px;
+        width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+    }
+    
+    .round-indicator-r1 { background-color: #4475C2; }
+    .round-indicator-r2 { background-color: #6366f1; }
+    .round-indicator-r3 { background-color: #8b5cf6; }
+    .round-indicator-r4 { background-color: #ec4899; }
+    .round-indicator-r5 { background-color: #f59e0b; }
+    .round-indicator-r6 { background-color: #f97316; }
     
     /* Group stage specific styling */
     .group-stage {
@@ -126,6 +171,140 @@
     .tab-content.active {
         display: block;
     }
+    
+    /* Mobile bracket styling */
+    .mobile-bracket-container {
+        display: none;
+    }
+    
+    .mobile-rounds-nav {
+        display: flex;
+        overflow-x: auto;
+        white-space: nowrap;
+        margin-bottom: 1rem;
+        border-radius: 9999px;
+        background-color: #f3f4f6;
+        padding: 4px;
+    }
+    
+    .mobile-round-tab {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        border-radius: 9999px;
+        color: #4b5563;
+    }
+    
+    .mobile-round-tab.active {
+        background-color: #4475C2;
+        color: white;
+    }
+    
+    .mobile-round-view {
+        display: none;
+    }
+    
+    .mobile-round-view.active {
+        display: block;
+    }
+    
+    .mobile-match {
+        position: relative;
+        background-color: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .mobile-match-number {
+        position: absolute;
+        left: -2.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 2rem;
+        height: 2rem;
+        background-color: #4475C2;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+    
+    .mobile-match-next {
+        position: absolute;
+        right: -3rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #4475C2;
+        font-weight: 600;
+    }
+    
+    .mobile-player {
+        padding: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .mobile-player-name {
+        display: flex;
+        align-items: center;
+    }
+    
+    .mobile-player-code {
+        margin-left: 0.5rem;
+    }
+    
+    .mobile-player-score {
+        font-weight: 600;
+    }
+    
+    .mobile-player-winner {
+        background-color: #f0fdf4;
+        border-radius: 0.25rem;
+    }
+    
+    .mobile-match-info {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 0.5rem;
+        text-align: center;
+    }
+    
+    /* Media queries for responsive design */
+    @media (max-width: 767px) {
+        .bracket-container {
+            display: none;
+        }
+        
+        .mobile-bracket-container {
+            display: block;
+        }
+
+        .desktop-bracket-container {
+            display: none;
+        }
+    }
+
+    @media (min-width: 767px) {
+        .bracket-container {
+            display: block;
+        }
+        
+        .mobile-bracket-container {
+            display: none;
+        }
+
+        .desktop-bracket-container {
+            display: block;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -149,7 +328,7 @@
         {% for category in categories %}
             <a href="{{ url_for('tournament.bracket', id=tournament.id, category=category.id) }}" 
                 class="py-2 px-4 border-b-2 font-medium text-sm whitespace-nowrap {% if category.id == selected_category.id %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
-                {{ category.category_type.value }}
+                {{ category.name }}
             </a>
         {% endfor %}
     </div>
@@ -158,10 +337,10 @@
 <!-- Tournament Bracket and Results -->
 <div class="bg-white p-4 rounded-lg shadow-sm mb-8">
     <h1 class="text-xl font-semibold mb-4">{{format.value}}</h1>
+    
     {% if has_group_stage %}
-
-        <!-- For Group + Knockout format -->
-        <div class="tab-container">
+        <!-- For Group + Knockout format - DESKTOP VIEW -->
+        <div id="desktop-tournament-bracket" class="desktop-bracket-container tab-container">
             <div class="tabs">
                 <div class="tab active" data-tab="group-stage">Group Stage</div>
                 <div class="tab" data-tab="knockout-stage">Knockout Stage</div>
@@ -205,6 +384,7 @@
                                                                     {% endif %}
                                                                 </div>
                                                                 {{ standing.team.player1.full_name.split()[-1] }}/{{ standing.team.player2.full_name.split()[-1] }}
+                                                                <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position }}</span>
                                                             </div>
                                                         {% else %}
                                                             TBD
@@ -222,6 +402,7 @@
                                                                     {% endif %}
                                                                 </div>
                                                                 {{ standing.player.full_name }}
+                                                                <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position }}</span>
                                                             </div>
                                                         {% else %}
                                                             TBD
@@ -248,14 +429,16 @@
                                                     {% if selected_category.is_doubles() %}
                                                         {% if match.team1 %}
                                                             {{ match.team1.player1.full_name.split()[-1] }}/{{ match.team1.player2.full_name.split()[-1] }}
+                                                            {% if match.player1_code %}<span class="position-code">{{ match.player1_code }}</span>{% endif %}
                                                         {% else %}
-                                                            TBD
+                                                            {% if match.player1_code %}<span class="position-code">{{ match.player1_code }}</span>{% else %}TBD{% endif %}
                                                         {% endif %}
                                                     {% else %}
                                                         {% if match.player1 %}
                                                             {{ match.player1.full_name }}
+                                                            {% if match.player1_code %}<span class="position-code">{{ match.player1_code }}</span>{% endif %}
                                                         {% else %}
-                                                            TBD
+                                                            {% if match.player1_code %}<span class="position-code">{{ match.player1_code }}</span>{% else %}TBD{% endif %}
                                                         {% endif %}
                                                     {% endif %}
                                                 </div>
@@ -277,14 +460,16 @@
                                                     {% if selected_category.is_doubles() %}
                                                         {% if match.team2 %}
                                                             {{ match.team2.player1.full_name.split()[-1] }}/{{ match.team2.player2.full_name.split()[-1] }}
+                                                            {% if match.player2_code %}<span class="position-code">{{ match.player2_code }}</span>{% endif %}
                                                         {% else %}
-                                                            TBD
+                                                            {% if match.player2_code %}<span class="position-code">{{ match.player2_code }}</span>{% else %}TBD{% endif %}
                                                         {% endif %}
                                                     {% else %}
                                                         {% if match.player2 %}
                                                             {{ match.player2.full_name }}
+                                                            {% if match.player2_code %}<span class="position-code">{{ match.player2_code }}</span>{% endif %}
                                                         {% else %}
-                                                            TBD
+                                                            {% if match.player2_code %}<span class="position-code">{{ match.player2_code }}</span>{% else %}TBD{% endif %}
                                                         {% endif %}
                                                     {% endif %}
                                                 </div>
@@ -335,7 +520,9 @@
                             </h3>
                             
                             {% for match in bracket_data.knockout_rounds[round_num]|sort(attribute='match_order') %}
-                                <div id="match-{{ match.id }}" class="bracket-match">
+                                <div id="match-{{ match.id }}" class="bracket-match {% if round_num == 1 %}gold-match{% elif round_num == 1.5 %}bronze-match{% endif %}">
+                                    <!-- Round indicator bar -->
+                                    <div class="round-indicator round-indicator-r{{ round_num|int }}"></div>
                                     <div class="bracket-team {% if match.winner_id == match.player1_id or match.winning_team_id == match.team1_id %}bracket-winner{% endif %}">
                                         <div class="flex items-center">
                                         {% if selected_category.is_doubles() %}
@@ -357,7 +544,11 @@
                                                     {{ match.team1.player2.full_name.split()[-1] }}
                                                 </a>
                                             {% else %}
-                                                <span class="text-sm text-gray-500">TBD</span>
+                                                {% if match.player1_code %}
+                                                    <span class="position-code">{{ match.player1_code }}</span>
+                                                {% else %}
+                                                    <span class="text-sm text-gray-500">TBD</span>
+                                                {% endif %}
                                             {% endif %}                                
                                         {% else %}
                                             {% if match.player1 %}
@@ -374,7 +565,11 @@
                                                     {{ match.player1.full_name }}
                                                 </a>
                                             {% else %}
-                                                <span class="text-sm text-gray-500">TBD</span>
+                                                {% if match.player1_code %}
+                                                    <span class="position-code">{{ match.player1_code }}</span>
+                                                {% else %}
+                                                    <span class="text-sm text-gray-500">TBD</span>
+                                                {% endif %}
                                             {% endif %}
                                         {% endif %}
                                         </div>
@@ -414,7 +609,11 @@
                                                         {{ match.team2.player2.full_name.split()[-1] }}
                                                     </a>
                                                 {% else %}
-                                                    <span class="text-sm text-gray-500">TBD</span>
+                                                    {% if match.player2_code %}
+                                                        <span class="position-code">{{ match.player2_code }}</span>
+                                                    {% else %}
+                                                        <span class="text-sm text-gray-500">TBD</span>
+                                                    {% endif %}
                                                 {% endif %}                                    
                                             {% else %}
                                                 {% if match.player2 %}
@@ -431,7 +630,11 @@
                                                         {{ match.player2.full_name }}
                                                     </a>
                                                 {% else %}
-                                                    <span class="text-sm text-gray-500">TBD</span>
+                                                    {% if match.player2_code %}
+                                                        <span class="position-code">{{ match.player2_code }}</span>
+                                                    {% else %}
+                                                        <span class="text-sm text-gray-500">TBD</span>
+                                                    {% endif %}
                                                 {% endif %}
                                             {% endif %}
                                         </div>
@@ -467,8 +670,217 @@
                 </div>
             </div>
         </div>
+        
+        <!-- MOBILE VIEW for Group + Knockout format -->
+        <div id="mobile-tournament-bracket" class="mobile-bracket-container">
+            <!-- Mobile tabs for Group Stage / Knockout -->
+            <div class="tab-container mb-4">
+                <div class="tabs">
+                    <div class="tab active" data-tab="mobile-group-stage">Group Stage</div>
+                    <div class="tab" data-tab="mobile-knockout-stage">Knockout Stage</div>
+                </div>
+                
+                <!-- Mobile Group Stage Tab Content -->
+                <div class="tab-content active" id="mobile-group-stage">
+                    <div class="mt-4">
+                        {% for group_data in bracket_data.groups %}
+                            <div class="bg-white rounded-lg shadow-sm mb-6">
+                                <div class="group-header">Group {{ group_data.group.name }}</div>
+                                
+                                <!-- Mobile Group Standings -->
+                                <table class="group-standings">
+                                    <thead>
+                                        <tr>
+                                            <th>Team</th>
+                                            <th class="text-center">W-L</th>
+                                            <th class="text-center">Sets</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for standing in group_data.standings %}
+                                            <tr class="{% if standing.position <= selected_category.teams_advancing_per_group %}advancing{% endif %}">
+                                                <td>
+                                                    {% if selected_category.is_doubles() %}
+                                                        {% if standing.team %}
+                                                            <div class="flex items-center">
+                                                                {{ standing.team.player1.full_name.split()[-1] }}/{{ standing.team.player2.full_name.split()[-1] }}
+                                                                <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position }}</span>
+                                                            </div>
+                                                        {% else %}
+                                                            TBD
+                                                        {% endif %}
+                                                    {% else %}
+                                                        {% if standing.player %}
+                                                            <div class="flex items-center">
+                                                                {{ standing.player.full_name }}
+                                                                <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position }}</span>
+                                                            </div>
+                                                        {% else %}
+                                                            TBD
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-center">{{ standing.matches_won }}-{{ standing.matches_lost }}</td>
+                                                <td class="text-center">
+                                                    {{ standing.sets_won }}-{{ standing.sets_lost }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Mobile Knockout Stage Tab Content -->
+                <div class="tab-content" id="mobile-knockout-stage">
+                    <!-- Mobile Round Navigation -->
+                    <div class="mobile-rounds-nav">
+                        {% set round_names = {
+                            1: 'F',
+                            1.5: '3P',
+                            2: 'SF',
+                            3: 'QF',
+                            4: 'R16',
+                            5: 'R32',
+                            6: 'R64'
+                        } %}
+                        
+                        {% for round_num in bracket_data.knockout_rounds|sort(reverse=true) %}
+                            <div class="mobile-round-tab {% if loop.first %}active{% endif %}" data-round="{{ round_num }}">
+                                {{ round_names[round_num] if round_num in round_names else 'R' ~ round_num }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Mobile Round Views -->
+                    {% for round_num in bracket_data.knockout_rounds|sort(reverse=true) %}
+                        <div id="mobile-round-{{ round_num }}" class="mobile-round-view {% if loop.first %}active{% endif %}">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-4 text-center">
+                                {% if round_num == 1 %}
+                                    Final
+                                {% elif round_num == 1.5 %}
+                                    3rd Place
+                                {% elif round_num == 2 %}
+                                    Semifinals
+                                {% elif round_num == 3 %}
+                                    Quarterfinals
+                                {% elif round_num == 4 %}
+                                    Round of 16
+                                {% elif round_num == 5 %}
+                                    Round of 32
+                                {% elif round_num == 6 %}
+                                    Round of 64
+                                {% else %}
+                                    Round {{ round_num }}
+                                {% endif %}
+                            </h3>
+                            
+                            <div class="mx-6">
+                                {% for match in bracket_data.knockout_rounds[round_num]|sort(attribute='match_order') %}
+                                    <div class="mobile-match {% if round_num == 1 %}gold-match{% elif round_num == 1.5 %}bronze-match{% endif %}">
+                                        <!-- Match number and next indicator -->
+                                        <div class="mobile-match-number">{{ match.match_order + 1 }}</div>
+                                        <div class="mobile-match-next">{{ match.match_order + 1 }}→</div>
+                                        
+                                        <!-- Player 1 -->
+                                        <div class="mobile-player {% if match.winner_id == match.player1_id or match.winning_team_id == match.team1_id %}mobile-player-winner{% endif %}">
+                                            <div class="mobile-player-name">
+                                                {% if selected_category.is_doubles() %}
+                                                    {% if match.team1 %}
+                                                        {{ match.team1.player1.full_name.split()[-1] }}/{{ match.team1.player2.full_name.split()[-1] }}
+                                                    {% else %}
+                                                        {% if match.player1_code %}
+                                                            <span class="position-code">{{ match.player1_code }}</span>
+                                                        {% else %}
+                                                            TBD
+                                                        {% endif %}
+                                                    {% endif %}
+                                                {% else %}
+                                                    {% if match.player1 %}
+                                                        {{ match.player1.full_name }}
+                                                    {% else %}
+                                                        {% if match.player1_code %}
+                                                            <span class="position-code">{{ match.player1_code }}</span>
+                                                        {% else %}
+                                                            TBD
+                                                        {% endif %}
+                                                    {% endif %}
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <div class="mobile-player-score">
+                                                {% if scores and match.id in scores %}
+                                                    {% for score in scores[match.id] %}
+                                                        <span class="{% if score.player1_score > score.player2_score %}text-green-600{% endif %}">
+                                                            {{ score.player1_score }}
+                                                        </span>
+                                                        {% if not loop.last %} - {% endif %}
+                                                    {% endfor %}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Player 2 -->
+                                        <div class="mobile-player {% if match.winner_id == match.player2_id or match.winning_team_id == match.team2_id %}mobile-player-winner{% endif %}">
+                                            <div class="mobile-player-name">
+                                                {% if selected_category.is_doubles() %}
+                                                    {% if match.team2 %}
+                                                        {{ match.team2.player1.full_name.split()[-1] }}/{{ match.team2.player2.full_name.split()[-1] }}
+                                                    {% else %}
+                                                        {% if match.player2_code %}
+                                                            <span class="position-code">{{ match.player2_code }}</span>
+                                                        {% else %}
+                                                            TBD
+                                                        {% endif %}
+                                                    {% endif %}
+                                                {% else %}
+                                                    {% if match.player2 %}
+                                                        {{ match.player2.full_name }}
+                                                    {% else %}
+                                                        {% if match.player2_code %}
+                                                            <span class="position-code">{{ match.player2_code }}</span>
+                                                        {% else %}
+                                                            TBD
+                                                        {% endif %}
+                                                    {% endif %}
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <div class="mobile-player-score">
+                                                {% if scores and match.id in scores %}
+                                                    {% for score in scores[match.id] %}
+                                                        <span class="{% if score.player2_score > score.player1_score %}text-green-600{% endif %}">
+                                                            {{ score.player2_score }}
+                                                        </span>
+                                                        {% if not loop.last %} - {% endif %}
+                                                    {% endfor %}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Match info -->
+                                        <div class="mobile-match-info">
+                                            {% if match.completed %}
+                                                <span class="text-green-600">Completed</span>
+                                            {% elif match.scheduled_time %}
+                                                <span>
+                                                    {{ match.scheduled_time.strftime('%b %d, %I:%M %p') }}
+                                                    {% if match.court %}• {{ match.court }}{% endif %}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
     {% else %}
-        <!-- Standard elimination bracket -->
+        <!-- Standard elimination bracket - DESKTOP VIEW -->
         <div id="tournament-bracket" class="bracket-container">
             {% for round_num in bracket_data.knockout_rounds|sort(reverse=true) %}
                 <div class="bracket-round">
@@ -493,7 +905,9 @@
                     </h3>
                     
                     {% for match in bracket_data.knockout_rounds[round_num]|sort(attribute='match_order') %}
-                        <div id="match-{{ match.id }}" class="bracket-match">
+                        <div id="match-{{ match.id }}" class="bracket-match {% if round_num == 1 %}gold-match{% elif round_num == 1.5 %}bronze-match{% endif %}">
+                            <!-- Round indicator bar -->
+                            <div class="round-indicator round-indicator-r{{ round_num|int }}"></div>
                             <div class="bracket-team {% if match.winner_id == match.player1_id or match.winning_team_id == match.team1_id %}bracket-winner{% endif %}">
                                 <div class="flex items-center">
                                 {% if selected_category.is_doubles() %}
@@ -515,7 +929,11 @@
                                             {{ match.team1.player2.full_name.split()[-1] }}
                                         </a>
                                     {% else %}
-                                        <span class="text-sm text-gray-500">TBD</span>
+                                        {% if match.player1_code %}
+                                            <span class="position-code">{{ match.player1_code }}</span>
+                                        {% else %}
+                                            <span class="text-sm text-gray-500">TBD</span>
+                                        {% endif %}
                                     {% endif %}                                
                                 {% else %}
                                     {% if match.player1 %}
@@ -532,7 +950,11 @@
                                             {{ match.player1.full_name }}
                                         </a>
                                     {% else %}
-                                        <span class="text-sm text-gray-500">TBD</span>
+                                        {% if match.player1_code %}
+                                            <span class="position-code">{{ match.player1_code }}</span>
+                                        {% else %}
+                                            <span class="text-sm text-gray-500">TBD</span>
+                                        {% endif %}
                                     {% endif %}
                                 {% endif %}
                                 </div>
@@ -572,7 +994,11 @@
                                                 {{ match.team2.player2.full_name.split()[-1] }}
                                             </a>
                                         {% else %}
-                                            <span class="text-sm text-gray-500">TBD</span>
+                                            {% if match.player2_code %}
+                                                <span class="position-code">{{ match.player2_code }}</span>
+                                            {% else %}
+                                                <span class="text-sm text-gray-500">TBD</span>
+                                            {% endif %}
                                         {% endif %}                                    
                                     {% else %}
                                         {% if match.player2 %}
@@ -589,7 +1015,11 @@
                                                 {{ match.player2.full_name }}
                                             </a>
                                         {% else %}
-                                            <span class="text-sm text-gray-500">TBD</span>
+                                            {% if match.player2_code %}
+                                                <span class="position-code">{{ match.player2_code }}</span>
+                                            {% else %}
+                                                <span class="text-sm text-gray-500">TBD</span>
+                                            {% endif %}
                                         {% endif %}
                                     {% endif %}
                                 </div>
@@ -623,6 +1053,151 @@
                 </div>
             {% endfor %}
         </div>
+        
+        <!-- MOBILE VIEW for single elimination format -->
+        <div id="mobile-tournament-bracket" class="mobile-bracket-container">
+            <!-- Mobile Round Navigation -->
+            <div class="mobile-rounds-nav">
+                {% set round_names = {
+                    1: 'F',
+                    1.5: '3P',
+                    2: 'SF',
+                    3: 'QF',
+                    4: 'R16',
+                    5: 'R32',
+                    6: 'R64'
+                } %}
+                
+                {% for round_num in bracket_data.knockout_rounds|sort(reverse=false) %}
+                    <div class="mobile-round-tab {% if loop.first %}active{% endif %}" data-round="{{ round_num }}">
+                        {{ round_names[round_num] if round_num in round_names else 'R' ~ round_num }}
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Mobile Round Views -->
+            {% for round_num in bracket_data.knockout_rounds|sort(reverse=false) %}
+                <div id="mobile-round-{{ round_num }}" class="mobile-round-view {% if loop.first %}active{% endif %}">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4 text-center">
+                        {% if round_num == 1 %}
+                            Final
+                        {% elif round_num == 1.5 %}
+                            3rd Place
+                        {% elif round_num == 2 %}
+                            Semifinals
+                        {% elif round_num == 3 %}
+                            Quarterfinals
+                        {% elif round_num == 4 %}
+                            Round of 16
+                        {% elif round_num == 5 %}
+                            Round of 32
+                        {% elif round_num == 6 %}
+                            Round of 64
+                        {% else %}
+                            Round {{ round_num }}
+                        {% endif %}
+                    </h3>
+                    
+                    <div class="mx-6">
+                        {% for match in bracket_data.knockout_rounds[round_num]|sort(attribute='match_order') %}
+                            <div class="mobile-match {% if round_num == 1 %}gold-match{% elif round_num == 1.5 %}bronze-match{% endif %}">
+                                <!-- Match number and next indicator -->
+                                <div class="mobile-match-number">{{ match.match_order + 1 }}</div>
+                                <div class="mobile-match-next">{{ match.match_order + 1 }}→</div>
+                                
+                                <!-- Player 1 -->
+                                <div class="mobile-player {% if match.winner_id == match.player1_id or match.winning_team_id == match.team1_id %}mobile-player-winner{% endif %}">
+                                    <div class="mobile-player-name">
+                                        {% if selected_category.is_doubles() %}
+                                            {% if match.team1 %}
+                                                {{ match.team1.player1.full_name.split()[-1] }}/{{ match.team1.player2.full_name.split()[-1] }}
+                                            {% else %}
+                                                {% if match.player1_code %}
+                                                    <span class="position-code">{{ match.player1_code }}</span>
+                                                {% else %}
+                                                    TBD
+                                                {% endif %}
+                                            {% endif %}
+                                        {% else %}
+                                            {% if match.player1 %}
+                                                {{ match.player1.full_name }}
+                                            {% else %}
+                                                {% if match.player1_code %}
+                                                    <span class="position-code">{{ match.player1_code }}</span>
+                                                {% else %}
+                                                    TBD
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="mobile-player-score">
+                                        {% if scores and match.id in scores %}
+                                            {% for score in scores[match.id] %}
+                                                <span class="{% if score.player1_score > score.player2_score %}text-green-600{% endif %}">
+                                                    {{ score.player1_score }}
+                                                </span>
+                                                {% if not loop.last %} - {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <!-- Player 2 -->
+                                <div class="mobile-player {% if match.winner_id == match.player2_id or match.winning_team_id == match.team2_id %}mobile-player-winner{% endif %}">
+                                    <div class="mobile-player-name">
+                                        {% if selected_category.is_doubles() %}
+                                            {% if match.team2 %}
+                                                {{ match.team2.player1.full_name.split()[-1] }}/{{ match.team2.player2.full_name.split()[-1] }}
+                                            {% else %}
+                                                {% if match.player2_code %}
+                                                    <span class="position-code">{{ match.player2_code }}</span>
+                                                {% else %}
+                                                    TBD
+                                                {% endif %}
+                                            {% endif %}
+                                        {% else %}
+                                            {% if match.player2 %}
+                                                {{ match.player2.full_name }}
+                                            {% else %}
+                                                {% if match.player2_code %}
+                                                    <span class="position-code">{{ match.player2_code }}</span>
+                                                {% else %}
+                                                    TBD
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="mobile-player-score">
+                                        {% if scores and match.id in scores %}
+                                            {% for score in scores[match.id] %}
+                                                <span class="{% if score.player2_score > score.player1_score %}text-green-600{% endif %}">
+                                                    {{ score.player2_score }}
+                                                </span>
+                                                {% if not loop.last %} - {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <!-- Match info -->
+                                <div class="mobile-match-info">
+                                    {% if match.completed %}
+                                        <span class="text-green-600">Completed</span>
+                                    {% elif match.scheduled_time %}
+                                        <span>
+                                            {{ match.scheduled_time.strftime('%b %d, %I:%M %p') }}
+                                            {% if match.court %}• {{ match.court }}{% endif %}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
     {% endif %}
 </div>
 
@@ -637,6 +1212,7 @@
 {% block scripts %}
 {{ super() }}
 <script src="{{ url_for('static', filename='js/bracket-visualization.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bracket-mobile.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize the bracket visualization once the DOM is fully loaded
@@ -649,24 +1225,33 @@
         if (tabs.length > 0) {
             tabs.forEach(tab => {
                 tab.addEventListener('click', function() {
-                    // Remove active class from all tabs
-                    tabs.forEach(t => t.classList.remove('active'));
+                    // Get the parent tab container
+                    const tabContainer = this.closest('.tabs');
+                    
+                    // Find tabs only in this container (to avoid affecting other tab groups)
+                    const siblingTabs = tabContainer.querySelectorAll('.tab');
+                    
+                    // Remove active class from sibling tabs
+                    siblingTabs.forEach(t => t.classList.remove('active'));
                     
                     // Add active class to clicked tab
                     this.classList.add('active');
                     
-                    // Hide all tab content
-                    const tabContents = document.querySelectorAll('.tab-content');
+                    // Get the container that holds the content
+                    const contentContainer = tabContainer.closest('.tab-container');
+                    
+                    // Hide all tab content in this container
+                    const tabContents = contentContainer.querySelectorAll('.tab-content');
                     tabContents.forEach(content => {
                         content.classList.remove('active');
                     });
                     
                     // Show the selected tab content
                     const tabId = this.getAttribute('data-tab');
-                    document.getElementById(tabId).classList.add('active');
+                    contentContainer.querySelector('#' + tabId).classList.add('active');
                     
                     // Reinitialize bracket visualization if showing knockout stage
-                    if (tabId === 'knockout-stage') {
+                    if (tabId === 'knockout-stage' || tabId === 'mobile-knockout-stage') {
                         // Small delay to ensure DOM is updated
                         setTimeout(() => {
                             if (document.getElementById('tournament-bracket')) {

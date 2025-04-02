@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-4">{{ title }}</h1>
+    <h2 class="text-xl text-gray-600 mb-6">Tournament: {{ tournament.name }} | Category: {{ category.name }}</h2>
+
+    <p class="mb-4 text-gray-700">Drag and drop participants to change their seed order. The list is ordered by the current seed (lowest first, unseeded last). Click 'Save Seeding' to apply changes.</p>
+
+    <div id="seeding-list-container" class="bg-white shadow rounded-lg p-6">
+        <ol id="seedable-list" class="list-decimal list-inside space-y-3">
+            {% for reg in registrations %}
+            <li class="p-3 border rounded-md bg-gray-50 cursor-move flex justify-between items-center" data-registration-id="{{ reg.id }}">
+                <span class="font-medium">
+                    <span class="inline-block w-6 text-right mr-2">{{ loop.index }}.</span> <!-- Display current visual order -->
+                    {{ reg.team_name }}
+                </span>
+                <span class="text-sm text-gray-500">
+                    Current Seed: {{ reg.seed if reg.seed is not none else 'Unseeded' }}
+                </span>
+                <!-- Add drag handle icon if needed by JS library -->
+                <!-- <span class="drag-handle">☰</span> -->
+            </li>
+            {% else %}
+            <li class="text-gray-500">No approved registrations found for this category.</li>
+            {% endfor %}
+        </ol>
+    </div>
+
+    <div class="mt-6">
+        <button id="save-seeding-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+            Save Seeding
+        </button>
+        <span id="save-status" class="ml-4 text-gray-600"></span>
+    </div>
+
+</div>
+
+<!-- Include SortableJS library (example using CDN) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
+<!-- Embedded JavaScript for handling drag/drop and saving -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const seedableList = document.getElementById('seedable-list');
+    const saveButton = document.getElementById('save-seeding-button');
+    const saveStatus = document.getElementById('save-status');
+
+    if (!seedableList || !saveButton || !saveStatus) {
+        console.error('Required elements for seeding UI not found.');
+        return;
+    }
+
+    // Initialize SortableJS
+    let sortable = Sortable.create(seedableList, {
+        animation: 150, // ms, animation speed moving items when sorting, `0` — without animation
+        ghostClass: 'sortable-ghost', // Class name for the drop placeholder
+        chosenClass: 'sortable-chosen', // Class name for the chosen item
+        dragClass: 'sortable-drag', // Class name for the dragging item
+        // handle: '.drag-handle', // Uncomment if using a specific drag handle element
+    });
+
+    // Save button click handler
+    saveButton.addEventListener('click', function () {
+        saveButton.disabled = true;
+        saveStatus.textContent = 'Saving...';
+        saveStatus.classList.remove('text-red-500', 'text-green-500');
+        saveStatus.classList.add('text-gray-600');
+
+        const listItems = seedableList.querySelectorAll('li');
+        const seedData = [];
+
+        listItems.forEach((item, index) => {
+            const registrationId = item.getAttribute('data-registration-id');
+            if (registrationId) {
+                seedData.push({
+                    registration_id: parseInt(registrationId, 10),
+                    seed: index + 1 // Seed is 1-based index
+                });
+            }
+        });
+
+        // Use Jinja2 template to generate the URL
+        const saveUrl = "{{ url_for('organizer.manage_seeding', tournament_id=tournament.id, category_id=category.id) }}";
+
+        fetch(saveUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // Use Jinja2 to generate CSRF token
+                'X-CSRFToken': "{{ csrf_token() }}"
+            },
+            body: JSON.stringify(seedData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                saveStatus.textContent = 'Seeding saved successfully!';
+                saveStatus.classList.add('text-green-500');
+                // Optionally, update the "Current Seed" text in the list items visually
+                listItems.forEach((item, index) => {
+                    const seedDisplay = item.querySelector('.text-sm.text-gray-500');
+                    if (seedDisplay) {
+                        seedDisplay.textContent = `Current Seed: ${index + 1}`;
+                    }
+                    // Update the visual order number
+                    const orderSpan = item.querySelector('.inline-block.w-6');
+                     if (orderSpan) {
+                        orderSpan.textContent = `${index + 1}.`;
+                    }
+                });
+
+            } else {
+                saveStatus.textContent = `Error: ${data.message || 'Unknown error'}`;
+                saveStatus.classList.add('text-red-500');
+            }
+        })
+        .catch(error => {
+            console.error('Error saving seeding:', error);
+            saveStatus.textContent = 'An error occurred while saving.';
+            saveStatus.classList.add('text-red-500');
+        })
+        .finally(() => {
+            saveButton.disabled = false;
+        });
+    });
+});
+</script>
+{% endblock %}

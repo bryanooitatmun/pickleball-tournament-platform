@@ -262,7 +262,7 @@
                     </div>
                 {% endif %}
                 
-                <form method="POST" action="{{ url_for('organizer.edit_score', id=tournament.id, category_id=category.id, match_id=match.id) }}" class="space-y-6">
+                <form method="POST" action="{{ url_for('organizer.update_match', id=tournament.id, category_id=category.id, match_id=match.id) }}" class="space-y-6">
                     {{ form.hidden_tag() }}
                     
                     <h3 class="font-medium text-gray-700">Add/Update Set Score</h3>
@@ -312,11 +312,11 @@
             <h2 class="text-xl font-bold mb-4">Actions</h2>
             
             <div class="space-y-3">
-                <a href="{{ url_for('organizer.edit_match', id=tournament.id, category_id=category.id, match_id=match.id) }}" class="block w-full text-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                <a href="{{ url_for('organizer.update_match', id=tournament.id, category_id=category.id, match_id=match.id) }}" class="block w-full text-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
                     Edit Match Details
                 </a>
                 
-                <form method="POST" action="{{ url_for('organizer.complete_match', id=tournament.id, category_id=category.id, match_id=match.id) }}">
+                <form method="POST" action="{{ url_for('organizer.update_match', id=tournament.id, category_id=category.id, match_id=match.id) }}">
                     <input type="hidden" name="match_id" value="{{ match.id }}">
                     
                     {% if match.player1 and match.player2 %}

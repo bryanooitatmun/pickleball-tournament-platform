@@ -5,6 +5,8 @@ Flask-Login==0.6.3
 Flask-WTF==1.2.1
 Flask-Migrate==4.0.5
 Flask-Mail==0.10.0
+Flask-SocketIO==5.3.6  # Added for real-time features
+Flask-APScheduler==1.13.1  # Added for task scheduling
 email-validator==2.1.0
 WTForms==3.1.1
 
@@ -29,3 +31,7 @@ requests==2.32.3
 
 # Deployment
 gunicorn==21.2.0
+eventlet==0.35.2  # Added as WebSocket server for Flask-SocketIO
+
+# Testing
+pytest==8.1.1 # Or latest version

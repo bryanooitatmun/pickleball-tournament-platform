@@ -1,0 +1,17 @@
+Hello {{ user.username }},
+
+This is a reminder that your match in the {{ category_name }} category of {{ tournament.name }} is scheduled to start soon.
+
+Match Details:
+- Time: {{ match.scheduled_time.strftime('%I:%M %p, %d %B %Y') }}
+- Court: {{ match.court or "TBD" }}
+{% if match.livestream_url %}
+- Livestream: {{ match.livestream_url }}
+{% endif %}
+
+Please ensure you arrive at least 15-30 minutes before your scheduled time to check in with tournament officials.
+
+Good luck!
+
+Best regards,
+{{ tournament.name }} Organizers

@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, TextAreaField, IntegerField, FloatField, SelectField, DateField, DateTimeField, TimeField, BooleanField, SubmitField, FieldList, FormField, DecimalField
-from wtforms.validators import DataRequired, Length, NumberRange, Optional, ValidationError
+from wtforms import StringField, TextAreaField, IntegerField, FloatField, SelectField, DateField, DateTimeField, TimeField, BooleanField, SubmitField, FieldList, FormField, DecimalField, HiddenField, URLField
+from wtforms.validators import DataRequired, Length, NumberRange, Optional, ValidationError, URL
 from datetime import datetime, timedelta
 from app.models import TournamentTier, TournamentFormat, CategoryType, TournamentStatus, Venue, SponsorTier
 
@@ -16,6 +16,8 @@ def validate_file_size(max_size_mb=5):
         function: A validator function that can be used with WTForms
     """
     def _validate_file_size(form, field):
+        if isinstance(field.data, str):
+            return True
         if field.data:
             # Get file size in bytes and convert to MB
             file_size = len(field.data.read()) / 1024 / 1024
@@ -49,7 +51,7 @@ class TournamentForm(FlaskForm):
                         choices=[(status.name, status.value) for status in TournamentStatus], 
                         validators=[DataRequired()])
     
-    prize_pool = FloatField('Prize Pool (RM)', validators=[Optional(), NumberRange(min=0)])
+    prize_pool = FloatField('Prize Pool (RM)', validators=[NumberRange(min=0)])
     
     # Upload fields
     logo = FileField('Tournament Logo', validators=[
@@ -104,53 +106,85 @@ class TournamentForm(FlaskForm):
             (venue.id, venue.name) for venue in venues
         ]
 
-# class CategoryForm(FlaskForm):
-#     category_type = SelectField('Category', validators=[DataRequired()], choices=[
-#         (CategoryType.MENS_SINGLES.name, "Men's Singles"),
-#         (CategoryType.WOMENS_SINGLES.name, "Women's Singles"),
-#         (CategoryType.MENS_DOUBLES.name, "Men's Doubles"),
-#         (CategoryType.WOMENS_DOUBLES.name, "Women's Doubles"),
-#         (CategoryType.MIXED_DOUBLES.name, "Mixed Doubles")
-#     ])
-#     max_participants = IntegerField('Maximum Participants', validators=[DataRequired(), NumberRange(min=2, max=128)])
-#     points_awarded = IntegerField('Points Awarded', validators=[DataRequired(), NumberRange(min=0)])
-#     submit = SubmitField('Add Category')
-
 class SeedingForm(FlaskForm):
     player_id = IntegerField('Player ID', validators=[DataRequired()])
     seed = IntegerField('Seed', validators=[NumberRange(min=1)])
     submit = SubmitField('Update Seed')
 
-class MatchForm(FlaskForm):
-    court = StringField('Court', validators=[Length(max=50)])
-    scheduled_time = DateField('Date', format='%Y-%m-%d')
-    scheduled_time_hour = TimeField('Time', format='%H:%M')
-    player1_id = SelectField('Player 1', coerce=int)
-    player2_id = SelectField('Player 2', coerce=int)
-    player1_partner_id = SelectField('Player 1 Partner (doubles only)', coerce=int)
-    player2_partner_id = SelectField('Player 2 Partner (doubles only)', coerce=int)
-    submit = SubmitField('Save Match')
-
 class ScoreForm(FlaskForm):
-    set_number = IntegerField('Set', validators=[DataRequired(), NumberRange(min=1)])
-    player1_score = IntegerField('Player 1 Score', validators=[DataRequired(), NumberRange(min=0)])
-    player2_score = IntegerField('Player 2 Score', validators=[DataRequired(), NumberRange(min=0)])
-    submit = SubmitField('Save Score')
+    """Form for a single set score entry"""
+    player1_score = IntegerField('Player/Team 1 Score', validators=[NumberRange(min=0)], default=0)
+    player2_score = IntegerField('Player/Team 2 Score', validators=[NumberRange(min=0)], default=0)
 
-class BracketGenerationForm(FlaskForm):
-    category_id = SelectField('Category', coerce=int, validators=[DataRequired()])
-    use_seeding = BooleanField('Use Seeding')
-    third_place_match = BooleanField('Include Third Place Match')
-    submit = SubmitField('Generate Bracket')
+class MatchForm(FlaskForm):
+    """Form for editing match details"""
+    court = StringField('Court Assignment', validators=[Optional(), Length(max=50)])
+    scheduled_time = DateTimeField('Scheduled Time', format='%Y-%m-%dT%H:%M', validators=[Optional()])
+    livestream_url = URLField('Livestream URL', validators=[URL()])  # Will fail on invalid URLs
+    
+    # Score information
+    set_count = IntegerField('Number of Sets', validators=[NumberRange(min=0, max=5)], default=0)
+    scores = FieldList(FormField(ScoreForm), min_entries=0, max_entries=5)
+    
+    # Verification flags
+    referee_verified = BooleanField('Referee Verified', default=False)
+    player_verified = BooleanField('Player Verified', default=False)
+    
+    def __init__(self, *args, **kwargs):
+        super(MatchForm, self).__init__(*args, **kwargs)
+        # Pre-populate with 3 score forms by default
+        while len(self.scores) < 3:
+            self.scores.append_entry()
 
 class CompleteMatchForm(FlaskForm):
-    match_id = IntegerField('Match ID', validators=[DataRequired()])
-    winner_id = IntegerField('Winner ID', validators=[DataRequired()])
-    completed = BooleanField('Mark as Completed')
-    submit = SubmitField('Complete Match')
+    """Form for completing a match with scores and winner"""
+    # Hidden fields for match identification
+    match_id = HiddenField('Match ID', validators=[DataRequired()])
+    
+    # Score information
+    set_count = IntegerField('Number of Sets', validators=[NumberRange(min=1, max=5)], default=3)
+    scores = FieldList(FormField(ScoreForm), min_entries=1, max_entries=5)
+    
+    # Verification
+    referee_verified = BooleanField('I verify that these scores are correct', default=False)
+    
+    def __init__(self, *args, **kwargs):
+        super(CompleteMatchForm, self).__init__(*args, **kwargs)
+        # Pre-populate with 3 score forms by default
+        while len(self.scores) < 3:
+            self.scores.append_entry()
 
+class BulkMatchForm(FlaskForm):
+    """Form for bulk editing matches"""
+    court = StringField('Court Assignment', validators=[Optional(), Length(max=50)])
+    scheduled_date = DateField('Scheduled Date', format='%Y-%m-%d', validators=[Optional()])
+    scheduled_time = TimeField('Scheduled Time', format='%H:%M', validators=[Optional()])
+    
+    # Selection fields
+    select_all = BooleanField('Select All', default=False)
+    match_ids = FieldList(HiddenField('Match ID'), min_entries=0)
+    selected_matches = FieldList(BooleanField('Select'), min_entries=0)
+    
+    # Confirmation step
+    confirm = BooleanField('Confirm Changes', validators=[Optional()])
+    
+    preview = SubmitField('Preview Changes')
+
+class BracketGenerationForm(FlaskForm):
+    """Form for generating tournament brackets"""
+    bracket_type = SelectField('Bracket Type', choices=[
+        ('generate_groups', 'Generate Group Stage'),
+        ('generate_knockout', 'Generate Knockout Stage')
+    ], validators=[DataRequired()])
+    
+    use_seeding = BooleanField('Use Seeding for Bracket Generation', default=True)
+    third_place_match = BooleanField('Include Third Place Match', default=True)
+    
+    submit = SubmitField('Generate Bracket')
 
 class CategoryForm(FlaskForm):
+    name = StringField('Category Name', validators=[Length(max=100)])
+
     category_type = SelectField('Category Type', choices=[
         (CategoryType.MENS_SINGLES.name, 'Men\'s Singles'),
         (CategoryType.WOMENS_SINGLES.name, 'Women\'s Singles'),
@@ -166,7 +200,7 @@ class CategoryForm(FlaskForm):
     points_awarded = IntegerField('Points Awarded', validators=[DataRequired()], default=100)
     
     registration_fee = DecimalField('Registration Fee', 
-                                   validators=[Optional(), NumberRange(min=0)],
+                                   validators=[NumberRange(min=0)],
                                    default=0.0)
     
     # Format options

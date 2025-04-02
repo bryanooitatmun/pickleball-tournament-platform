@@ -20,7 +20,7 @@ class PrizeService:
         total_percentage = sum(cat.prize_percentage for cat in categories)
         if total_percentage != 100:
             # Normalize if not exactly 100%
-            adjustment_factor = 100 / total_percentage
+            adjustment_factor = 100 / total_percentage if total_percentage != 0 else 0
             for category in categories:
                 category.prize_percentage *= adjustment_factor
         

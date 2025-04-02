@@ -1,258 +1,191 @@
 {% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
 
-{% block title %}Edit Match - {{ tournament.name }} - Pickleball Tournament Platform{% endblock %}
 
 {% block content %}
-<div class="mb-6">
-    <div class="flex items-center gap-2 text-gray-500 text-sm mb-2">
-        <a href="{{ url_for('main.index') }}" class="hover:text-blue-600">Home</a>
-        <span>/</span>
-        <a href="{{ url_for('organizer.dashboard') }}" class="hover:text-blue-600">Organizer Dashboard</a>
-        <span>/</span>
-        <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="hover:text-blue-600">{{ tournament.name }}</a>
-        <span>/</span>
-        <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" class="hover:text-blue-600">{{ category.category_type.value }}</a>
-        <span>/</span>
-        <span class="text-gray-700">Edit Match</span>
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">{{ title }}</h1>
+        <p class="text-gray-600">
+            Tournament: <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:underline">{{ tournament.name }}</a> |
+            Category: <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=match.category_id) }}" class="text-blue-600 hover:underline">{{ match.category.name }}</a>
+        </p>
     </div>
-    
-    <div class="flex justify-between items-start">
-        <div>
-            <h1 class="text-3xl font-bold mb-2">Edit Match</h1>
-            <div class="text-gray-600">{{ category.category_type.value }} • {{ tournament.name }}</div>
-        </div>
-        
-        <div class="flex space-x-3">
-            <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-                Back to Category
-            </a>
-        </div>
-    </div>
-</div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <!-- Match Form -->
-    <div class="lg:col-span-2">
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <h2 class="text-xl font-bold mb-4">Match Details</h2>
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <form method="POST" class="space-y-6">
+            {{ form.hidden_tag() }}
             
-            <form method="POST" action="{{ url_for('organizer.edit_match', id=tournament.id, category_id=category.id, match_id=match.id) }}" class="space-y-6">
-                {{ form.hidden_tag() }}
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Match Details Section -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-700 border-b pb-2">Match Details</h2>
+                    
                     <div>
-                        <label for="court" class="block text-sm font-medium text-gray-700 mb-1">Court</label>
-                        {{ form.court(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
-                        {% for error in form.court.errors %}
-                            <div class="text-red-600 text-xs mt-1">{{ error }}</div>
+                        <div class="font-medium text-gray-700">Match ID: {{ match.id }}</div>
+                        <div class="font-medium text-gray-700">Round: {{ match.round_name }}</div>
+                        {% if match.group %}
+                            <div class="font-medium text-gray-700">Group: {{ match.group.name }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <div class="font-medium text-gray-700 mb-1">Participants:</div>
+                        <div class="p-3 bg-gray-50 rounded-md">
+                            {% if match.is_doubles %}
+                                {% if match.team1 %}
+                                    <div class="font-medium">Team 1: {{ match.team1.player1.full_name }} / {{ match.team1.player2.full_name }}</div>
+                                {% else %}
+                                    <div class="font-medium text-gray-500">Team 1: TBD</div>
+                                {% endif %}
+                                
+                                {% if match.team2 %}
+                                    <div class="font-medium">Team 2: {{ match.team2.player1.full_name }} / {{ match.team2.player2.full_name }}</div>
+                                {% else %}
+                                    <div class="font-medium text-gray-500">Team 2: TBD</div>
+                                {% endif %}
+                            {% else %}
+                                {% if match.player1 %}
+                                    <div class="font-medium">Player 1: {{ match.player1.full_name }}</div>
+                                {% else %}
+                                    <div class="font-medium text-gray-500">Player 1: TBD</div>
+                                {% endif %}
+                                
+                                {% if match.player2 %}
+                                    <div class="font-medium">Player 2: {{ match.player2.full_name }}</div>
+                                {% else %}
+                                    <div class="font-medium text-gray-500">Player 2: TBD</div>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="form-group">
+                            {{ form.court.label(class="block text-sm font-medium text-gray-700") }}
+                            {{ form.court(class="mt-1 block p-2 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm") }}
+                            {% for error in form.court.errors %}
+                                <span class="text-red-600 text-xs">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="form-group">
+                            {{ form.scheduled_time.label(class="block text-sm font-medium text-gray-700") }}
+                            {{ form.scheduled_time(class="mt-1 block p-2  w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm", type="datetime-local") }}
+                            {% for error in form.scheduled_time.errors %}
+                                <span class="text-red-600 text-xs">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="form-group">
+                            {{ form.livestream_url.label(class="block text-sm font-medium text-gray-700") }}
+                            {{ form.livestream_url(class="mt-1 block p-2  w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm") }}
+                            {% for error in form.livestream_url.errors %}
+                                <span class="text-red-600 text-xs">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Scores Section -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-700 border-b pb-2">Match Scores</h2>
+                    
+                    <div class="form-group">
+                        {{ form.set_count.label(class="block text-sm font-medium text-gray-700") }}
+                        {{ form.set_count(class="mt-1 block p-2  w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm", min="0", max="5", onchange="updateSetForms()") }}
+                        {% for error in form.set_count.errors %}
+                            <span class="text-red-600 text-xs">{{ error }}</span>
                         {% endfor %}
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label for="scheduled_time" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                            {{ form.scheduled_time(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md", type="date") }}
-                            {% for error in form.scheduled_time.errors %}
-                                <div class="text-red-600 text-xs mt-1">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                        
-                        <div>
-                            <label for="scheduled_time_hour" class="block text-sm font-medium text-gray-700 mb-1">Time</label>
-                            {{ form.scheduled_time_hour(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md", type="time") }}
-                            {% for error in form.scheduled_time_hour.errors %}
-                                <div class="text-red-600 text-xs mt-1">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="border-t border-gray-200 pt-6">
-                    <h3 class="font-medium text-gray-700 mb-3">Players</h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Player 1 -->
-                        <div class="space-y-4">
-                            <h4 class="text-blue-600 font-medium">Player 1</h4>
-                            
-                            <div>
-                                <label for="player1_id" class="block text-sm font-medium text-gray-700 mb-1">Select Player</label>
-                                {{ form.player1_id(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
-                                {% for error in form.player1_id.errors %}
-                                    <div class="text-red-600 text-xs mt-1">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                            
-                            {% if category.category_type.value in ["Men's Doubles", "Women's Doubles", "Mixed Doubles"] %}
-                                <div>
-                                    <label for="player1_partner_id" class="block text-sm font-medium text-gray-700 mb-1">Select Partner</label>
-                                    {{ form.player1_partner_id(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
-                                    {% for error in form.player1_partner_id.errors %}
-                                        <div class="text-red-600 text-xs mt-1">{{ error }}</div>
-                                    {% endfor %}
+                    <div id="scores-container" class="space-y-3">
+                        {% for i in range(form.scores|length) %}
+                            <div id="set-{{ i+1 }}" class="set-form bg-gray-50 p-3 rounded-md{% if i >= form.set_count.data %} hidden{% endif %}">
+                                <div class="font-medium text-gray-700 mb-2">Set {{ i+1 }}</div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="form-group">
+                                        <label class="block text-sm font-medium text-gray-700">
+                                            {% if match.is_doubles %}
+                                                {% if match.team1 %}Team 1{% else %}Team 1 (TBD){% endif %}
+                                            {% else %}
+                                                {% if match.player1 %}{{ match.player1.full_name }}{% else %}Player 1 (TBD){% endif %}
+                                            {% endif %}
+                                        </label>
+                                        {{ form.scores[i].player1_score(class="mt-1 block p-2  w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm", min="0") }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="block text-sm font-medium text-gray-700">
+                                            {% if match.is_doubles %}
+                                                {% if match.team2 %}Team 2{% else %}Team 2 (TBD){% endif %}
+                                            {% else %}
+                                                {% if match.player2 %}{{ match.player2.full_name }}{% else %}Player 2 (TBD){% endif %}
+                                            {% endif %}
+                                        </label>
+                                        {{ form.scores[i].player2_score(class="mt-1 block p-2  w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm", min="0") }}
+                                    </div>
                                 </div>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- Player 2 -->
-                        <div class="space-y-4">
-                            <h4 class="text-blue-600 font-medium">Player 2</h4>
-                            
-                            <div>
-                                <label for="player2_id" class="block text-sm font-medium text-gray-700 mb-1">Select Player</label>
-                                {{ form.player2_id(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
-                                {% for error in form.player2_id.errors %}
-                                    <div class="text-red-600 text-xs mt-1">{{ error }}</div>
-                                {% endfor %}
                             </div>
-                            
-                            {% if category.category_type.value in ["Men's Doubles", "Women's Doubles", "Mixed Doubles"] %}
-                                <div>
-                                    <label for="player2_partner_id" class="block text-sm font-medium text-gray-700 mb-1">Select Partner</label>
-                                    {{ form.player2_partner_id(class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md") }}
-                                    {% for error in form.player2_partner_id.errors %}
-                                        <div class="text-red-600 text-xs mt-1">{{ error }}</div>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Status and Next Match Info -->
-                <div class="border-t border-gray-200 pt-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-medium text-gray-700">Match Status</h3>
-                        
-                        <div>
-                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                {% if match.completed %}
-                                    bg-green-100 text-green-800
-                                {% else %}
-                                    bg-yellow-100 text-yellow-800
-                                {% endif %}">
-                                {{ 'Completed' if match.completed else 'In Progress' }}
-                            </span>
-                        </div>
+                        {% endfor %}
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                        <div>
-                            <span class="font-medium">Round:</span> 
-                            {% if match.round == 1 %}
-                                Final
-                            {% elif match.round == 1.5 %}
-                                3rd Place
-                            {% elif match.round == 2 %}
-                                Semifinal
-                            {% elif match.round == 3 %}
-                                Quarterfinal
-                            {% elif match.round == 4 %}
-                                Round of 16
-                            {% elif match.round == 5 %}
-                                Round of 32
-                            {% elif match.round == 6 %}
-                                Round of 64
-                            {% else %}
-                                Round {{ match.round }}
-                            {% endif %}
-                        </div>
+                    <div class="space-y-4 mt-8">
+                        <h3 class="text-lg font-semibold text-gray-700 border-b pb-2">Verification</h3>
                         
-                        <div>
-                            <span class="font-medium">Match Order:</span> {{ match.match_order }}
-                        </div>
-                        
-                        {% if match.next_match_id %}
-                            <div class="col-span-2">
-                                <span class="font-medium">Next Match:</span> Match {{ match.next_match_id }} in 
-                                {% if match.next_match.round == 1 %}
-                                    Final
-                                {% elif match.next_match.round == 1.5 %}
-                                    3rd Place
-                                {% elif match.next_match.round == 2 %}
-                                    Semifinal
-                                {% elif match.next_match.round == 3 %}
-                                    Quarterfinal
-                                {% elif match.next_match.round == 4 %}
-                                    Round of 16
-                                {% elif match.next_match.round == 5 %}
-                                    Round of 32
-                                {% elif match.next_match.round == 6 %}
-                                    Round of 64
-                                {% else %}
-                                    Round {{ match.next_match.round }}
-                                {% endif %}
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                {{ form.referee_verified(class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded") }}
                             </div>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <!-- Form buttons -->
-                <div class="border-t border-gray-200 pt-6 flex justify-end space-x-4">
-                    <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-                        Cancel
-                    </a>
-                    {{ form.submit(class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition") }}
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <!-- Sidebar -->
-    <div class="space-y-6">
-        <!-- Quick Actions -->
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <h2 class="text-xl font-bold mb-4">Actions</h2>
-            
-            <div class="space-y-3">
-                <a href="{{ url_for('organizer.edit_score', id=tournament.id, category_id=category.id, match_id=match.id) }}" class="block w-full text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                    Update Scores
-                </a>
-                
-                {% if match.player1_id and match.player2_id %}
-                    <form method="POST" action="{{ url_for('organizer.complete_match', id=tournament.id, category_id=category.id, match_id=match.id) }}">
-                        <input type="hidden" name="match_id" value="{{ match.id }}">
-                        <input type="hidden" name="winner_id" value="{{ match.player1_id }}">
-                        <input type="hidden" name="completed" value="{{ 0 if match.completed else 1 }}">
+                            <div class="ml-3 text-sm">
+                                {{ form.referee_verified.label(class="font-medium text-gray-700") }}
+                                <p class="text-gray-500">Mark this match as verified by referee</p>
+                            </div>
+                        </div>
                         
-                        <button type="submit" class="w-full px-4 py-2 bg-{{ 'orange' if match.completed else 'green' }}-600 text-white rounded-lg hover:bg-{{ 'orange' if match.completed else 'green' }}-700 transition">
-                            {{ 'Mark as Incomplete' if match.completed else 'Mark as Complete' }}
-                        </button>
-                    </form>
-                {% endif %}
-                
-                <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" class="block w-full text-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-                    Back to Bracket
-                </a>
-            </div>
-        </div>
-        
-        <!-- Match Info -->
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <h2 class="text-xl font-bold mb-4">Match Information</h2>
-            
-            <div class="text-sm text-gray-600 space-y-3">
-                <p>This match is part of the {{ category.category_type.value }} tournament bracket.</p>
-                
-                <div>
-                    <span class="font-medium">Current status:</span> 
-                    {% if match.completed %}
-                        <span class="text-green-600">Completed</span>
-                    {% else %}
-                        <span class="text-yellow-600">In Progress</span>
-                    {% endif %}
-                </div>
-                
-                {% if match.completed and match.winner %}
-                    <div>
-                        <span class="font-medium">Winner:</span> 
-                        {{ match.winner.full_name }}
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                {{ form.player_verified(class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded") }}
+                            </div>
+                            <div class="ml-3 text-sm">
+                                {{ form.player_verified.label(class="font-medium text-gray-700") }}
+                                <p class="text-gray-500">Mark this match as verified by player</p>
+                            </div>
+                        </div>
                     </div>
-                {% endif %}
-                
-                <p class="text-blue-600 font-medium mt-4">Note: Changes to player assignments will affect the bracket display and progression.</p>
+                </div>
             </div>
-        </div>
+            
+            <div class="flex justify-between pt-6 border-t">
+                <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=match.category_id) }}" class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Cancel
+                </a>
+                <button type="submit" class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Save Match
+                </button>
+            </div>
+        </form>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function updateSetForms() {
+        const setCount = document.getElementById('set_count').value;
+        const setForms = document.querySelectorAll('.set-form');
+        
+        setForms.forEach((form, index) => {
+            if (index < setCount) {
+                form.classList.remove('hidden');
+            } else {
+                form.classList.add('hidden');
+            }
+        });
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateSetForms();
+    });
+</script>
 {% endblock %}

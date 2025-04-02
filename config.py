@@ -11,7 +11,7 @@ class Config:
     # Upload configurations
     UPLOAD_FOLDER = os.path.join(basedir, 'app', 'static', 'uploads')
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-    MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 16MB max upload
+    MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10MB max upload
     
     # Email configuration
     MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.example.com')
@@ -21,12 +21,23 @@ class Config:
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@sportssync.asia')
 
-
     # Session configuration
     PERMANENT_SESSION_LIFETIME = timedelta(days=30)
     
     # Admin email
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'admin@example.com'
+    
+    # Socket.IO configuration
+    SOCKETIO_CORS_ALLOWED_ORIGINS = os.environ.get('SOCKETIO_CORS_ALLOWED_ORIGINS', '*')
+    SOCKETIO_ASYNC_MODE = os.environ.get('SOCKETIO_ASYNC_MODE', 'eventlet')
+    
+    # APScheduler configuration
+    SCHEDULER_API_ENABLED = False  # Disable the API for security
+    SCHEDULER_TIMEZONE = "UTC"
+    SCHEDULER_JOB_DEFAULTS = {
+        'coalesce': False,
+        'max_instances': 3
+    }
     
     # Tournament configuration
     TOURNAMENT_TIERS = [

@@ -5,6 +5,7 @@ from flask_login import LoginManager
 from config import Config
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
+from flask_socketio import SocketIO  # Added for real-time features
 import os
 
 db = SQLAlchemy()
@@ -13,8 +14,8 @@ csrf = CSRFProtect()
 login = LoginManager()
 login.login_view = 'auth.login'
 login.login_message = 'Please log in to access this page.'
-
 mail = Mail()
+socketio = SocketIO()  # Initialize SocketIO
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -23,11 +24,18 @@ def create_app(config_class=Config):
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
-    mail.init_app(app)  # Initialize mail
+    mail.init_app(app)
     login.init_app(app)
-    
-    # Initialize CSRF protection
     csrf.init_app(app)
+    
+    # Initialize SocketIO with the app and enable CORS
+    socketio.init_app(app, 
+                     cors_allowed_origins=app.config['SOCKETIO_CORS_ALLOWED_ORIGINS'],
+                     async_mode=app.config['SOCKETIO_ASYNC_MODE'])
+    
+    # Initialize APScheduler for task scheduling
+    from app.scheduler import init_scheduler
+    init_scheduler(app)
     
     # Ensure the uploads directory exists
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -69,5 +77,10 @@ def create_app(config_class=Config):
     def request_entity_too_large(error):
         flash("File too large! Please upload an image smaller than 5MB.", "danger")
         return redirect(request.referrer)
+
+    # Import and register Socket.IO event handlers
+    with app.app_context():
+        from app.socket import register_socketio_handlers
+        register_socketio_handlers(socketio)
 
     return app

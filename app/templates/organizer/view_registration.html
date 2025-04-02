@@ -89,6 +89,46 @@
             {% endif %}
         </div>
         
+        <!-- Check in -->
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex flex-wrap items-center justify-between">
+                <h3 class="text-lg font-bold">Check-in Status</h3>
+                <div class="flex gap-2 mt-2 sm:mt-0">
+                    {% if registration.checked_in %}
+                        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Checked In
+                        </span>
+                        <div class="text-sm text-gray-600">
+                            {{ registration.check_in_time.strftime('%B %d, %Y at %H:%M') }}
+                        </div>
+                        <form method="POST" action="{{ url_for('organizer.check_out_player', id=registration.id) }}" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700">
+                                Check Out
+                            </button>
+                        </form>
+                    {% elif registration.is_approved %}
+                        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            Not Checked In
+                        </span>
+                        <form method="POST" action="{{ url_for('organizer.check_in_player', id=registration.id) }}" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">
+                                Check In
+                            </button>
+                        </form>
+                    {% else %}
+                        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                            Not Available
+                        </span>
+                        <div class="text-sm text-gray-600">
+                            Registration must be approved before check-in
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
         <!-- Player Information -->
         <div class="p-6 border-b border-gray-200">
             <h3 class="text-lg font-bold mb-4">Player Information</h3>

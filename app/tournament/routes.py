@@ -342,25 +342,137 @@ def schedule(id):
     # Get tournament
     tournament = Tournament.query.get_or_404(id)
     
-    # Get all matches with court and time info
-    matches = Match.query.join(TournamentCategory).filter(
-        TournamentCategory.tournament_id == id,
-        Match.court.isnot(None),
-        Match.scheduled_time.isnot(None)
-    ).order_by(Match.scheduled_time).all()
+    # Get categories to allow filtering
+    categories = tournament.categories.all()
     
-    # Group matches by day
-    days = {}
-    for match in matches:
-        day = match.scheduled_time.date()
-        if day not in days:
-            days[day] = []
-        days[day].append(match)
+    # Get filter parameters
+    category_id = request.args.get('category', type=int)
+    search_query = request.args.get('search', '')
+    stage_filter = request.args.get('stage', '')
+    
+    # Base query
+    if category_id:
+        matches_query = Match.query.join(TournamentCategory).filter(
+            TournamentCategory.tournament_id == id,
+            TournamentCategory.id == category_id,
+            Match.scheduled_time.isnot(None)
+        )
+    else:
+        matches_query = Match.query.join(TournamentCategory).filter(
+            TournamentCategory.tournament_id == id,
+            Match.scheduled_time.isnot(None)
+        )
+    
+    # Execute the query to get all matches (we'll organize and filter in Python)
+    all_matches = matches_query.all()
+    
+    # Extract available stages for filter options
+    available_stages = {
+        'knockout': set(),  # Set of round numbers
+        'groups': set()     # Set of group names
+    }
+    
+    for match in all_matches:
+        if match.stage.name == 'GROUP' and match.group:
+            available_stages['groups'].add(match.group.name)
+        elif match.stage.name == 'KNOCKOUT':
+            available_stages['knockout'].add(match.round)
+    
+    # Sort the sets for consistent display
+    available_stages['groups'] = sorted(available_stages['groups'])
+    available_stages['knockout'] = reversed(sorted(available_stages['knockout']))
+    
+    # Filter matches by player name if search is provided
+    if search_query:
+        filtered_matches = []
+        search_query = search_query.lower()
+        
+        for match in all_matches:
+            # Check player names for singles matches
+            if match.player1 and match.player1.full_name.lower().find(search_query) != -1:
+                filtered_matches.append(match)
+                continue
+            if match.player2 and match.player2.full_name.lower().find(search_query) != -1:
+                filtered_matches.append(match)
+                continue
+                
+            # Check player names for doubles matches
+            if match.is_doubles:
+                if match.team1:
+                    if (match.team1.player1 and match.team1.player1.full_name.lower().find(search_query) != -1) or \
+                       (match.team1.player2 and match.team1.player2.full_name.lower().find(search_query) != -1):
+                        filtered_matches.append(match)
+                        continue
+                
+                if match.team2:
+                    if (match.team2.player1 and match.team2.player1.full_name.lower().find(search_query) != -1) or \
+                       (match.team2.player2 and match.team2.player2.full_name.lower().find(search_query) != -1):
+                        filtered_matches.append(match)
+                        continue
+        
+        all_matches = filtered_matches
+    
+    # Filter by stage if specified
+    if stage_filter:
+        if stage_filter.startswith('group:'):
+            # Filter by specific group
+            group_name = stage_filter[6:]  # Remove 'group:' prefix
+            all_matches = [m for m in all_matches if m.stage.name == 'GROUP' and m.group and m.group.name == group_name]
+        elif stage_filter.isdigit():
+            # For knockout rounds (e.g., "1" for finals, "2" for semis)
+            round_num = int(stage_filter)
+            all_matches = [m for m in all_matches if m.stage.name == 'KNOCKOUT' and m.round == round_num]
+    
+    # Organize matches by stage and round
+    stages = {}
+    
+    # Process group stage matches
+    group_matches = [m for m in all_matches if m.stage.name == 'GROUP']
+    if group_matches:
+        # Group by the group name
+        groups = {}
+        for match in group_matches:
+            group_name = match.group.name if match.group else "Unknown Group"
+            if group_name not in groups:
+                groups[group_name] = []
+            groups[group_name].append(match)
+        
+        # Sort groups alphabetically
+        sorted_groups = dict(sorted(groups.items()))
+        stages['group'] = sorted_groups
+    
+    # Process knockout matches
+    knockout_matches = [m for m in all_matches if m.stage.name == 'KNOCKOUT']
+    if knockout_matches:
+        rounds = {}
+        for match in knockout_matches:
+            round_num = match.round
+            round_name = match.round_name
+            if round_num not in rounds:
+                rounds[round_num] = {
+                    'name': round_name,
+                    'matches': []
+                }
+            rounds[round_num]['matches'].append(match)
+        
+        # Sort rounds
+        sorted_rounds = dict(reversed(sorted(rounds.items())))
+        stages['knockout'] = sorted_rounds
+    
+    # Get selected category if filtering
+    selected_category = None
+    if category_id:
+        selected_category = TournamentCategory.query.get(category_id)
     
     return render_template('tournament/schedule.html',
-                           title=f"{tournament.name} - Schedule",
-                           tournament=tournament,
-                           days=days)
+                          title=f"{tournament.name} - Schedule",
+                          tournament=tournament,
+                          stages=stages,
+                          categories=categories,
+                          selected_category=selected_category,
+                          search_query=search_query,
+                          stage_filter=stage_filter,
+                          available_stages=available_stages)
 
 @bp.route('/<int:id>/live_scoring')
 def live_scoring(id):
@@ -372,12 +484,13 @@ def live_scoring(id):
         flash('Live scoring is only available for ongoing tournaments.', 'warning')
         return redirect(url_for('main.tournament_detail', id=id))
     
-    # Get all ongoing matches
+    # Get all ongoing matches (both singles and doubles)
     ongoing_matches = Match.query.join(TournamentCategory).filter(
         TournamentCategory.tournament_id == id,
         Match.completed == False,
-        Match.player1_id.isnot(None),
-        Match.player2_id.isnot(None)
+        # For singles matches OR doubles matches
+        ((Match.player1_id.isnot(None) & Match.player2_id.isnot(None)) |
+         (Match.team1_id.isnot(None) & Match.team2_id.isnot(None)))
     ).all()
     
     # Get match scores
@@ -512,65 +625,210 @@ def match_detail(id, match_id):
                            match=match,
                            scores=scores)
 
-@bp.route('/<int:id>/match/<int:match_id>/live')
-def live_match(id, match_id):
-    # Get tournament and match
+# Route removed as match_detail.html now handles live scoring functionality
+
+@bp.route('/<int:id>/live_courts')
+def live_courts(id):
+    """
+    Live view of all courts in a tournament, showing active matches and next scheduled matches
+    """
+    # Get tournament
     tournament = Tournament.query.get_or_404(id)
-    match = Match.query.get_or_404(match_id)
     
-    # Verify match belongs to this tournament
-    if match.category.tournament_id != id:
-        flash('Match not found in this tournament.', 'danger')
+    # Check if tournament is ongoing
+    if tournament.status != TournamentStatus.ONGOING:
+        flash('Live court view is only available for ongoing tournaments.', 'warning')
         return redirect(url_for('main.tournament_detail', id=id))
     
-    # Check if match is ongoing
-    if match.completed:
-        flash('This match has already been completed.', 'warning')
-        return redirect(url_for('tournament.match_detail', id=id, match_id=match_id))
+    # Get all matches with court assignments for this tournament
+    all_assigned_matches = Match.query.join(TournamentCategory).filter(
+        TournamentCategory.tournament_id == id,
+        Match.court.isnot(None)
+    ).order_by(Match.scheduled_time).all()
     
-    # Get match scores
-    scores = MatchScore.query.filter_by(match_id=match_id).order_by(MatchScore.set_number).all()
+    # Organize matches by court
+    courts = {}
+    # Get ongoing matches (not completed, have players/teams assigned, and have a court)
+    ongoing_matches = {}
+    # Get upcoming matches by court (next scheduled match for each court)
+    upcoming_matches = {}
     
-    return render_template('tournament/live_match.html',
-                           title=f"{tournament.name} - Live Match",
+    # Current time for comparison
+    now = datetime.now()
+    
+    # Process all assigned matches to organize them by court
+    for match in all_assigned_matches:
+        court = match.court
+        
+        # Add court to dictionaries if not already present
+        if court not in courts:
+            courts[court] = []
+        if court not in ongoing_matches:
+            ongoing_matches[court] = None
+        if court not in upcoming_matches:
+            upcoming_matches[court] = None
+        
+        # Add match to the court's matches list
+        courts[court].append(match)
+        
+        # Check if this is an ongoing match
+        if not match.completed and (
+            (match.is_doubles and match.team1_id and match.team2_id) or
+            (not match.is_doubles and match.player1_id and match.player2_id)
+        ):
+            # If no ongoing match for this court or this match is more recent, use this one
+            if ongoing_matches[court] is None:
+                ongoing_matches[court] = match
+            elif match.scheduled_time and ongoing_matches[court].scheduled_time:
+                # If match is more recent (closer to now) than the current ongoing match
+                if abs((match.scheduled_time - now).total_seconds()) < abs((ongoing_matches[court].scheduled_time - now).total_seconds()):
+                    ongoing_matches[court] = match
+        
+        # Check if this is an upcoming match
+        if not match.completed and match.scheduled_time and match.scheduled_time > now:
+            # If no upcoming match for this court yet or this one is scheduled sooner
+            if upcoming_matches[court] is None:
+                upcoming_matches[court] = match
+            elif match.scheduled_time and upcoming_matches[court].scheduled_time:
+                # Use the match that's scheduled earlier as the next match
+                if match.scheduled_time < upcoming_matches[court].scheduled_time:
+                    upcoming_matches[court] = match
+    
+    # Get match scores for ongoing matches
+    scores = {}
+    for court, match in ongoing_matches.items():
+        if match:
+            match_scores = MatchScore.query.filter_by(match_id=match.id).order_by(MatchScore.set_number).all()
+            scores[match.id] = match_scores
+    
+    return render_template('tournament/live_courts.html',
+                           title=f"{tournament.name} - Live Courts",
                            tournament=tournament,
-                           match=match,
-                           scores=scores)
+                           courts=courts,
+                           ongoing_matches=ongoing_matches,
+                           upcoming_matches=upcoming_matches,
+                           scores=scores,
+                           now=now)
 
+# Add this API endpoint after the api_scores function
+@bp.route('/api/<int:id>/courts_data')
+def api_courts_data(id):
+    """API endpoint for live court status data"""
+    # Get tournament
+    tournament = Tournament.query.get_or_404(id)
+    
+    # Get all matches with court assignments for this tournament
+    all_assigned_matches = Match.query.join(TournamentCategory).filter(
+        TournamentCategory.tournament_id == id,
+        Match.court.isnot(None)
+    ).order_by(Match.scheduled_time).all()
+    
+    # Organize matches by court
+    courts_data = {}
+    now = datetime.now()
+    
+    for match in all_assigned_matches:
+        court = match.court
+        
+        # Initialize court data if not exists
+        if court not in courts_data:
+            courts_data[court] = {
+                'ongoing_match': None,
+                'upcoming_match': None
+            }
+        
+        # Check if match is ongoing (not completed and has players/teams assigned)
+        if not match.completed and (
+            (match.is_doubles and match.team1_id and match.team2_id) or
+            (not match.is_doubles and match.player1_id and match.player2_id)
+        ):
+            current_ongoing = courts_data[court]['ongoing_match']
+            
+            # If no ongoing match yet or this match is scheduled earlier
+            if current_ongoing is None or (
+                match.scheduled_time and current_ongoing.get('scheduled_time') and
+                match.scheduled_time < datetime.fromisoformat(current_ongoing['scheduled_time'])
+            ):
+                # Format match data for JSON
+                courts_data[court]['ongoing_match'] = _format_match_for_api(match)
+        
+        # Check if match is upcoming
+        if not match.completed and match.scheduled_time and match.scheduled_time > now:
+            current_upcoming = courts_data[court]['upcoming_match']
+            
+            # If no upcoming match yet or this match is scheduled earlier
+            if current_upcoming is None or (
+                match.scheduled_time and current_upcoming.get('scheduled_time') and
+                match.scheduled_time < datetime.fromisoformat(current_upcoming['scheduled_time'])
+            ):
+                # Format match data for JSON
+                courts_data[court]['upcoming_match'] = _format_match_for_api(match)
+    
+    return jsonify(courts_data)
+    
 @bp.route('/api/<int:id>/scores')
 def api_scores(id):
     # API endpoint to get latest scores for all matches in a tournament
     # This can be used for live updates via AJAX
     
-    # Get all ongoing matches for this tournament
+    # Get all ongoing matches for this tournament (both singles and doubles)
     ongoing_matches = Match.query.join(TournamentCategory).filter(
         TournamentCategory.tournament_id == id,
         Match.completed == False,
-        Match.player1_id.isnot(None),
-        Match.player2_id.isnot(None)
+        # For singles matches OR doubles matches
+        ((Match.player1_id.isnot(None) & Match.player2_id.isnot(None)) |
+         (Match.team1_id.isnot(None) & Match.team2_id.isnot(None)))
     ).all()
     
     result = []
     for match in ongoing_matches:
         scores = MatchScore.query.filter_by(match_id=match.id).order_by(MatchScore.set_number).all()
-        match_data = {
-            'match_id': match.id,
-            'player1': match.player1.full_name if match.player1 else 'TBD',
-            'player2': match.player2.full_name if match.player2 else 'TBD',
-            'scores': [
-                {
-                    'set': score.set_number,
-                    'player1_score': score.player1_score,
-                    'player2_score': score.player2_score
-                } for score in scores
-            ]
-        }
         
-        # Add doubles partner info if applicable
-        if match.player1_partner:
-            match_data['player1_partner'] = match.player1_partner.full_name
-        if match.player2_partner:
-            match_data['player2_partner'] = match.player2_partner.full_name
+        # Handle both singles and doubles matches appropriately
+        if match.is_doubles:
+            match_data = {
+                'match_id': match.id,
+                'is_doubles': True,
+                'scores': [
+                    {
+                        'set': score.set_number,
+                        'player1_score': score.player1_score,
+                        'player2_score': score.player2_score
+                    } for score in scores
+                ]
+            }
+            
+            # Add team information
+            if match.team1:
+                match_data['team1'] = {
+                    'player1': match.team1.player1.full_name,
+                    'player2': match.team1.player2.full_name
+                }
+            else:
+                match_data['team1'] = {'player1': 'TBD', 'player2': 'TBD'}
+                
+            if match.team2:
+                match_data['team2'] = {
+                    'player1': match.team2.player1.full_name,
+                    'player2': match.team2.player2.full_name
+                }
+            else:
+                match_data['team2'] = {'player1': 'TBD', 'player2': 'TBD'}
+        else:
+            # Singles match
+            match_data = {
+                'match_id': match.id,
+                'is_doubles': False,
+                'player1': match.player1.full_name if match.player1 else 'TBD',
+                'player2': match.player2.full_name if match.player2 else 'TBD',
+                'scores': [
+                    {
+                        'set': score.set_number,
+                        'player1_score': score.player1_score,
+                        'player2_score': score.player2_score
+                    } for score in scores
+                ]
+            }
         
         result.append(match_data)
     

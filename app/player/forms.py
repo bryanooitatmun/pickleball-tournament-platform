@@ -5,6 +5,7 @@ from wtforms import StringField, TextAreaField, IntegerField, SelectField, Submi
 from wtforms.validators import DataRequired, Email, Length, NumberRange, Optional, URL, EqualTo, Regexp, ValidationError
 from datetime import datetime, date
 from app.models import Tournament, TournamentCategory, Registration, PlayerProfile, User, UserRole
+import re
 
 def validate_file_size(max_size_mb=5):
     """
@@ -54,7 +55,11 @@ class ProfileForm(FlaskForm):
     instagram = StringField('Instagram Link', validators=[Optional(), URL()])
     facebook = StringField('Facebook Link', validators=[Optional(), URL()])
     twitter = StringField('Twitter Link', validators=[Optional(), URL()])
+    tiktok = StringField('TikTok Link', validators=[Optional(), URL()])
+    xiaohongshu = StringField('XiaoHongShu Link', validators=[Optional(), URL()])
+    coach_academy = StringField('Coach/Academy Affiliation', validators=[Optional(), Length(max=255)])
     turned_pro = IntegerField('Turned Pro (Year)', validators=[
+        Optional(),
         NumberRange(min=1970, max=datetime.now().year)
     ])
     submit = SubmitField('Save Profile')
@@ -288,84 +293,6 @@ class RegistrationForm(FlaskForm):
         # Check if contains at least one letter and one number
         if not (re.search(r'[A-Za-z]', field.data) and re.search(r'[0-9]', field.data)):
             raise ValidationError('DUPR ID must contain at least one letter and one number')
-# class TournamentRegistrationForm(FlaskForm):
-#     # Hidden fields
-#     tournament_id = HiddenField('Tournament ID')
-#     category_id = SelectField('Category', coerce=int, validators=[DataRequired()])
-    
-#     # Player fields (only required if user is not logged in)
-#     email = EmailField('Email', validators=[Optional(), Email(), Length(max=120)])
-#     full_name = StringField('Full Name', validators=[Optional(), Length(max=100)])
-#     phone = StringField('Phone Number', validators=[Optional(), Length(max=20)])
-#     country = StringField('Country', validators=[Optional(), Length(max=50)])
-#     city = StringField('City', validators=[Optional(), Length(max=50)])
-#     password = PasswordField('Password', validators=[Optional(), Length(min=8)])
-#     confirm_password = PasswordField('Confirm Password', 
-#                                     validators=[Optional(), EqualTo('password', message='Passwords must match')])
-    
-#     #Player 2 fields
-#     email_2 = EmailField('Email', validators=[Optional(), Email(), Length(max=120)])
-#     full_name_2 = StringField('Full Name', validators=[Optional(), Length(max=100)])
-#     phone_2 = StringField('Phone Number', validators=[Optional(), Length(max=20)])
-#     country_2 = StringField('Country', validators=[Optional(), Length(max=50)])
-#     city_2 = StringField('City', validators=[Optional(), Length(max=50)])
-#     password_2 = PasswordField('Password', validators=[Optional(), Length(min=8)])
-#     confirm_password_2 = PasswordField('Confirm Password', 
-#                                     validators=[Optional(), EqualTo('password', message='Passwords must match')])
-
-#     # Registration-specific fields
-#     partner_id = SelectField('Partner (for doubles)', coerce=int, validators=[Optional()])
-#     dupr_rating = StringField('DUPR Rating', validators=[Optional(), Length(max=10)])
-#     emergency_contact = StringField('Emergency Contact', validators=[Optional(), Length(max=100)])
-#     emergency_phone = StringField('Emergency Contact Phone', validators=[Optional(), Length(max=20)])
-    
-#     # Additional player info
-#     date_of_birth = StringField('Date of Birth', validators=[Optional(), Length(max=10)])
-#     gender = SelectField('Gender', choices=[('', 'Select Gender'), ('M', 'Male'), ('F', 'Female'), ('O', 'Other')], 
-#                         validators=[Optional()])
-#     shirt_size = SelectField('Shirt Size', 
-#                            choices=[('', 'Select Size'), ('XS', 'XS'), ('S', 'S'), ('M', 'M'), 
-#                                    ('L', 'L'), ('XL', 'XL'), ('XXL', 'XXL')],
-#                            validators=[Optional()])
-    
-#     # Special requests
-#     special_requests = TextAreaField('Special Requests', validators=[Optional(), Length(max=500)])
-    
-#     # Agreements
-#     terms_agreement = BooleanField('I agree to the rules and regulations of this tournament', 
-#                                  validators=[DataRequired()])
-#     liability_waiver = BooleanField('I acknowledge that pickleball involves risks and waive liability', 
-#                                   validators=[DataRequired()])
-    
-#     def validate_email(self, email):
-#         if not self.is_authenticated:  # Only validate if creating a new user
-#             user = User.query.filter_by(email=email.data.lower()).first()
-#             if user:
-#                 raise ValidationError('This email is already registered. Please log in instead.')
-    
-#     # Custom validation function to be used in the route
-#     def validate_registration(self, is_authenticated):
-#         self.is_authenticated = is_authenticated
-        
-#         # If not authenticated, validate all user fields
-#         if not is_authenticated:
-#             if not self.email.data:
-#                 self.email.errors.append('Email is required')
-#                 return False
-            
-#             if not self.full_name.data:
-#                 self.full_name.errors.append('Full name is required')
-#                 return False
-            
-#             if not self.password.data:
-#                 self.password.errors.append('Password is required')
-#                 return False
-                
-#             if self.password.data != self.confirm_password.data:
-#                 self.confirm_password.errors.append('Passwords must match')
-#                 return False
-        
-#         return True
 
 
 class EquipmentForm(FlaskForm):

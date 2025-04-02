@@ -1,0 +1,11 @@
+- **Backend Framework:** Python Flask
+- **Database:** SQLite (Default)
+- **ORM:** Flask-SQLAlchemy
+- **Database Migrations:** Flask-Migrate
+- **Authentication:** Flask-Login
+- **Forms:** Flask-WTF
+- **Real-time Communication:** Flask-SocketIO (for live updates)
+- **Email:** Flask-Mail
+- **Task Scheduling:** Celery or APScheduler (for notifications)
+- **Frontend:** HTML, CSS (Tailwind via CDN), JavaScript
+- **Deployment (Recommended):** Nginx, Gunicorn, Systemd
