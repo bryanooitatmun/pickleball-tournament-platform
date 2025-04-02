@@ -9,3 +9,4 @@
 /app/static/uploads
 .env
 TODO
+/node_modules
