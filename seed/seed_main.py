@@ -21,10 +21,10 @@ def run_seed_module(module_name, description):
         module = __import__(f"seed.{module_name}", fromlist=['main'])
         module.main()
         end_time = time.time()
-        print(f"\n✓ Completed {module_name} in {round(end_time - start_time, 2)} seconds")
+        print(f"\n[SUCCESS] Completed {module_name} in {round(end_time - start_time, 2)} seconds")
         return True
     except Exception as e:
-        print(f"\n✗ Error in {module_name}: {e}")
+        print(f"\n[ERROR] Error in {module_name}: {e}")
         print(f"Error details: {type(e).__name__}")
         import traceback
         traceback.print_exc()

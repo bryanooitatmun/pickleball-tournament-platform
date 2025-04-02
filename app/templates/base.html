@@ -113,6 +113,58 @@
         {% endif %}
     {% endwith %}
 
+    <!-- Development Mode Seeding Controls -->
+    {% if ENV == 'development' and current_user.is_authenticated and current_user.is_admin() %}
+        <div class="container mx-auto px-4 py-2">
+            <div class="bg-gray-100 border border-gray-300 rounded p-4 mb-4">
+                <h2 class="text-lg font-semibold mb-2">Development Tools - Database Seeding</h2>
+                <div class="flex flex-wrap gap-2">
+                    <form action="{{ url_for('admin.run_seed') }}" method="post" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="seed_type" value="all">
+                        <button type="submit" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">Seed All</button>
+                    </form>
+                    
+                    <form action="{{ url_for('admin.run_seed') }}" method="post" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="seed_type" value="users">
+                        <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">Users Only</button>
+                    </form>
+                    
+                    <form action="{{ url_for('admin.run_seed') }}" method="post" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="seed_type" value="tournament">
+                        <button type="submit" class="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700">Tournaments Only</button>
+                    </form>
+                    
+                    <form action="{{ url_for('admin.run_seed') }}" method="post" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="seed_type" value="mens_doubles">
+                        <button type="submit" class="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700">Men's Doubles</button>
+                    </form>
+                    
+                    <form action="{{ url_for('admin.run_seed') }}" method="post" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="seed_type" value="womens_doubles">
+                        <button type="submit" class="px-3 py-1 bg-pink-600 text-white rounded hover:bg-pink-700">Women's Doubles</button>
+                    </form>
+                    
+                    <form action="{{ url_for('admin.run_seed') }}" method="post" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="seed_type" value="no_brackets">
+                        <button type="submit" class="px-3 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-700">Skip Brackets</button>
+                    </form>
+                    
+                    <form action="{{ url_for('admin.run_seed') }}" method="post" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="seed_type" value="no_matches">
+                        <button type="submit" class="px-3 py-1 bg-orange-600 text-white rounded hover:bg-orange-700">Skip Matches</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
     <!-- Main Content -->
     <main class="flex-grow container mx-auto px-4 py-6">
         {% block content %}{% endblock %}

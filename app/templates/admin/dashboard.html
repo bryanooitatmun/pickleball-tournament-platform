@@ -169,67 +169,25 @@
             
             <!-- User Distribution -->
             <div class="mb-6">
-                <h3 class="font-medium text-gray-700 mb-2">User Roles</h3>
-                <div class="bg-gray-100 rounded-full h-6 mb-2">
-                    {% set admin_percent = (admins / users_count * 100) if users_count > 0 else 0 %}
-                    {% set organizer_percent = (organizers / users_count * 100) if users_count > 0 else 0 %}
-                    {% set player_percent = (players / users_count * 100) if users_count > 0 else 0 %}
-                    
-                    <div class="flex h-full rounded-full overflow-hidden">
-                        <div class="bg-blue-600 h-full" style="width: {{ player_percent }}%"></div>
-                        <div class="bg-green-600 h-full" style="width: {{ organizer_percent }}%"></div>
-                        <div class="bg-purple-600 h-full" style="width: {{ admin_percent }}%"></div>
-                    </div>
-                </div>
+                <h3 class="font-medium text-gray-700 mb-2">Stats</h3>
                 <div class="flex justify-between text-xs text-gray-600">
                     <div class="flex items-center">
                         <div class="w-3 h-3 bg-blue-600 rounded-full mr-1"></div>
-                        <span>Players: {{ players }}</span>
+                        <span>Players: {{ players_count }}</span>
                     </div>
                     <div class="flex items-center">
-                        <div class="w-3 h-3 bg-green-600 rounded-full mr-1"></div>
-                        <span>Organizers: {{ organizers }}</span>
+                        <div class="w-3 h-3 bg-blue-600 rounded-full mr-1"></div>
+                        <span>Matches: {{ matches_count }}</span>
                     </div>
                     <div class="flex items-center">
-                        <div class="w-3 h-3 bg-purple-600 rounded-full mr-1"></div>
-                        <span>Admins: {{ admins }}</span>
+                        <div class="w-3 h-3 bg-blue-600 rounded-full mr-1"></div>
+                        <span>Tournaments: {{ tournaments_count }}</span>
                     </div>
                 </div>
             </div>
             
-            <!-- Tournament Status -->
-            <div class="mb-6">
-                <h3 class="font-medium text-gray-700 mb-2">Tournament Status</h3>
-                <div class="grid grid-cols-3 gap-2">
-                    <div class="bg-blue-100 p-3 rounded">
-                        <div class="text-lg font-bold text-blue-800">{{ tournament_stats.upcoming }}</div>
-                        <div class="text-xs text-blue-600">Upcoming</div>
-                    </div>
-                    <div class="bg-yellow-100 p-3 rounded">
-                        <div class="text-lg font-bold text-yellow-800">{{ tournament_stats.ongoing }}</div>
-                        <div class="text-xs text-yellow-600">Ongoing</div>
-                    </div>
-                    <div class="bg-green-100 p-3 rounded">
-                        <div class="text-lg font-bold text-green-800">{{ tournament_stats.completed }}</div>
-                        <div class="text-xs text-green-600">Completed</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Match Completion -->
-            <div>
-                <h3 class="font-medium text-gray-700 mb-2">Match Completion</h3>
-                <div class="flex items-center">
-                    <div class="w-full bg-gray-200 rounded-full h-4 mr-2">
-                        {% set completion_rate = (match_stats.completed / match_stats.total * 100) if match_stats.total > 0 else 0 %}
-                        <div class="bg-green-600 h-4 rounded-full" style="width: {{ completion_rate }}%"></div>
-                    </div>
-                    <span class="text-sm text-gray-600">{{ completion_rate|int }}%</span>
-                </div>
-                <div class="text-xs text-gray-500 mt-1">
-                    {{ match_stats.completed }} completed out of {{ match_stats.total }} total matches
-                </div>
-            </div>
+
+
         </div>
     </div>
 </div>

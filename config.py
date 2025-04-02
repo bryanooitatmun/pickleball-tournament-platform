@@ -7,6 +7,7 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'hard-to-guess-string'
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    FLASK_ENV=os.environ.get('FLASK_ENV', 'development')
     
     # Upload configurations
     UPLOAD_FOLDER = os.path.join(basedir, 'app', 'static', 'uploads')

@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()  # Load environment variables from .env file
+
 from app import create_app, db, socketio
 from app.models import (User, PlayerProfile, Tournament, TournamentCategory, Match, 
 MatchScore, Registration, Equipment, PlayerSponsor, PlatformSponsor, Venue, Advertisement)

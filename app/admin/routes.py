@@ -2,8 +2,11 @@ from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user, login_required
 from app import db
 from app.admin import bp
-from app.models import User, UserRole, Tournament, PlayerProfile, Match
+from app.models import User, UserRole, Tournament, PlayerProfile, Match, TournamentStatus
 from app.decorators import admin_required
+import os
+import sys
+import subprocess
 
 @bp.route('/dashboard')
 @login_required
@@ -29,6 +32,46 @@ def dashboard():
                            matches_count=matches_count,
                            newest_users=newest_users,
                            upcoming_tournaments=upcoming_tournaments)
+
+@bp.route('/dev/seed', methods=['POST'])
+@login_required
+@admin_required
+def run_seed():
+    """Development-only route to run seed scripts"""
+    if os.environ.get('FLASK_ENV') != 'development':
+        flash('This feature is only available in development mode.', 'danger')
+        return redirect(url_for('main.index'))
+    
+    if not current_user.is_admin():
+        flash('Only admins can run seed scripts.', 'danger')
+        return redirect(url_for('main.index'))
+    
+    seed_type = request.form.get('seed_type', 'all')
+    cmd = [sys.executable, 'run_seeds.py', '--reset']
+    
+    if seed_type == 'users':
+        cmd.append('--users-only')
+    elif seed_type == 'tournament':
+        cmd.append('--tournament-only')
+    elif seed_type == 'mens_doubles':
+        cmd.append('--mens-doubles')
+    elif seed_type == 'womens_doubles':
+        cmd.append('--womens-doubles')
+    elif seed_type == 'no_brackets':
+        cmd.append('--skip-brackets')
+    elif seed_type == 'no_matches':
+        cmd.append('--skip-matches')
+    
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            flash(f'Seed script ran successfully: {seed_type}', 'success')
+        else:
+            flash(f'Error running seed script: {result.stderr}', 'danger')
+    except Exception as e:
+        flash(f'Error running seed script: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin.dashboard'))
 
 @bp.route('/users')
 @login_required

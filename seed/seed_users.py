@@ -11,7 +11,7 @@ import string
 from datetime import date, datetime, timedelta
 import sys
 
-def create_admin(username="admin", email="admin@example.com", password="password", commit=True):
+def create_admin(username="admin", email="admin@example.com", password="sportssynccomplicatedpassword", commit=True):
     """Create an admin user account"""
     # Check if admin exists
     admin = User.query.filter_by(email=email).first()
@@ -34,7 +34,7 @@ def create_admin(username="admin", email="admin@example.com", password="password
     
     return admin
 
-def create_organizer(username="organizer", email="organizer@example.com", password="password", commit=True):
+def create_organizer(username="organizer", email="organizer@example.com", password="sportssynccomplicatedpassword", commit=True):
     """Create an organizer user account"""
     # Check if organizer exists
     organizer = User.query.filter_by(email=email).first()
@@ -57,7 +57,7 @@ def create_organizer(username="organizer", email="organizer@example.com", passwo
     
     return organizer
 
-def create_referee(username="referee", email="referee@example.com", password="password", commit=True):
+def create_referee(username="referee", email="referee@example.com", password="sportssynccomplicatedpassword", commit=True):
     """Create a referee user account"""
     # Check if referee exists
     referee = User.query.filter_by(email=email).first()

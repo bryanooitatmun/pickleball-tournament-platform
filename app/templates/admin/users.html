@@ -98,9 +98,9 @@
                                     <div class="text-sm font-medium text-gray-900">
                                         {{ user.username }}
                                     </div>
-                                    {% if user.role == UserRole.PLAYER and user.player_profile.first() %}
+                                    {% if user.role == UserRole.PLAYER and user.player_profile %}
                                         <div class="text-xs text-gray-500">
-                                            {{ user.player_profile.first().full_name }}
+                                            {{ user.player_profile.full_name }}
                                         </div>
                                     {% endif %}
                                 </div>

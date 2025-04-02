@@ -40,6 +40,16 @@ def create_app(config_class=Config):
     # Ensure the uploads directory exists
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     
+    # Add environment and enums to template context
+    @app.context_processor
+    def inject_global_vars():
+        from app.models.enums import TournamentStatus, UserRole
+        return dict(
+            ENV=app.config.get('FLASK_ENV', 'production'),
+            TournamentStatus=TournamentStatus,
+            UserRole=UserRole
+        )
+    
     # Register blueprints
     from app.main import bp as main_bp
     app.register_blueprint(main_bp)
