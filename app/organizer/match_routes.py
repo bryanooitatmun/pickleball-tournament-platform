@@ -29,9 +29,11 @@ def update_match(id, match_id):
     """Update match scores and potentially winner based on form submission."""
     tournament = Tournament.query.get_or_404(id)
     match = Match.query.get_or_404(match_id)
+
     form = MatchForm()
 
-    # Permission check is now handled by the decorator above
+    # Check if user is referee (more restricted access)
+    is_referee_only = current_user.is_referee() and not current_user.is_organizer()
 
     if match.category.tournament_id != tournament.id:
          flash('Match does not belong to this tournament.', 'danger')
@@ -43,7 +45,12 @@ def update_match(id, match_id):
         if match.scheduled_time:
             form.scheduled_time.data = match.scheduled_time
         form.livestream_url.data = match.livestream_url
-        
+        form.referee_verified.data = match.referee_verified
+        form.player_verified.data = match.player_verified
+
+        # Set completed status
+        form.completed.data = match.completed
+
         # Populate score form fields based on existing scores
         existing_scores = match.scores.all()
         form.set_count.data = len(existing_scores)
@@ -57,39 +64,43 @@ def update_match(id, match_id):
                               title=f"Edit Match",
                               tournament=tournament,
                               match=match,
-                              form=form)
+                              form=form,
+                              is_referee_only=is_referee_only)  # Pass permission flag to template
 
     if form.validate_on_submit():
         try:
             # --- Update Scheduling Info ---
-            old_court = match.court
-            old_time = match.scheduled_time
-            old_livestream = match.livestream_url
-            
-            match.court = form.court.data
-            match.scheduled_time = form.scheduled_time.data
-            match.livestream_url = form.livestream_url.data
-            
-            # Check if scheduling changed for notification purposes
-            schedule_changed = (old_court != match.court or 
-                               old_time != match.scheduled_time or
-                               old_livestream != match.livestream_url)
+            # Referees can't update scheduling info
+            if not is_referee_only:
+                old_court = match.court
+                old_time = match.scheduled_time
+                old_livestream = match.livestream_url
+                
+                match.court = form.court.data
+                match.scheduled_time = form.scheduled_time.data
+                match.livestream_url = form.livestream_url.data
+                
+                # Check if scheduling changed for notification purposes
+                schedule_changed = (old_court != match.court or 
+                                   old_time != match.scheduled_time or
+                                   old_livestream != match.livestream_url)
 
-            if schedule_changed:
-                # Track what changed for notification
-                changes = {}
-                if old_court != match.court:
-                    changes['court'] = match.court
-                if old_time != match.scheduled_time:
-                    changes['scheduled_time'] = match.scheduled_time
-                if old_livestream != match.livestream_url:
-                    changes['livestream_url'] = match.livestream_url
-                
-                # Schedule notification task
-                from app.tasks.email_tasks import send_schedule_change_email
-                send_schedule_change_email(match.id, changes)
-                
+                if schedule_changed:
+                    # Track what changed for notification
+                    changes = {}
+                    if old_court != match.court:
+                        changes['court'] = match.court
+                    if old_time != match.scheduled_time:
+                        changes['scheduled_time'] = match.scheduled_time
+                    if old_livestream != match.livestream_url:
+                        changes['livestream_url'] = match.livestream_url
+                    
+                    # Schedule notification task
+                    from app.tasks.email_tasks import send_schedule_change_email
+                    #send_schedule_change_email(match.id, changes)
+            
             # --- Update Scores ---
+            # Both referees and organizers can update scores
             set_count = form.set_count.data
             new_scores = []
             player1_sets_won = 0
@@ -118,43 +129,52 @@ def update_match(id, match_id):
                     elif p2_score > p1_score:
                         player2_sets_won += 1
 
-            # --- Determine Winner (if scores provided allow) ---
-            winner_determined = False
-            if player1_sets_won > player2_sets_won:
-                 # Player 1 / Team 1 wins
-                 if match.is_doubles:
-                     match.winning_team_id = match.team1_id
-                     match.losing_team_id = match.team2_id
-                     match.winning_player_id = None
-                     match.losing_player_id = None
-                 else:
-                     match.winning_player_id = match.player1_id
-                     match.losing_player_id = match.player2_id
-                     match.winning_team_id = None
-                     match.losing_team_id = None
-                 match.completed = True
-                 winner_determined = True
-            elif player2_sets_won > player1_sets_won:
-                 # Player 2 / Team 2 wins
-                 if match.is_doubles:
-                     match.winning_team_id = match.team2_id
-                     match.losing_team_id = match.team1_id
-                     match.winning_player_id = None
-                     match.losing_player_id = None
-                 else:
-                     match.winning_player_id = match.player2_id
-                     match.losing_player_id = match.player1_id
-                     match.winning_team_id = None
-                     match.losing_team_id = None
-                 match.completed = True
-                 winner_determined = True
+            # --- Update Match Completion Status ---
+            # Use the value from the form
+            match.completed = form.completed.data
+            winner_determined = match.completed
+
+            # --- Determine winner (if match is completed) ---
+            if match.completed:
+                if player1_sets_won > player2_sets_won:
+                    # Player 1 / Team 1 wins
+                    if match.is_doubles:
+                        match.winning_team_id = match.team1_id
+                        match.losing_team_id = match.team2_id
+                        match.winning_player_id = None
+                        match.losing_player_id = None
+                    else:
+                        match.winning_player_id = match.player1_id
+                        match.losing_player_id = match.player2_id
+                        match.winning_team_id = None
+                        match.losing_team_id = None
+                elif player2_sets_won > player1_sets_won:
+                    # Player 2 / Team 2 wins
+                    if match.is_doubles:
+                        match.winning_team_id = match.team2_id
+                        match.losing_team_id = match.team1_id
+                        match.winning_player_id = None
+                        match.losing_player_id = None
+                    else:
+                        match.winning_player_id = match.player2_id
+                        match.losing_player_id = match.player1_id
+                        match.winning_team_id = None
+                        match.losing_team_id = None
+                else:
+                    # Equal sets won - can't determine a winner
+                    flash('Warning: Match marked as completed but has equal sets won. Please ensure scores are properly entered.', 'warning')
+                    # Still mark as completed but without winners
+                    match.winning_player_id = None
+                    match.winning_team_id = None
+                    match.losing_player_id = None
+                    match.losing_team_id = None
+                    winner_determined = False
             else:
-                 # Scores might be incomplete or a draw (if allowed)
-                 match.completed = False
-                 match.winning_player_id = None
-                 match.winning_team_id = None
-                 match.losing_player_id = None
-                 match.losing_team_id = None
+                # Match not completed - clear winner fields
+                match.winning_player_id = None
+                match.winning_team_id = None
+                match.losing_player_id = None
+                match.losing_team_id = None
 
             # --- Verification ---
             # Set referee verification based on current user role
@@ -195,29 +215,16 @@ def update_match(id, match_id):
                     'status': 'completed' if match.completed else 'in_progress'
                 }, room=f'courts_view_{match.category.tournament_id}')
 
-            # Schedule notification for court/time change if needed
-            if schedule_changed:
-                # Track what changed for notification
-                changes = {}
-                if old_court != match.court:
-                    changes['court'] = match.court
-                if old_time != match.scheduled_time:
-                    changes['scheduled_time'] = match.scheduled_time.strftime('%Y-%m-%d %H:%M') if match.scheduled_time else None
-                
-                # Schedule notification task (this would be implemented in tasks.py)
-                from app.tasks.email_tasks import send_schedule_change_email
-                # TODO: FIX THIS, the current implementation will spam messages
-                #send_schedule_change_email(match.id, changes)
-
             # If winner determined, update standings/brackets
             if winner_determined:
+                print(match.next_match_id)
                 # If this is a group match, update group standings
                 if match.group_id:
                     BracketService.update_group_standings(match.group_id)
 
                 # If knockout, advance winner to next match
                 elif match.next_match_id:
-                     BracketService.advance_winner(match)
+                    BracketService.advance_winner(match)
             
             flash('Match updated successfully.', 'success')
             return redirect(url_for('organizer.update_match', id=tournament.id, match_id=match.id))
@@ -227,6 +234,7 @@ def update_match(id, match_id):
              flash(f'Invalid input: {e}', 'danger')
         except Exception as e:
             db.session.rollback()
+            raise(e)
             flash(f'Error updating match: {e}', 'danger')
 
     # If form validation failed
@@ -234,7 +242,8 @@ def update_match(id, match_id):
                           title=f"Edit Match",
                           tournament=tournament,
                           match=match,
-                          form=form)
+                          form=form,
+                          is_referee_only=is_referee_only)  # Pass permission flag to template
 
 
 # --- Bracket & Placing Routes ---
@@ -497,67 +506,6 @@ def bulk_edit_matches(id, category_id):
                                   matches=selected_matches,
                                   court=form.court.data,
                                   scheduled_datetime=scheduled_datetime)
-        
-        # If confirmed, apply changes
-        if form.confirm.data and form.submit.data:
-            try:
-                matches_updated = 0
-                schedule_changed_matches = []
-                
-                # Format datetime from separate date and time fields
-                scheduled_datetime = None
-                if form.scheduled_date.data and form.scheduled_time.data:
-                    scheduled_datetime = datetime.combine(form.scheduled_date.data, form.scheduled_time.data)
-                
-                # Update each selected match
-                for match_id in selected_match_ids:
-                    match = Match.query.get(match_id)
-                    if match and match.category_id == category_id:
-                        old_court = match.court
-                        old_time = match.scheduled_time
-                        
-                        # Update court if provided
-                        if form.court.data:
-                            match.court = form.court.data
-                        
-                        # Update schedule if both date and time provided
-                        if scheduled_datetime:
-                            match.scheduled_time = scheduled_datetime
-                        
-                        # Check if changes were made
-                        if old_court != match.court or old_time != match.scheduled_time:
-                            matches_updated += 1
-                            
-                            # Track changes for notifications
-                            if old_court != match.court or old_time != match.scheduled_time:
-                                schedule_changed_matches.append({
-                                    'match_id': match.id,
-                                    'changes': {
-                                        'court': match.court if old_court != match.court else None,
-                                        'scheduled_time': match.scheduled_time.strftime('%Y-%m-%d %H:%M') if old_time != match.scheduled_time else None
-                                    }
-                                })
-                
-                # Commit changes
-                db.session.commit()
-                
-                # Send notifications for schedule changes
-                if schedule_changed_matches:
-                    from app.tasks.email_tasks import send_schedule_change_email
-                    for match_data in schedule_changed_matches:
-                        send_schedule_change_email(match_data['match_id'], match_data['changes'])
-                
-                # Clear session data
-                if 'bulk_edit_data' in session:
-                    session.pop('bulk_edit_data')
-                
-                flash(f'Successfully updated {matches_updated} matches.', 'success')
-                return redirect(url_for('organizer.manage_category', id=id, category_id=category_id))
-                
-            except Exception as e:
-                db.session.rollback()
-                flash(f'Error updating matches: {e}', 'danger')
-                return redirect(url_for('organizer.bulk_edit_matches', id=id, category_id=category_id))
     
     # For GET request, initialize form
     # Add all matches to the form
@@ -644,8 +592,8 @@ def confirm_bulk_edit(id, category_id):
         # Send notifications for schedule changes
         if schedule_changed_matches:
             from app.tasks.email_tasks import send_schedule_change_email
-            for match_data in schedule_changed_matches:
-                send_schedule_change_email(match_data['match_id'], match_data['changes'])
+            # for match_data in schedule_changed_matches:
+            #     send_schedule_change_email(match_data['match_id'], match_data['changes'])
         
         # Clear session data
         session.pop('bulk_edit_data')

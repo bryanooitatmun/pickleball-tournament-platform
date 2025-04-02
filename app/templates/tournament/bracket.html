@@ -368,7 +368,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for standing in group_data.standings %}
+                                        {% for standing in group_data.standings|sort(attribute='position') %}
                                             <tr class="{% if standing.position <= selected_category.teams_advancing_per_group %}advancing{% endif %}">
                                                 <td>
                                                     {% if selected_category.is_doubles() %}
@@ -384,7 +384,7 @@
                                                                     {% endif %}
                                                                 </div>
                                                                 {{ standing.team.player1.full_name.split()[-1] }}/{{ standing.team.player2.full_name.split()[-1] }}
-                                                                <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position }}</span>
+                                                                <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position if standing.position != 999 else '-' }}</span>
                                                             </div>
                                                         {% else %}
                                                             TBD
@@ -402,7 +402,7 @@
                                                                     {% endif %}
                                                                 </div>
                                                                 {{ standing.player.full_name }}
-                                                                <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position }}</span>
+                                                                <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position if standing.position != 999 else '-' }}</span>
                                                             </div>
                                                         {% else %}
                                                             TBD
@@ -697,14 +697,14 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for standing in group_data.standings %}
+                                        {% for standing in group_data.standings|sort(attribute='position') %}
                                             <tr class="{% if standing.position <= selected_category.teams_advancing_per_group %}advancing{% endif %}">
                                                 <td>
                                                     {% if selected_category.is_doubles() %}
                                                         {% if standing.team %}
                                                             <div class="flex items-center">
                                                                 {{ standing.team.player1.full_name.split()[-1] }}/{{ standing.team.player2.full_name.split()[-1] }}
-                                                                <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position }}</span>
+                                                                <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position if standing.position != 999 else '-' }}</span>
                                                             </div>
                                                         {% else %}
                                                             TBD
@@ -713,7 +713,7 @@
                                                         {% if standing.player %}
                                                             <div class="flex items-center">
                                                                 {{ standing.player.full_name }}
-                                                                <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position }}</span>
+                                                                <<span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position if standing.position != 999 else '-' }}</span>
                                                             </div>
                                                         {% else %}
                                                             TBD

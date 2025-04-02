@@ -482,10 +482,11 @@ def live_scoring(id):
         flash('Live scoring is only available for ongoing tournaments.', 'warning')
         return redirect(url_for('main.tournament_detail', id=id))
     
-    # Get all ongoing matches (both singles and doubles)
+    # Get all ongoing matches (both singles and doubles) with court assignments
     ongoing_matches = Match.query.join(TournamentCategory).filter(
         TournamentCategory.tournament_id == id,
         Match.completed == False,
+        Match.court.isnot(None),  # Only include matches with court assignments
         # For singles matches OR doubles matches
         ((Match.player1_id.isnot(None) & Match.player2_id.isnot(None)) |
          (Match.team1_id.isnot(None) & Match.team2_id.isnot(None)))
@@ -669,28 +670,32 @@ def live_courts(id):
         # Add match to the court's matches list
         courts[court].append(match)
         
-        # Check if this is an ongoing match
-        if not match.completed and (
-            (match.is_doubles and match.team1_id and match.team2_id) or
-            (not match.is_doubles and match.player1_id and match.player2_id)
-        ):
-            # If no ongoing match for this court or this match is more recent, use this one
-            if ongoing_matches[court] is None:
-                ongoing_matches[court] = match
-            elif match.scheduled_time and ongoing_matches[court].scheduled_time:
-                # If match is more recent (closer to now) than the current ongoing match
-                if abs((match.scheduled_time - now).total_seconds()) < abs((ongoing_matches[court].scheduled_time - now).total_seconds()):
-                    ongoing_matches[court] = match
+    for court, matches in courts.items():
+
+        ongoing_matches[court] = matches[0] if matches and matches[0].scheduled_time and not matches[0].completed else None 
+        upcoming_matches[court] = matches[1] if len(matches) > 1 and matches[1].scheduled_time and not matches[1].completed else None 
+        # # Check if this is an ongoing match
+        # if not match.completed and (
+        #     (match.is_doubles and match.team1_id and match.team2_id) or
+        #     (not match.is_doubles and match.player1_id and match.player2_id)
+        # ):
+        #     # If no ongoing match for this court or this match is more recent, use this one
+        #     if ongoing_matches[court] is None:
+        #         ongoing_matches[court] = match
+        #     elif match.scheduled_time and ongoing_matches[court].scheduled_time:
+        #         # If match is more recent (closer to now) than the current ongoing match
+        #         if abs((match.scheduled_time - now).total_seconds()) < abs((ongoing_matches[court].scheduled_time - now).total_seconds()):
+        #             ongoing_matches[court] = match
         
-        # Check if this is an upcoming match
-        if not match.completed and match.scheduled_time and match.scheduled_time > now:
-            # If no upcoming match for this court yet or this one is scheduled sooner
-            if upcoming_matches[court] is None:
-                upcoming_matches[court] = match
-            elif match.scheduled_time and upcoming_matches[court].scheduled_time:
-                # Use the match that's scheduled earlier as the next match
-                if match.scheduled_time < upcoming_matches[court].scheduled_time:
-                    upcoming_matches[court] = match
+        # # Check if this is an upcoming match
+        # elif not match.completed and match.scheduled_time and match.scheduled_time > now:
+        #     # If no upcoming match for this court yet or this one is scheduled sooner
+        #     if upcoming_matches[court] is None:
+        #         upcoming_matches[court] = match
+        #     elif match.scheduled_time and upcoming_matches[court].scheduled_time:
+        #         # Use the match that's scheduled earlier as the next match
+        #         if match.scheduled_time < upcoming_matches[court].scheduled_time:
+        #             upcoming_matches[court] = match
     
     # Get match scores for ongoing matches
     scores = {}

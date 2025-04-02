@@ -126,6 +126,9 @@ class MatchForm(FlaskForm):
     set_count = IntegerField('Number of Sets', validators=[NumberRange(min=0, max=5)], default=0)
     scores = FieldList(FormField(ScoreForm), min_entries=0, max_entries=5)
     
+    # Match status
+    completed = BooleanField('Mark Match as Completed', default=False)
+    
     # Verification flags
     referee_verified = BooleanField('Referee Verified', default=False)
     player_verified = BooleanField('Player Verified', default=False)

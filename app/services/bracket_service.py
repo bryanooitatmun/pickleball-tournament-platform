@@ -104,32 +104,102 @@ class BracketService:
         group = Group.query.get_or_404(group_id)
         category = group.category
         
-        # Get all completed matches in this group
-        completed_matches = []
+        # Get ALL matches in this group (both completed and incomplete)
+        all_matches = []
         
         # Try using stage field if it exists
         if hasattr(Match, 'stage'):
-            completed_matches = Match.query.filter_by(
-                group_id=group_id, 
-                completed=True,
+            all_matches = Match.query.filter_by(
+                group_id=group_id,
                 stage=MatchStage.GROUP
             ).all()
         else:
-            # Fallback: just get completed matches with this group_id
-            completed_matches = Match.query.filter_by(
-                group_id=group_id, 
-                completed=True
+            # Fallback: just get all matches with this group_id
+            all_matches = Match.query.filter_by(
+                group_id=group_id
             ).all()
         
         # Create a dict to track participant standings
         standings = {}
         
-        # Process each match to update standings
-        for match in completed_matches:
-            BracketService._process_match_for_standings(match, standings, category.is_doubles())
+        # First, initialize standings for all participants in the group
+        for match in all_matches:
+            if category.is_doubles():
+                # Add team1 to standings if not already there
+                if match.team1_id and match.team1_id not in standings:
+                    standing = GroupStanding.query.filter_by(
+                        group_id=group_id, team_id=match.team1_id
+                    ).first()
+                    
+                    if not standing:
+                        standing = GroupStanding(
+                            group_id=group_id,
+                            team_id=match.team1_id
+                        )
+                        db.session.add(standing)
+                    
+                    # Reset all counters to zero
+                    BracketService._reset_standing_counters(standing)
+                    standings[match.team1_id] = standing
+                
+                # Add team2 to standings if not already there
+                if match.team2_id and match.team2_id not in standings:
+                    standing = GroupStanding.query.filter_by(
+                        group_id=group_id, team_id=match.team2_id
+                    ).first()
+                    
+                    if not standing:
+                        standing = GroupStanding(
+                            group_id=group_id,
+                            team_id=match.team2_id
+                        )
+                        db.session.add(standing)
+                    
+                    # Reset all counters to zero
+                    BracketService._reset_standing_counters(standing)
+                    standings[match.team2_id] = standing
+            else:
+                # Add player1 to standings if not already there
+                if match.player1_id and match.player1_id not in standings:
+                    standing = GroupStanding.query.filter_by(
+                        group_id=group_id, player_id=match.player1_id
+                    ).first()
+                    
+                    if not standing:
+                        standing = GroupStanding(
+                            group_id=group_id,
+                            player_id=match.player1_id
+                        )
+                        db.session.add(standing)
+                    
+                    # Reset all counters to zero
+                    BracketService._reset_standing_counters(standing)
+                    standings[match.player1_id] = standing
+                
+                # Add player2 to standings if not already there
+                if match.player2_id and match.player2_id not in standings:
+                    standing = GroupStanding.query.filter_by(
+                        group_id=group_id, player_id=match.player2_id
+                    ).first()
+                    
+                    if not standing:
+                        standing = GroupStanding(
+                            group_id=group_id,
+                            player_id=match.player2_id
+                        )
+                        db.session.add(standing)
+                    
+                    # Reset all counters to zero
+                    BracketService._reset_standing_counters(standing)
+                    standings[match.player2_id] = standing
         
-        # Update database standings
-        BracketService._update_database_standings(standings, group_id)
+        # Process only completed matches to calculate standings from scratch
+        completed_matches = [m for m in all_matches if m.completed]
+        for match in completed_matches:
+            BracketService._calculate_match_for_standings(match, standings, category.is_doubles())
+        
+        # Remove old standings that are no longer needed (if any)
+        BracketService._clean_old_standings(standings, group_id)
         
         # Calculate final positions
         standings_list = list(standings.values())
@@ -137,6 +207,147 @@ class BracketService:
         
         db.session.commit()
         return standings_list
+
+    @staticmethod
+    def _reset_standing_counters(standing):
+        """Reset all counters in a standing to zero"""
+        standing.matches_played = 0
+        standing.matches_won = 0
+        standing.matches_lost = 0
+        standing.sets_won = 0
+        standing.sets_lost = 0
+        standing.points_won = 0
+        standing.points_lost = 0
+
+    @staticmethod
+    def _calculate_match_for_standings(match, standings, is_doubles):
+        """
+        Process a match to calculate standings
+        This replaces _process_match_for_standings and avoids incrementing counters
+        """
+        if is_doubles:
+            # Process team 1
+            if match.team1_id and match.team1_id in standings:
+                standing = standings[match.team1_id]
+                # Increment matches played
+                standing.matches_played += 1
+                
+                # Check who won
+                if match.winning_team_id == match.team1_id:
+                    standing.matches_won += 1
+                else:
+                    standing.matches_lost += 1
+                
+                # Process set scores
+                scores = match.scores.all() if hasattr(match, 'scores') else MatchScore.query.filter_by(match_id=match.id).all()
+                for score in scores:
+                    if score.player1_score > score.player2_score:
+                        standing.sets_won += 1
+                    else:
+                        standing.sets_lost += 1
+                    
+                    standing.points_won += score.player1_score
+                    standing.points_lost += score.player2_score
+            
+            # Process team 2
+            if match.team2_id and match.team2_id in standings:
+                standing = standings[match.team2_id]
+                # Increment matches played
+                standing.matches_played += 1
+                
+                # Check who won
+                if match.winning_team_id == match.team2_id:
+                    standing.matches_won += 1
+                else:
+                    standing.matches_lost += 1
+                
+                # Process set scores
+                scores = match.scores.all() if hasattr(match, 'scores') else MatchScore.query.filter_by(match_id=match.id).all()
+                for score in scores:
+                    if score.player2_score > score.player1_score:
+                        standing.sets_won += 1
+                    else:
+                        standing.sets_lost += 1
+                    
+                    standing.points_won += score.player2_score
+                    standing.points_lost += score.player1_score
+        else:
+            # Singles match
+            # Process player 1
+            if match.player1_id and match.player1_id in standings:
+                standing = standings[match.player1_id]
+                # Increment matches played
+                standing.matches_played += 1
+                
+                # Check who won
+                if match.winning_player_id == match.player1_id:
+                    standing.matches_won += 1
+                else:
+                    standing.matches_lost += 1
+                
+                # Process set scores
+                scores = match.scores.all() if hasattr(match, 'scores') else MatchScore.query.filter_by(match_id=match.id).all()
+                for score in scores:
+                    if score.player1_score > score.player2_score:
+                        standing.sets_won += 1
+                    else:
+                        standing.sets_lost += 1
+                    
+                    standing.points_won += score.player1_score
+                    standing.points_lost += score.player2_score
+            
+            # Process player 2
+            if match.player2_id and match.player2_id in standings:
+                standing = standings[match.player2_id]
+                # Increment matches played
+                standing.matches_played += 1
+                
+                # Check who won
+                if match.winning_player_id == match.player2_id:
+                    standing.matches_won += 1
+                else:
+                    standing.matches_lost += 1
+                
+                # Process set scores
+                scores = match.scores.all() if hasattr(match, 'scores') else MatchScore.query.filter_by(match_id=match.id).all()
+                for score in scores:
+                    if score.player2_score > score.player1_score:
+                        standing.sets_won += 1
+                    else:
+                        standing.sets_lost += 1
+                    
+                    standing.points_won += score.player2_score
+                    standing.points_lost += score.player1_score
+
+    @staticmethod
+    def _clean_old_standings(standings, group_id):
+        """Remove standings that are no longer needed"""
+        participant_ids = list(standings.keys())
+        
+        # Don't delete anything if there are no participants
+        if not participant_ids:
+            return
+        
+        # Get IDs of teams and players in the standings
+        team_ids = [pid for pid in participant_ids if standings[pid].team_id is not None]
+        player_ids = [pid for pid in participant_ids if standings[pid].player_id is not None]
+        
+        # For teams - delete standings that aren't in our current list
+        if team_ids:
+            GroupStanding.query.filter(
+                GroupStanding.group_id == group_id,
+                GroupStanding.team_id.notin_(team_ids),
+                GroupStanding.team_id.isnot(None)
+            ).delete(synchronize_session=False)
+        
+        # For players - delete standings that aren't in our current list
+        if player_ids:
+            GroupStanding.query.filter(
+                GroupStanding.group_id == group_id,
+                GroupStanding.player_id.notin_(player_ids),
+                GroupStanding.player_id.isnot(None)
+            ).delete(synchronize_session=False)
+
     
     @staticmethod
     def _process_match_for_standings(match, standings, is_doubles):
@@ -243,59 +454,6 @@ class BracketService:
                     GroupStanding.player_id.notin_(player_ids),
                     GroupStanding.player_id.isnot(None)
                 ).delete(synchronize_session=False)
-    
-    @staticmethod
-    def _update_standing_from_match(standing, match, is_team1):
-        """Update standing based on a match result"""
-        # Increment matches played counter
-        standing.matches_played = standing.matches_played + 1
-        
-        # Check who won the match
-        if is_team1:
-            if hasattr(match, 'is_doubles') and match.is_doubles:
-                if match.winning_team_id == match.team1_id:
-                    standing.matches_won = standing.matches_won + 1
-                else:
-                    standing.matches_lost = standing.matches_lost + 1
-            else:
-                if match.winning_player_id == match.player1_id:
-                    standing.matches_won = standing.matches_won + 1
-                else:
-                    standing.matches_lost = standing.matches_lost + 1
-        else:
-            if hasattr(match, 'is_doubles') and match.is_doubles:
-                if match.winning_team_id == match.team2_id:
-                    standing.matches_won = standing.matches_won + 1
-                else:
-                    standing.matches_lost = standing.matches_lost + 1
-            else:
-                if match.winning_player_id == match.player2_id:
-                    standing.matches_won = standing.matches_won + 1
-                else:
-                    standing.matches_lost = standing.matches_lost + 1
-        
-        # Process set scores
-        scores = match.scores if hasattr(match, 'scores') else MatchScore.query.filter_by(match_id=match.id).all()
-        
-        for score in scores:
-            if is_team1:
-                if score.player1_score > score.player2_score:
-                    standing.sets_won = standing.sets_won + 1
-                else:
-                    standing.sets_lost = standing.sets_lost + 1
-                
-                # Add points
-                standing.points_won = standing.points_won + score.player1_score
-                standing.points_lost = standing.points_lost + score.player2_score
-            else:
-                if score.player2_score > score.player1_score:
-                    standing.sets_won = standing.sets_won + 1
-                else:
-                    standing.sets_lost = standing.sets_lost + 1
-                
-                # Add points
-                standing.points_won = standing.points_won + score.player2_score
-                standing.points_lost = standing.points_lost + score.player1_score
     
     @staticmethod
     def _calculate_group_positions(standings):
@@ -428,3 +586,90 @@ class BracketService:
         )
         
         return sorted_tied
+
+    @staticmethod
+    def advance_winner(match):
+        """
+        Advances the winner of a match to the next match in the knockout bracket
+        
+        Args:
+            match: The completed match whose winner should advance
+        """
+        if not match.completed:
+            # Match isn't complete yet, can't advance
+            return False
+        
+        if not match.next_match_id:
+            # No next match to advance to
+            return False
+        
+        # Get the next match
+        next_match = Match.query.get(match.next_match_id)
+        if not next_match:
+            # Next match doesn't exist
+            return False
+        
+        # Determine whether winner goes to position 1 or 2 in the next match
+        # This is usually based on match number, round, or some other logic
+        # Default to position 1 (player1/team1) if we can't determine
+        position = 1
+        
+        # Try to determine position based on match_order
+        # Even match_order usually goes to position 1, odd to position 2
+        if hasattr(match, 'match_order') and match.match_order is not None:
+            position = 1 if match.match_order % 2 == 0 else 2
+        
+        # For doubles match
+        if match.is_doubles:
+            winning_team_id = match.winning_team_id
+            if not winning_team_id:
+                # No winner determined
+                return False
+            
+            # Advance winner to the appropriate position
+            if position == 1:
+                next_match.team1_id = winning_team_id
+                # Copy position code if it exists
+                if hasattr(match, 'player1_code') and match.player1_code:
+                    next_match.player1_code = match.player1_code
+            else:
+                next_match.team2_id = winning_team_id
+                # Copy position code if it exists
+                if hasattr(match, 'player2_code') and match.player2_code:
+                    next_match.player2_code = match.player2_code
+        
+        # For singles match
+        else:
+            winning_player_id = match.winning_player_id
+            if not winning_player_id:
+                # No winner determined
+                return False
+            
+            # Advance winner to the appropriate position
+            if position == 1:
+                next_match.player1_id = winning_player_id
+                # Copy position code if it exists
+                if hasattr(match, 'player1_code') and match.player1_code:
+                    next_match.player1_code = match.player1_code
+            else:
+                next_match.player2_id = winning_player_id
+                # Copy position code if it exists
+                if hasattr(match, 'player2_code') and match.player2_code:
+                    next_match.player2_code = match.player2_code
+        
+        # Save changes
+        db.session.commit()
+        
+        # Emit socket event to update brackets
+        try:
+            from app import socketio
+            socketio.emit('bracket_update', {
+                'tournament_id': match.category.tournament_id,
+                'category_id': match.category_id,
+                'match_id': next_match.id
+            }, room=f'tournament_{match.category.tournament_id}')
+        except ImportError:
+            # SocketIO might not be available
+            pass
+        
+        return True

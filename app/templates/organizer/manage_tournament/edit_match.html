@@ -59,7 +59,8 @@
                             {% endif %}
                         </div>
                     </div>
-                    
+                    <!-- Only show scheduling fields for organizers, not for referees -->
+                    {% if not is_referee_only %}
                     <div class="space-y-4">
                         <div class="form-group">
                             {{ form.court.label(class="block text-sm font-medium text-gray-700") }}
@@ -85,8 +86,47 @@
                             {% endfor %}
                         </div>
                     </div>
+                    {% else %}
+                    <!-- For referees, just show the current match information without edit fields -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-sm">
+                        <div>
+                            <span class="block font-medium text-gray-700 mb-1">Court</span>
+                            <span class="block">{{ match.court or "Not assigned" }}</span>
+                        </div>
+                        
+                        <div>
+                            <span class="block font-medium text-gray-700 mb-1">Scheduled Time</span>
+                            <span class="block">{{ match.scheduled_time.strftime('%Y-%m-%d %H:%M') if match.scheduled_time else "Not scheduled" }}</span>
+                        </div>
+                    </div>
+                    
+                    {% if match.livestream_url %}
+                    <div class="mb-4 text-sm">
+                        <span class="block font-medium text-gray-700 mb-1">Livestream URL</span>
+                        <span class="block">{{ match.livestream_url }}</span>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+
                 </div>
-                
+
+                <!-- Show a message for referees about their limited permissions -->
+                {% if is_referee_only %}
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <span class="material-icons text-blue-500">info</span>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-blue-700">
+                                As a referee, you can only update match scores and verify results. Contact an organizer to change other match details.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}           
+                    
                 <!-- Scores Section -->
                 <div class="space-y-4">
                     <h2 class="text-xl font-semibold text-gray-700 border-b pb-2">Match Scores</h2>
@@ -128,27 +168,56 @@
                             </div>
                         {% endfor %}
                     </div>
-                    
+
+                    <div class="space-y-4 mt-8 border-t pt-4">
+                        <h3 class="text-lg font-semibold text-gray-700 pb-2">Match Status</h3>
+                        
+                        <div class="flex items-center space-x-2">
+                            <div class="flex items-center">
+                                {{ form.completed(class="h-4 w-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500") }}
+                                {{ form.completed.label(class="ml-2 block text-sm text-gray-700") }}
+                            </div>
+                            <span class="text-xs text-gray-500">(Mark as completed when all scores are final)</span>
+                        </div>
+                    </div>                    
                     <div class="space-y-4 mt-8">
                         <h3 class="text-lg font-semibold text-gray-700 border-b pb-2">Verification</h3>
                         
-                        <div class="flex items-start">
-                            <div class="flex items-center h-5">
-                                {{ form.referee_verified(class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded") }}
+                        <div class="flex items-center space-x-4 mb-2">
+                            <div class="flex-1">
+                                {% if is_referee_only %}
+                                    <!-- Referees automatically verify when they submit -->
+                                    <div class="flex items-center">
+                                        <input type="checkbox" checked disabled class="h-4 w-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500">
+                                        <label class="ml-2 block text-sm text-gray-700">
+                                            Referee Verified (your verification will be applied on save)
+                                        </label>
+                                    </div>
+                                {% else %}
+                                    <!-- Organizers can set both verifications -->
+                                    <div class="flex items-center">
+                                        {{ form.referee_verified(class="h-4 w-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500") }}
+                                        {{ form.referee_verified.label(class="ml-2 block text-sm text-gray-700") }}
+                                    </div>
+                                {% endif %}
                             </div>
-                            <div class="ml-3 text-sm">
-                                {{ form.referee_verified.label(class="font-medium text-gray-700") }}
-                                <p class="text-gray-500">Mark this match as verified by referee</p>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-start">
-                            <div class="flex items-center h-5">
-                                {{ form.player_verified(class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded") }}
-                            </div>
-                            <div class="ml-3 text-sm">
-                                {{ form.player_verified.label(class="font-medium text-gray-700") }}
-                                <p class="text-gray-500">Mark this match as verified by player</p>
+                            
+                            <div class="flex-1">
+                                {% if is_referee_only %}
+                                    <!-- Referees can't set player verification -->
+                                    <div class="flex items-center">
+                                        <input type="checkbox" {% if match.player_verified %}checked{% endif %} disabled class="h-4 w-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500">
+                                        <label class="ml-2 block text-sm text-gray-700">
+                                            Player Verified (only players or organizers can set this)
+                                        </label>
+                                    </div>
+                                {% else %}
+                                    <!-- Organizers can set player verification -->
+                                    <div class="flex items-center">
+                                        {{ form.player_verified(class="h-4 w-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500") }}
+                                        {{ form.player_verified.label(class="ml-2 block text-sm text-gray-700") }}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
