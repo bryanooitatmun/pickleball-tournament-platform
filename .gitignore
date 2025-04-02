@@ -3,11 +3,8 @@
 /venv
 /app/__pycache__
 *.pyc
-*.db
 /migrations
-*.db
 /app/static/uploads
 .env
 TODO
 /node_modules
-*.db
