@@ -76,8 +76,6 @@ def edit_sponsors(id):
     # Get tournament sponsors in their current order
     tournament_sponsors = tournament.platform_sponsors
 
-    print(tournament_sponsors)
-
     # Sort the sponsors by tier first, then by display_order
     tournament_sponsors = sorted(tournament_sponsors, 
         key=lambda x: (
@@ -87,7 +85,6 @@ def edit_sponsors(id):
             x.display_order or 999
         )
     )
-    print(tournament_sponsors)
     # Available sponsors (excluding already selected)
     available_sponsors = all_sponsors
     

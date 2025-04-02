@@ -120,7 +120,7 @@ class MatchForm(FlaskForm):
     """Form for editing match details"""
     court = StringField('Court Assignment', validators=[Optional(), Length(max=50)])
     scheduled_time = DateTimeField('Scheduled Time', format='%Y-%m-%dT%H:%M', validators=[Optional()])
-    livestream_url = URLField('Livestream URL', validators=[URL()])  # Will fail on invalid URLs
+    livestream_url = URLField('Livestream URL', validators=[Optional(), URL()])  # Will fail on invalid URLs
     
     # Score information
     set_count = IntegerField('Number of Sets', validators=[NumberRange(min=0, max=5)], default=0)

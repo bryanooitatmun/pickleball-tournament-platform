@@ -21,6 +21,7 @@ def view_registrations():
 
     # Get categories for these tournaments
     categories = TournamentCategory.query.filter(TournamentCategory.tournament_id.in_(tournament_ids)).all()
+
     category_ids = [c.id for c in categories]
 
     # Get registrations for these categories
@@ -64,6 +65,18 @@ def view_registrations():
              # If user tries to filter by a tournament they don't own/admin, show nothing or flash error
              registrations_query = registrations_query.filter(Registration.id == -1) # No results
              flash('You do not have permission to view registrations for the selected tournament.', 'warning')
+    
+    # Filter by category if requested
+    category_filter = request.args.get('category', 'all')
+    if category_filter != 'all' and category_filter.isdigit():
+        category_id = int(category_filter)
+        # Ensure the selected category is one the user can access
+        if category_id in category_ids:
+            registrations_query = registrations_query.filter(Registration.category_id == category_id)
+        else:
+            # If user tries to filter by a category they don't have access to, show nothing or flash error
+            registrations_query = registrations_query.filter(Registration.id == -1)  # No results
+            flash('You do not have permission to view registrations for the selected category.', 'warning')
 
 
     registrations = registrations_query.order_by(Registration.registration_date.desc()).all()
@@ -73,7 +86,9 @@ def view_registrations():
                           registrations=registrations,
                           status_filter=status_filter,
                           tournament_filter=tournament_filter,
-                          all_tournaments=tournaments) # Pass all accessible tournaments for the filter dropdown
+                          category_filter=category_filter,
+                          all_tournaments=tournaments,
+                          categories=categories) # Pass all accessible tournaments and categories for the filter dropdowns
 
 @bp.route('/registration/<int:id>')
 @login_required

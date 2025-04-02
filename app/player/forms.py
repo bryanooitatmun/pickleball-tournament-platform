@@ -325,7 +325,6 @@ class PaymentForm(FlaskForm):
 
     def validate_payment_proof(self, field):
         # Check file size - limit to 5MB
-        print('test')
         if field.data:
             # Get file size in bytes and convert to MB
             file_size = len(field.data.read()) / 1024 / 1024

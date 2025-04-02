@@ -27,8 +27,6 @@ def bracket(id):
     
     # Use BracketService to get comprehensive bracket data
     bracket_data = BracketService.get_bracket_data(category_id)
-
-    print(bracket_data)
     
     # Process scores into a dictionary for easier template access
     scores = {}

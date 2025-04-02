@@ -99,7 +99,11 @@
                             Checked In
                         </span>
                         <div class="text-sm text-gray-600">
-                            {{ registration.check_in_time.strftime('%B %d, %Y at %H:%M') }}
+                            {% if registration.check_in_time %}
+                                {{ registration.check_in_time.strftime('%B %d, %Y at %H:%M') }}
+                            {% else %}
+                                No Check In Time
+                            {% endif %}
                         </div>
                         <form method="POST" action="{{ url_for('organizer.check_out_player', id=registration.id) }}" class="inline">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>

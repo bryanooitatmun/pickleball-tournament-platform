@@ -206,7 +206,8 @@ def update_match(id, match_id):
                 
                 # Schedule notification task (this would be implemented in tasks.py)
                 from app.tasks.email_tasks import send_schedule_change_email
-                send_schedule_change_email(match.id, changes)
+                # TODO: FIX THIS, the current implementation will spam messages
+                #send_schedule_change_email(match.id, changes)
 
             # If winner determined, update standings/brackets
             if winner_determined:

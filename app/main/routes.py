@@ -117,7 +117,6 @@ def events():
     
     past_by_month = {}
     for tournament in past_tournaments:
-        print(tournament.winners_by_category)
         month = tournament.end_date.strftime('%B').upper()
         if month not in past_by_month:
             past_by_month[month] = []
