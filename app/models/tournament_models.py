@@ -201,12 +201,17 @@ class TournamentCategory(db.Model):
             CategoryType.MIXED_DOUBLES
         ]
 
-    def calculate_prize_money(self, total_prize_pool):
-        """Calculate actual prize money based on percentage of total pool"""
-        if self.prize_percentage is not None and total_prize_pool is not None:
-            self.prize_money = total_prize_pool * (self.prize_percentage / 100)
-            return self.prize_money
-        return self.prize_money # Return existing value if calculation not possible
+    def calculate_prize_money(self):
+        """Calculate prize money as the sum of all cash prizes in this category"""
+        from app.models.prize_models import PrizeType
+        
+        # Get all cash prizes for this category
+        cash_prizes = self.prizes.filter_by(prize_type=PrizeType.CASH).all()
+        
+        # Sum up all cash amounts (handle None values)
+        self.prize_money = sum(prize.cash_amount or 0.0 for prize in cash_prizes)
+        
+        return self.prize_money
 
     def get_points_for_place(self, place):
         """Get points for a specific place based on distribution"""
@@ -241,49 +246,32 @@ class TournamentCategory(db.Model):
         return 0.0
 
     def calculate_prize_values(self):
-        """Calculate and update prize values based on tournament prize pool and defined prizes"""
-        # Import Prize locally if needed, or ensure it's available
-        from app.models.prize_models import Prize
-
-        # Calculate cash prize based on percentage if applicable
-        if self.tournament and self.tournament.prize_pool is not None and self.prize_percentage is not None:
-            if self.prize_percentage > 0:
-                self.prize_money = self.tournament.prize_pool * (self.prize_percentage / 100)
-
-        # Create default cash prizes if none exist but there's prize money and distribution
-        # This logic might be better handled in a service layer or upon prize distribution finalization
-        # cash_prizes = [prize for prize in self.prizes if prize.prize_type == PrizeType.CASH]
-        # if self.prize_money > 0 and not cash_prizes and self.prize_distribution:
-        #     for placement, percentage in self.prize_distribution.items():
-        #         amount = self.prize_money * (percentage / 100)
-        #         prize = Prize(
-        #             category_id=self.id,
-        #             placement=placement,
-        #             prize_type=PrizeType.CASH,
-        #             cash_amount=amount
-        #         )
-        #         db.session.add(prize) # Be careful adding directly here, might cause issues if called frequently
-
-        # Update total value based on existing Prize objects
-        total = 0.0
-        # Ensure self.prizes is loaded if accessed this way
-        current_prizes = self.prizes.all()
-        cash_from_prizes = sum(p.cash_amount for p in current_prizes if p.prize_type == PrizeType.CASH and p.cash_amount is not None)
-        merch_value = sum((p.monetary_value or 0.0) * (p.quantity or 1) for p in current_prizes if p.prize_type != PrizeType.CASH)
-
-        # Use calculated prize_money if no specific cash prizes are defined
-        total = (self.prize_money or 0.0) + merch_value
-        self.total_prize_value = total
-
+        """Calculate and update prize values based on defined prizes"""
+        from app.models.prize_models import PrizeType
+        
+        # Calculate cash prize (sum of all cash prizes)
+        cash_prizes = self.prizes.filter_by(prize_type=PrizeType.CASH).all()
+        self.prize_money = sum(p.cash_amount or 0.0 for p in cash_prizes)
+        
+        # Calculate merchandise value (sum of monetary value * quantity for non-cash prizes)
+        non_cash_prizes = [p for p in self.prizes.all() if p.prize_type != PrizeType.CASH]
+        merch_value = sum((p.monetary_value or 0.0) * (p.quantity or 1) for p in non_cash_prizes)
+        
+        # Calculate total prize value
+        self.total_prize_value = self.prize_money + merch_value
+        
         # Update flags
+        current_prizes = self.prizes.all()
         self.has_merchandise = any(p.prize_type == PrizeType.MERCHANDISE for p in current_prizes)
-        # Assuming trophies are a type of merchandise or need a specific flag/type
-        self.has_trophies = False # Update this based on actual prize data if needed
-
-        # Update tournament totals (consider doing this in a separate step/service to avoid race conditions)
-        # if self.tournament:
-        #     self.tournament.total_cash_prize = sum(cat.prize_money or 0.0 for cat in self.tournament.categories)
-        #     self.tournament.total_prize_value = sum(cat.total_prize_value or 0.0 for cat in self.tournament.categories)
+        self.has_trophies = any(p.prize_type == PrizeType.TROPHY for p in current_prizes)
+        
+        # Calculate prize percentage if we have a tournament with a non-zero total cash prize
+        if self.tournament and self.tournament.total_cash_prize and self.tournament.total_cash_prize > 0:
+            self.prize_percentage = (self.prize_money / self.tournament.total_cash_prize) * 100
+        else:
+            self.prize_percentage = 0
+            
+        return self.total_prize_value
 
     def add_merchandise_prize(self, placement, title, value, description=None, image=None, quantity=1):
         """Add a merchandise prize to this category"""

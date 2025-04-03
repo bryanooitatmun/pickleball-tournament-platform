@@ -52,9 +52,8 @@ def edit_categories(id):
                     category.registration_fee = float(request.form.get(f'registration_fee_{category_id}', 0.0))
                     category.description = request.form.get(f'description_{category_id}', '')
                     category.display_order = int(request.form.get(f'display_order_{category_id}', 999))
-                    category.prize_percentage = float(request.form.get(f'prize_percentage_{category_id}', 0.0))
-                    # prize_money might be calculated later, allow direct setting?
-                    category.prize_money = float(request.form.get(f'prize_money_{category_id}', category.prize_money or 0.0))
+                    
+                    # prize_percentage and prize_money are now calculated values, don't update from form
 
                     # Optional restriction fields
                     min_dupr = request.form.get(f'min_dupr_rating_{category_id}', '')
@@ -92,8 +91,7 @@ def edit_categories(id):
                         registration_fee=float(request.form.getlist('new_registration_fee')[i] or 0.0),
                         description=request.form.getlist('new_description')[i] or '',
                         display_order=int(request.form.getlist('new_display_order')[i] or 999),
-                        prize_percentage=float(request.form.getlist('new_prize_percentage')[i] or 0.0),
-                        prize_money=float(request.form.getlist('new_prize_money')[i] or 0.0)
+                        # prize_percentage and prize_money will be calculated later
                     )
 
                     # Optional restriction fields for new categories
@@ -211,7 +209,7 @@ def manage_category(id, category_id):
             try:
                 category.max_participants = int(request.form.get('max_participants', category.max_participants or 0))
                 category.points_awarded = int(request.form.get('points_awarded', category.points_awarded or 0))
-                category.prize_percentage = float(request.form.get('prize_percentage', category.prize_percentage or 0.0))
+                # prize_percentage is now a calculated value, don't update from form
 
                 min_dupr = request.form.get('min_dupr_rating', '')
                 max_dupr = request.form.get('max_dupr_rating', '')

@@ -10,23 +10,19 @@ class PrizeService:
     @staticmethod
     def distribute_prize_pool(tournament_id):
         """
-        Distribute total prize pool among categories and calculate
-        prize money for each placement
+        Calculate prize money for each category based on its prizes,
+        and update the tournament totals
         """
         tournament = Tournament.query.get_or_404(tournament_id)
         categories = TournamentCategory.query.filter_by(tournament_id=tournament_id).all()
         
-        # Validate that category percentages add up to 100%
-        total_percentage = sum(cat.prize_percentage for cat in categories)
-        if total_percentage != 100:
-            # Normalize if not exactly 100%
-            adjustment_factor = 100 / total_percentage if total_percentage != 0 else 0
-            for category in categories:
-                category.prize_percentage *= adjustment_factor
-        
-        # Calculate prize money for each category
+        # First, calculate prize money for each category based on its prizes
         for category in categories:
-            category.calculate_prize_money(tournament.prize_pool)
+            category.calculate_prize_values()
+        
+        # Then, update the tournament totals
+        tournament.total_cash_prize = sum(cat.prize_money or 0.0 for cat in categories)
+        tournament.total_prize_value = sum(cat.total_prize_value or 0.0 for cat in categories)
         
         db.session.commit()
         return categories

@@ -315,9 +315,11 @@
                 
                 <div>
                     <label for="prize_pool" class="block text-sm font-medium text-gray-700 mb-1">
-                        Prize Pool (RM)
+                        Prize Pool (RM) - Calculated automatically
                     </label>
-                    {{ form.prize_pool(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                    <div class="text-xl font-semibold text-gray-900">RM{{ tournament.total_prize_value|int }}</div>
+                    <p class="hint-text">This value is calculated from all prizes defined in the Prizes tab.</p>
+                    {{ form.prize_pool(type="hidden", value=tournament.total_prize_value) }}
                     {% if form.prize_pool.errors %}
                     <div class="text-red-600 text-sm mt-1">
                         {% for error in form.prize_pool.errors %}
