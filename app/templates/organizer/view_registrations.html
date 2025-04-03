@@ -17,32 +17,32 @@
     <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
         <h2 class="text-lg font-bold mb-4">Filters</h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- Status Filter -->
             <div>
                 <h3 class="text-sm font-medium text-gray-500 mb-2">Registration Status</h3>
                 <div class="flex flex-wrap gap-2">
-                    <a href="{{ url_for('organizer.view_registrations', status='pending', tournament=tournament_filter) }}" 
+                    <a href="{{ url_for('organizer.view_registrations', status='pending', tournament=tournament_filter, category=category_filter) }}" 
                     class="px-4 py-2 rounded-md {% if status_filter == 'pending' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
                         Pending Verification
                     </a>
-                    <a href="{{ url_for('organizer.view_registrations', status='approved', tournament=tournament_filter) }}"
+                    <a href="{{ url_for('organizer.view_registrations', status='approved', tournament=tournament_filter, category=category_filter) }}"
                     class="px-4 py-2 rounded-md {% if status_filter == 'approved' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
                         Approved
                     </a>
-                    <a href="{{ url_for('organizer.view_registrations', status='checked_in', tournament=tournament_filter) }}"
+                    <a href="{{ url_for('organizer.view_registrations', status='checked_in', tournament=tournament_filter, category=category_filter) }}"
                     class="px-4 py-2 rounded-md {% if status_filter == 'checked_in' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
                         Checked In
                     </a>
-                    <a href="{{ url_for('organizer.view_registrations', status='not_checked_in', tournament=tournament_filter) }}"
+                    <a href="{{ url_for('organizer.view_registrations', status='not_checked_in', tournament=tournament_filter, category=category_filter) }}"
                     class="px-4 py-2 rounded-md {% if status_filter == 'not_checked_in' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
                         Not Checked In
                     </a>
-                    <a href="{{ url_for('organizer.view_registrations', status='rejected', tournament=tournament_filter) }}"
+                    <a href="{{ url_for('organizer.view_registrations', status='rejected', tournament=tournament_filter, category=category_filter) }}"
                     class="px-4 py-2 rounded-md {% if status_filter == 'rejected' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
                         Rejected
                     </a>
-                    <a href="{{ url_for('organizer.view_registrations', status='all', tournament=tournament_filter) }}"
+                    <a href="{{ url_for('organizer.view_registrations', status='all', tournament=tournament_filter, category=category_filter) }}"
                     class="px-4 py-2 rounded-md {% if status_filter == 'all' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
                         All Statuses
                     </a>
@@ -59,6 +59,23 @@
                         <option value="{{ tournament.id }}" {% if tournament_filter|int == tournament.id %}selected{% endif %}>
                             {{ tournament.name }}
                         </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Category Filter -->
+            <div>
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Category</h3>
+                <div class="relative">
+                    <select id="categoryFilter" onchange="changeCategory(this.value)" class="block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all" {% if category_filter == 'all' %}selected{% endif %}>All Categories</option>
+                        {% for category in categories %}
+                        {% if tournament_filter == 'all' or tournament_filter|int == category.tournament_id %}
+                        <option value="{{ category.id }}" {% if category_filter|int == category.id %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endif %}
                         {% endfor %}
                     </select>
                 </div>
@@ -84,6 +101,14 @@
                     {% for tournament in all_tournaments %}
                         {% if tournament_filter|int == tournament.id %}
                             for {{ tournament.name }}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+
+                {% if category_filter != 'all' %}
+                    {% for category in categories %}
+                        {% if category_filter|int == category.id %}
+                            ({{ category.name }})
                         {% endif %}
                     {% endfor %}
                 {% endif %}
@@ -329,10 +354,76 @@
   function changeTournament(tournamentId) {
     const url = new URL(window.location);
     url.searchParams.set('tournament', tournamentId);
+    
+    // Reset category filter when tournament changes
+    if (tournamentId === 'all') {
+      url.searchParams.set('category', 'all');
+    }
+    
     window.location.href = url.toString();
   }
   
+  // Function to change category filter
+  function changeCategory(categoryId) {
+    const url = new URL(window.location);
+    url.searchParams.set('category', categoryId);
+    window.location.href = url.toString();
+  }
+  
+  // Update category dropdown based on selected tournament
+  function updateCategoryOptions() {
+    const tournamentId = document.getElementById('tournamentFilter').value;
+    const categorySelect = document.getElementById('categoryFilter');
+    const allCategories = Array.from(categorySelect.querySelectorAll('option')).slice(1); // Skip "All Categories" option
+    
+    // First hide all category options except "All Categories"
+    allCategories.forEach(option => {
+      option.style.display = 'none';
+    });
+    
+    // Show relevant categories based on selected tournament
+    if (tournamentId === 'all') {
+      allCategories.forEach(option => {
+        option.style.display = '';
+      });
+    } else {
+      allCategories.forEach(option => {
+        const categoryTournamentId = option.dataset.tournamentId;
+        if (categoryTournamentId === tournamentId) {
+          option.style.display = '';
+        }
+      });
+    }
+    
+    // If current category is not valid for selected tournament, reset to "All Categories"
+    const currentCategory = categorySelect.value;
+    const isValidCategory = tournamentId === 'all' || 
+                            currentCategory === 'all' || 
+                            Array.from(categorySelect.querySelectorAll('option:not([style*="display: none"])')).some(opt => opt.value === currentCategory);
+    
+    if (!isValidCategory) {
+      categorySelect.value = 'all';
+    }
+  }
+  
   document.addEventListener('DOMContentLoaded', function() {
+    // Add tournament ID as data attribute to category options
+    const categorySelect = document.getElementById('categoryFilter');
+    const categoryOptions = categorySelect.querySelectorAll('option');
+    
+    categoryOptions.forEach(option => {
+      if (option.value !== 'all') {
+        const tournamentId = option.parentElement.dataset.tournamentId;
+        option.dataset.tournamentId = tournamentId;
+      }
+    });
+    
+    // Update categories when page loads
+    //updateCategoryOptions();
+    
+    // Update categories when tournament changes
+    document.getElementById('tournamentFilter').addEventListener('change', updateCategoryOptions);
+    
     // Modal handling
     const modalBackdrop = document.getElementById('modalBackdrop');
     const rejectModal = document.getElementById('rejectModal');
@@ -382,7 +473,7 @@
         // Create form and submit
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = `/registration/${registrationId}/checkin`;
+        form.action = `registration/${registrationId}/checkin`;
         
         // Add CSRF token
         const csrfInput = document.createElement('input');

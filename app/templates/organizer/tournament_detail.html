@@ -161,7 +161,7 @@
                                         </td> 
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" class="text-blue-600 hover:text-blue-900 mr-3">Manage</a>
-                                            <a href="{{ url_for('organizer.view_registrations', tournament=tournament.id) }}" class="text-blue-600 hover:text-blue-900">Registrations</a>
+                                            <a href="{{ url_for('organizer.view_registrations', tournament=tournament.id, category=category.id) }}" class="text-blue-600 hover:text-blue-900">Registrations</a>
                                         </td> 
                                     </tr>
                                 {% endfor %}

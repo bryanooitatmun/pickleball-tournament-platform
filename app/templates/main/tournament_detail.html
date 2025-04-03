@@ -353,15 +353,9 @@
                                         <span class="text-gray-700 group-hover:text-blue-700">Schedule</span>
                                     </a>
                                 {% endif %}
-                                
-                                {% if tournament.status.value == 'ongoing' %}
-                                    <a href="{{ url_for('tournament.live_courts', id=tournament.id) }}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-                                        <i class="fas fa-table-tennis mr-2"></i> Live Courts
-                                    </a>
-                                {% endif %}
+                            
 
-
-                                {% if tournament.status.value == 'completed' %}
+                                {% if tournament.status.value == 'ongoing' or tournament.status.value == 'completed' %}
                                     <a href="{{ url_for('tournament.results', id=tournament.id) }}" class="flex items-center py-2 px-3 rounded-md hover:bg-gray-50 transition group">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-hover:text-blue-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -369,6 +363,13 @@
                                         <span class="text-gray-700 group-hover:text-blue-700">View Results</span>
                                     </a>
                                 {% endif %}
+
+                                {% if tournament.status.value == 'ongoing' %}
+                                    <a href="{{ url_for('tournament.live_courts', id=tournament.id) }}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                                        <i class="fas fa-table-tennis mr-2"></i> Live Courts
+                                    </a>
+                                {% endif %}
+                                
                             {% endif %}
                         </div>
                     </div>

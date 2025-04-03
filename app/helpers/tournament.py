@@ -481,6 +481,11 @@ def _generate_knockout_from_groups(category):
         category_id=category.id, 
         stage=MatchStage.KNOCKOUT
     ).delete(synchronize_session=False)
+
+    Match.query.filter_by(
+        category_id=category.id, 
+        stage=MatchStage.PLAYOFF
+    ).delete(synchronize_session=False)
     
     # Determine bracket size (next power of 2)
     bracket_size = 1

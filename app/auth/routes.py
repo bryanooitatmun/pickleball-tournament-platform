@@ -32,7 +32,13 @@ def login():
 def logout():
     logout_user()
     flash('You have been logged out.', 'info')
-    return redirect(url_for('main.index'))
+    
+    # Redirect to the previous page if it exists and is a valid URL
+    next_page = request.referrer
+    if not next_page or url_parse(next_page).netloc != '':
+        next_page = url_for('main.index')
+    
+    return redirect(next_page)
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():

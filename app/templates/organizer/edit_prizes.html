@@ -216,6 +216,9 @@
                 {% if prize_data[category.id] %}
                     {% for prize in prize_data[category.id] %}
                     <div class="prize-card" id="prize-{{ prize.id }}">
+                        <!-- Add the hidden input for prize ID -->
+                        <input type="hidden" name="prize_id_{{ category.id }}" value="{{ prize.id }}">
+                        
                         <div class="prize-header">
                             <div class="flex items-center">
                                 <span class="badge badge-{{ prize.prize_type.value }}">{{ prize.prize_type.name }}</span>

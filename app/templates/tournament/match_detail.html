@@ -366,77 +366,6 @@
                         <span>Receiving live score updates</span>
                     </div>
                     
-                    <!-- Progress indicator -->
-                    <div class="mt-4 bg-gray-100 rounded-lg p-4">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Match Progress</h3>
-                        <div class="match-progress">
-                            {% if scores %}
-                                {% set player1_wins = 0 %}
-                                {% set player2_wins = 0 %}
-                                {% for score in scores %}
-                                    {% if score.player1_score > score.player2_score %}
-                                        {% set player1_wins = player1_wins + 1 %}
-                                    {% elif score.player2_score > score.player1_score %}
-                                        {% set player2_wins = player2_wins + 1 %}
-                                    {% endif %}
-                                {% endfor %}
-                                
-                                <div class="flex justify-center items-center space-x-4">
-                                    <div class="text-center">
-                                        <div class="text-3xl font-bold text-gray-900 player1-sets">{{ player1_wins }}</div>
-                                        <div class="text-sm text-gray-500">
-                                            {% if match.is_doubles %}
-                                                Team 1
-                                            {% elif match.player1 %}
-                                                {{ match.player1.full_name }}
-                                            {% else %}
-                                                Player 1
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="text-xl font-bold text-gray-400">-</div>
-                                    
-                                    <div class="text-center">
-                                        <div class="text-3xl font-bold text-gray-900 player2-sets">{{ player2_wins }}</div>
-                                        <div class="text-sm text-gray-500">
-                                            {% if match.is_doubles %}
-                                                Team 2
-                                            {% elif match.player2 %}
-                                                {{ match.player2.full_name }}
-                                            {% else %}
-                                                Player 2
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="mt-4 text-sm text-gray-600 match-status">
-                                    {% if player1_wins > player2_wins %}
-                                        {% if match.is_doubles %}
-                                            Team 1 is leading
-                                        {% elif match.player1 %}
-                                            {{ match.player1.full_name }} is leading
-                                        {% else %}
-                                            Player 1 is leading
-                                        {% endif %}
-                                    {% elif player2_wins > player1_wins %}
-                                        {% if match.is_doubles %}
-                                            Team 2 is leading
-                                        {% elif match.player2 %}
-                                            {{ match.player2.full_name }} is leading
-                                        {% else %}
-                                            Player 2 is leading
-                                        {% endif %}
-                                    {% else %}
-                                        Match is tied
-                                    {% endif %}
-                                </div>
-                            {% else %}
-                                <div class="text-gray-500">Match hasn't started yet</div>
-                            {% endif %}
-                        </div>
-                    </div>
                 </div>
                 {% endif %}
 
@@ -674,7 +603,27 @@
         
         // Function to update the scores in the UI
         function updateScores(data) {
-            if (!data.scores || data.scores.length === 0) return;
+            console.log('Updating scores with data:', data);
+            
+            // Create a standardized format regardless of input format
+            let matchId, scores;
+            
+            if (data.scores) {
+                // API format: array of score objects
+                matchId = data.match_id;
+                scores = data.scores;
+            } else {
+                // Socket.io format: single score object
+                matchId = data.match_id;
+                // Convert to the expected scores array format
+                scores = [{
+                    set: data.set_number,
+                    player1_score: data.player1_score,
+                    player2_score: data.player2_score
+                }];
+            }
+            
+            if (!scores || scores.length === 0) return;
             
             const matchScoresElement = document.querySelector('.match-scores');
             if (!matchScoresElement) return;
@@ -690,25 +639,28 @@
             let player2SetsWon = 0;
             
             // Process each score
-            data.scores.forEach(score => {
+            scores.forEach(score => {
+                // Get set number (handle both formats)
+                const setNumber = score.set || score.set_number;
+                
                 // Find or create score element for this set
-                let scoreSetElement = document.querySelector(`.score-set[data-set="${score.set}"]`);
+                let scoreSetElement = document.querySelector(`.score-set[data-set="${setNumber}"]`);
                 
                 if (!scoreSetElement) {
                     // Create new score element if not exists
                     const scoreSetHtml = `
-                        <div class="flex flex-col items-center score-set" data-set="${score.set}">
+                        <div class="flex flex-col items-center score-set" data-set="${setNumber}">
                             <div class="p-1 text-center score-box player1-score">
                                 ${score.player1_score}
                             </div>
-                            <div class="mt-2 text-xs text-gray-500">Set ${score.set}</div>
+                            <div class="mt-2 text-xs text-gray-500">Set ${setNumber}</div>
                             <div class="p-1 text-center score-box mt-2 player2-score">
                                 ${score.player2_score}
                             </div>
                         </div>
                     `;
                     matchScoresElement.insertAdjacentHTML('beforeend', scoreSetHtml);
-                    scoreSetElement = document.querySelector(`.score-set[data-set="${score.set}"]`);
+                    scoreSetElement = document.querySelector(`.score-set[data-set="${setNumber}"]`);
                 }
                 
                 // Update the scores
@@ -723,11 +675,9 @@
                     if (score.player1_score > score.player2_score) {
                         player1ScoreElement.className = 'p-1 text-center score-box winning-score player1-score';
                         player2ScoreElement.className = 'p-1 text-center score-box mt-2 losing-score player2-score';
-                        player1SetsWon++;
                     } else if (score.player2_score > score.player1_score) {
                         player1ScoreElement.className = 'p-1 text-center score-box losing-score player1-score';
                         player2ScoreElement.className = 'p-1 text-center score-box mt-2 winning-score player2-score';
-                        player2SetsWon++;
                     } else {
                         player1ScoreElement.className = 'p-1 text-center score-box losing-score player1-score';
                         player2ScoreElement.className = 'p-1 text-center score-box mt-2 losing-score player2-score';
@@ -735,25 +685,8 @@
                 }
             });
             
-            // Update match progress section if it exists
-            const player1SetsElement = document.querySelector('.player1-sets');
-            const player2SetsElement = document.querySelector('.player2-sets');
-            const matchStatusElement = document.querySelector('.match-status');
-            
-            if (player1SetsElement && player2SetsElement && matchStatusElement) {
-                player1SetsElement.textContent = player1SetsWon;
-                player2SetsElement.textContent = player2SetsWon;
-                
-                // Update match status text
-                if (player1SetsWon > player2SetsWon) {
-                    matchStatusElement.textContent = "{% if match.is_doubles %}Team 1{% elif match.player1 %}{{ match.player1.full_name }}{% else %}Player 1{% endif %} is leading";
-                } else if (player2SetsWon > player1SetsWon) {
-                    matchStatusElement.textContent = "{% if match.is_doubles %}Team 2{% elif match.player2 %}{{ match.player2.full_name }}{% else %}Player 2{% endif %} is leading";
-                } else {
-                    matchStatusElement.textContent = "Match is tied";
-                }
-            }
         }
+
     });
 </script>
 {% endif %}
