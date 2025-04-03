@@ -14,8 +14,8 @@
             {% for tournament in ongoing_tournaments %}
             <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
                 <div class="h-48 bg-gray-200 relative">
-                    {% if tournament.banner_image %}
-                    <img src="{{ url_for('static', filename='uploads/' + tournament.banner_image) }}" 
+                    {% if tournament.banner %}
+                    <img src="/static/{{ tournament.banner }}" 
                          alt="{{ tournament.name }}" class="w-full h-full object-cover">
                     {% else %}
                     <div class="w-full h-full flex items-center justify-center bg-gray-100">
@@ -85,8 +85,8 @@
             {% for tournament in upcoming_tournaments %}
             <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
                 <div class="h-48 bg-gray-200 relative">
-                    {% if tournament.banner_image %}
-                    <img src="{{ url_for('static', filename='uploads/' + tournament.banner_image) }}" 
+                    {% if tournament.banner %}
+                    <img src="/static/{{ tournament.banner }}" 
                          alt="{{ tournament.name }}" class="w-full h-full object-cover">
                     {% else %}
                     <div class="w-full h-full flex items-center justify-center bg-gray-100">
@@ -155,8 +155,8 @@
             {% for tournament in past_tournaments %}
             <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
                 <div class="h-48 bg-gray-200 relative">
-                    {% if tournament.banner_image %}
-                    <img src="{{ url_for('static', filename='uploads/' + tournament.banner_image) }}" 
+                    {% if tournament.banner %}
+                    <img src="/static/{{ tournament.banner }}" 
                          alt="{{ tournament.name }}" class="w-full h-full object-cover">
                     {% else %}
                     <div class="w-full h-full flex items-center justify-center bg-gray-100">
