@@ -36,7 +36,7 @@ class BracketService:
         
         # Organize knockout matches by round
         knockout_matches = [m for m in all_matches if (
-            hasattr(m, 'stage') and m.stage == MatchStage.KNOCKOUT
+            hasattr(m, 'stage') and (m.stage == MatchStage.KNOCKOUT or m.stage == MatchStage.PLAYOFF)
         ) or (
             not hasattr(m, 'stage') and (not hasattr(m, 'group_id') or m.group_id is None)
         )]

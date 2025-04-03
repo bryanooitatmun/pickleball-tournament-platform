@@ -165,6 +165,8 @@ class Match(db.Model):
             return "Final"
         elif self.round == 2:
             return "Semifinal"
+        elif self.round == 1.5:
+            return "Third Place Playoff"
         elif self.round == 3:
             return "Quarterfinal"
         elif self.round == 4:

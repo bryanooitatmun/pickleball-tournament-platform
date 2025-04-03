@@ -1,0 +1,209 @@
+<!-- _match_row.html - Mobile-friendly match row template -->
+
+<!-- Traditional table row for desktop -->
+<tr class="match-row hidden md:table-row" 
+    data-players="{% if selected_category.is_doubles() %}
+        {% if match.team1 %}{{ match.team1.player1.full_name }} {{ match.team1.player2.full_name }}{% endif %}
+        {% if match.team2 %}{{ match.team2.player1.full_name }} {{ match.team2.player2.full_name }}{% endif %}
+    {% else %}
+        {% if match.player1 %}{{ match.player1.full_name }}{% endif %}
+        {% if match.player2 %}{{ match.player2.full_name }}{% endif %}
+    {% endif %}">
+    <td class="px-4 py-4">
+        <div class="text-sm text-gray-900">
+            {% if selected_category.is_doubles() %}
+                {% if match.team1 %}
+                    <a href="{{ url_for('main.player_detail', id=match.team1.player1_id) }}" class="hover:text-blue-600">
+                        {{ match.team1.player1.full_name }}
+                    </a>
+                    / 
+                    <a href="{{ url_for('main.player_detail', id=match.team1.player2_id) }}" class="hover:text-blue-600">
+                        {{ match.team1.player2.full_name }}
+                    </a>
+                {% else %}
+                    TBD
+                {% endif %}
+            {% else %}
+                {% if match.player1 %}
+                    <a href="{{ url_for('main.player_detail', id=match.player1.id) }}" class="hover:text-blue-600">
+                        {{ match.player1.full_name }}
+                    </a>
+                {% else %}
+                    TBD
+                {% endif %}
+            {% endif %}
+        </div>
+        <div class="text-sm text-gray-500 mt-1">vs</div>
+        <div class="text-sm text-gray-900">
+            {% if selected_category.is_doubles() %}
+                {% if match.team2 %}
+                    <a href="{{ url_for('main.player_detail', id=match.team2.player1_id) }}" class="hover:text-blue-600">
+                        {{ match.team2.player1.full_name }}
+                    </a>
+                    / 
+                    <a href="{{ url_for('main.player_detail', id=match.team2.player2_id) }}" class="hover:text-blue-600">
+                        {{ match.team2.player2.full_name }}
+                    </a>
+                {% else %}
+                    TBD
+                {% endif %}
+            {% else %}
+                {% if match.player2 %}
+                    <a href="{{ url_for('main.player_detail', id=match.player2.id) }}" class="hover:text-blue-600">
+                        {{ match.player2.full_name }}
+                    </a>
+                {% else %}
+                    TBD
+                {% endif %}
+            {% endif %}
+        </div>
+    </td>
+    <td class="px-4 py-4 whitespace-nowrap">
+        {% for score in match.scores %}
+            <span class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                {{ score.player1_score }}-{{ score.player2_score }}
+            </span>
+            {% if not loop.last %} {% endif %}
+        {% endfor %}
+    </td>
+    <td class="px-4 py-4 whitespace-nowrap">
+        {% if selected_category.is_doubles() %}
+            {% if match.winner %}
+                <div class="text-sm font-medium text-green-600">
+                    <a href="{{ url_for('main.player_detail', id=match.winner.player1_id) }}" class="hover:text-green-800">
+                        {{ match.winner.player1.full_name }}
+                    </a>
+                    /
+                    <a href="{{ url_for('main.player_detail', id=match.winner.player2_id) }}" class="hover:text-green-800">
+                        {{ match.winner.player2.full_name }}
+                    </a>
+                </div>
+            {% else %}
+                <span class="text-sm text-gray-500">N/A</span>
+            {% endif %}
+        {% else %}
+            {% if match.winner %}
+                <a href="{{ url_for('main.player_detail', id=match.winner.id) }}" class="text-sm font-medium text-green-600 hover:text-green-800">
+                    {{ match.winner.full_name }}
+                </a>
+            {% else %}
+                <span class="text-sm text-gray-500">N/A</span>
+            {% endif %}
+        {% endif %}
+    </td>
+    <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+        <a href="{{ url_for('tournament.match_detail', id=tournament.id, match_id=match.id) }}" class="text-blue-600 hover:text-blue-900">
+            View
+        </a>
+    </td>
+</tr>
+
+<!-- Card layout for mobile -->
+<div class="match-card block md:hidden mb-4 bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden" 
+     data-players="{% if selected_category.is_doubles() %}
+        {% if match.team1 %}{{ match.team1.player1.full_name }} {{ match.team1.player2.full_name }}{% endif %}
+        {% if match.team2 %}{{ match.team2.player1.full_name }} {{ match.team2.player2.full_name }}{% endif %}
+    {% else %}
+        {% if match.player1 %}{{ match.player1.full_name }}{% endif %}
+        {% if match.player2 %}{{ match.player2.full_name }}{% endif %}
+    {% endif %}">
+    
+    <!-- Players section -->
+    <div class="p-4 border-b border-gray-100">
+        <div class="flex justify-between items-center">
+            <div class="flex-1">
+                <div class="font-medium">
+                    {% if selected_category.is_doubles() %}
+                        {% if match.team1 %}
+                            <a href="{{ url_for('main.player_detail', id=match.team1.player1_id) }}" class="text-blue-600">
+                                {{ match.team1.player1.full_name }}
+                            </a>
+                            / 
+                            <a href="{{ url_for('main.player_detail', id=match.team1.player2_id) }}" class="text-blue-600">
+                                {{ match.team1.player2.full_name }}
+                            </a>
+                        {% else %}
+                            TBD
+                        {% endif %}
+                    {% else %}
+                        {% if match.player1 %}
+                            <a href="{{ url_for('main.player_detail', id=match.player1.id) }}" class="text-blue-600">
+                                {{ match.player1.full_name }}
+                            </a>
+                        {% else %}
+                            TBD
+                        {% endif %}
+                    {% endif %}
+                </div>
+                
+                <div class="text-xs text-gray-500 my-1">vs</div>
+                
+                <div class="font-medium">
+                    {% if selected_category.is_doubles() %}
+                        {% if match.team2 %}
+                            <a href="{{ url_for('main.player_detail', id=match.team2.player1_id) }}" class="text-blue-600">
+                                {{ match.team2.player1.full_name }}
+                            </a>
+                            / 
+                            <a href="{{ url_for('main.player_detail', id=match.team2.player2_id) }}" class="text-blue-600">
+                                {{ match.team2.player2.full_name }}
+                            </a>
+                        {% else %}
+                            TBD
+                        {% endif %}
+                    {% else %}
+                        {% if match.player2 %}
+                            <a href="{{ url_for('main.player_detail', id=match.player2.id) }}" class="text-blue-600">
+                                {{ match.player2.full_name }}
+                            </a>
+                        {% else %}
+                            TBD
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Score display to the right -->
+            <div class="ml-4">
+                {% for score in match.scores %}
+                    <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800 mb-1">
+                        {{ score.player1_score }}-{{ score.player2_score }}
+                    </div>
+                    {% if not loop.last %}<br>{% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Winner and details footer -->
+    <div class="px-4 py-3 bg-gray-50 flex justify-between items-center">
+        <div class="text-sm">
+            <span class="text-gray-500">Winner:</span>
+            {% if selected_category.is_doubles() %}
+                {% if match.winner %}
+                    <span class="font-medium text-green-600">
+                        {{ match.winner.player1.full_name.split()[-1] }}/{{ match.winner.player2.full_name.split()[-1] }}
+                    </span>
+                {% else %}
+                    <span class="text-gray-500">N/A</span>
+                {% endif %}
+            {% else %}
+                {% if match.winner %}
+                    <span class="font-medium text-green-600">
+                        {{ match.winner.full_name }}
+                    </span>
+                {% else %}
+                    <span class="text-gray-500">N/A</span>
+                {% endif %}
+            {% endif %}
+        </div>
+        
+        <a href="{{ url_for('tournament.match_detail', id=tournament.id, match_id=match.id) }}" 
+           class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100">
+            View
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+        </a>
+    </div>
+</div>

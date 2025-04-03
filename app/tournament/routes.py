@@ -27,7 +27,6 @@ def bracket(id):
     
     # Use BracketService to get comprehensive bracket data
     bracket_data = BracketService.get_bracket_data(category_id)
-    
     # Process scores into a dictionary for easier template access
     scores = {}
     
@@ -544,6 +543,41 @@ def results(id):
         completed=True
     ).order_by(Match.round).all()
     
+    # Organize matches by stage and round for display
+    matches_by_stage = {
+        'group': {},
+        'knockout': {}
+    }
+    
+    # Track available stages for filtering
+    match_stages = {
+        'GROUP': set(),
+        'KNOCKOUT': set()
+    }
+    
+    # Process matches into stages
+    for match in matches:
+        if hasattr(match, 'stage') and match.stage:
+            if match.stage.name == 'GROUP' and match.group:
+                # Add to group matches
+                group_name = match.group.name
+                if group_name not in matches_by_stage['group']:
+                    matches_by_stage['group'][group_name] = []
+                matches_by_stage['group'][group_name].append(match)
+                match_stages['GROUP'].add(group_name)
+            else:
+                # Add to knockout matches
+                round_num = match.round
+
+                if round_num not in matches_by_stage['knockout']:
+                    matches_by_stage['knockout'][round_num] = {
+                        'name': match.round_name,
+                        'matches': []
+                    }
+                matches_by_stage['knockout'][round_num]['matches'].append(match)
+                match_stages['KNOCKOUT'].add(round_num)
+    
+    
     # Get prize distribution information
     prize_info = {
         'total_prize_pool': tournament.prize_pool,
@@ -599,6 +633,8 @@ def results(id):
                           placings=placings,
                           grouped_placings=grouped_placings,
                           matches=matches,
+                          matches_by_stage=matches_by_stage,
+                          match_stages=match_stages,
                           prize_info=prize_info,
                           points_info=points_info)
 

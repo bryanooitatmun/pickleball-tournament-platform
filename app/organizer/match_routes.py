@@ -397,46 +397,6 @@ def generate_bracket(id, category_id):
     
     return redirect(url_for('organizer.manage_category', id=id, category_id=category_id))
 
-# @bp.route('/tournament/<int:id>/calculate_placings/<int:category_id>', methods=['POST'])
-# @login_required
-# @organizer_required
-# def calculate_placings(id, category_id):
-#     """Calculate final placings for a category after all matches are complete."""
-#     tournament = Tournament.query.get_or_404(id)
-#     category = TournamentCategory.query.get_or_404(category_id)
-
-#     # Permission check
-#     if not current_user.is_admin() and tournament.organizer_id != current_user.id:
-#         flash('You do not have permission to calculate placings for this tournament.', 'danger')
-#         return redirect(url_for('organizer.tournament_detail', id=id))
-#     if category.tournament_id != tournament.id:
-#          flash('Category does not belong to this tournament.', 'danger')
-#          return redirect(url_for('organizer.tournament_detail', id=id))
-
-#     # Ensure tournament/category is completed or ready for placing calculation
-#     # Check if all matches in the category are completed
-#     incomplete_matches = Match.query.filter_by(category_id=category_id, completed=False).count()
-#     if incomplete_matches > 0:
-#         flash(f'Cannot calculate placings: {incomplete_matches} matches in this category are not yet completed.', 'warning')
-#         return redirect(url_for('organizer.manage_category', id=id, category_id=category_id))
-
-#     try:
-#         # Use PlacingService to calculate and potentially store placings
-#         # This service would contain the logic based on bracket results
-#         placings = PlacingService.calculate_and_store_placings(category_id) # Assumes service exists and returns/stores results
-
-#         # Award points based on placings and category settings
-#         points_awarded = PlacingService.award_points(category_id, placings)
-
-#         flash(f'Calculated {len(placings)} placings for category {category.name}. Points awarded.', 'success')
-#     except Exception as e:
-#         flash(f'Error calculating placings: {e}', 'danger')
-#         # No rollback needed usually for calculation, unless it tries to store results
-
-#     # Redirect to results page or category management
-#     return redirect(url_for('organizer.manage_category', id=id, category_id=category_id))
-
-
 @bp.route('/tournament/<int:id>/category/<int:category_id>/bulk_edit_matches', methods=['GET', 'POST'])
 @login_required
 @organizer_required
