@@ -50,7 +50,7 @@
         <div class="mb-8 bg-white p-3 md:p-6 rounded-xl shadow-md flex items-center">
             {% if tournament.logo %}
             <div class="mr-6 flex-shrink-0">
-                <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="h-24 w-auto object-contain">
+                <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="h-24 w-auto object-contain">
             </div>
             {% else %}
             <div class="mr-6 flex-shrink-0 md:w-24 md:h-24 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">

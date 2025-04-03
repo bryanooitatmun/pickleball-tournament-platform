@@ -29,7 +29,7 @@
                         <div class="flex items-center">
                             {% if feedback.tournament %}
                                 {% if feedback.tournament.logo %}
-                                    <img src="{{ feedback.tournament.logo }}" alt="{{ feedback.tournament.name }}" class="h-12 w-12 object-contain rounded mr-3">
+                                    <img src="{{ url_for('static', filename=feedback.tournament.logo) }}" alt="{{ feedback.tournament.name }}" class="h-12 w-12 object-contain rounded mr-3">
                                 {% else %}
                                     <div class="h-12 w-12 bg-indigo-100 rounded flex items-center justify-center mr-3">
                                         <span class="text-indigo-600 text-lg font-bold">{{ feedback.tournament.name[:1] }}</span>

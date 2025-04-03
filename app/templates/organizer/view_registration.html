@@ -17,7 +17,7 @@
         <div class="flex items-center p-6 border-b border-gray-200">
             {% if tournament.logo %}
             <div class="mr-4 flex-shrink-0">
-                <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="h-14 w-auto object-contain">
+                <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="h-14 w-auto object-contain">
             </div>
             {% endif %}
             <div>
