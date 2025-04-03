@@ -46,7 +46,7 @@
                             
                             <div class="absolute bottom-0 right-0 p-4 lg:p-8">
                                 {% if featured_tournament.logo %}
-                                <img src="{{ featured_tournament.logo }}" alt="{{ featured_tournament.name }}" class="h-32 lg:h-40">
+                                <img src="{{ url_for('static', filename=featured_tournament.logo) }}" alt="{{ featured_tournament.name }}" class="h-32 lg:h-40">
                                 {% endif %}
                             </div>
                         </div>
@@ -331,7 +331,7 @@
                                     
                                     {% if tournament.logo %}
                                     <div class="absolute bottom-0 right-0 p-2">
-                                        <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="h-20">
+                                        <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="h-20">
                                     </div>
                                     {% endif %}
                                 </div>

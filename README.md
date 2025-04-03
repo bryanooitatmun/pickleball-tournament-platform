@@ -122,7 +122,7 @@ The platform has three different types of users:
 
 9. sudo systemctl status pickleball
 
-10. sudo journalctl -u pickleball
+10. sudo journalctl -u pickleball -n 50
 
 11. cd /var/www/pickleball-tournament-platform
 
