@@ -223,7 +223,7 @@
                             {% endif %}
                         {% endif %}
                         
-                        {% if matches %}
+                        {# {% if matches %}
                         <form method="POST" action="{{ url_for('organizer.calculate_placings', id=tournament.id, category_id=category.id) }}" class="inline-block">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
@@ -233,7 +233,7 @@
                                 Calculate Placings
                             </button>
                         </form>
-                        {% endif %}
+                        {% endif %} #}
                     </div>
                     
                     <div class="mt-4">

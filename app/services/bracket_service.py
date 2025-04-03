@@ -590,7 +590,7 @@ class BracketService:
     @staticmethod
     def advance_winner(match):
         """
-        Advances the winner of a match to the next match in the knockout bracket
+        Advances the winner to the next match and handles special cases like semifinal losers going to 3rd place playoffs
         
         Args:
             match: The completed match whose winner should advance
@@ -599,64 +599,88 @@ class BracketService:
             # Match isn't complete yet, can't advance
             return False
         
-        if not match.next_match_id:
-            # No next match to advance to
-            return False
+        # --- First, handle the winner's advancement to the next match ---
+        if match.next_match_id:
+            # Get the next match
+            next_match = Match.query.get(match.next_match_id)
+            if next_match:
+                # Determine whether winner goes to position 1 or 2 in the next match
+                # Usually based on match_order: even goes to position 1, odd to position 2
+                position = 1
+                if hasattr(match, 'match_order') and match.match_order is not None:
+                    position = 1 if match.match_order % 2 == 0 else 2
+                
+                # For doubles match
+                if match.is_doubles:
+                    if match.winning_team_id:
+                        # Advance winner to the appropriate position
+                        if position == 1:
+                            next_match.team1_id = match.winning_team_id
+                            if hasattr(match, 'player1_code') and match.player1_code:
+                                next_match.player1_code = match.player1_code
+                        else:
+                            next_match.team2_id = match.winning_team_id
+                            if hasattr(match, 'player2_code') and match.player2_code:
+                                next_match.player2_code = match.player2_code
+                
+                # For singles match
+                else:
+                    if match.winning_player_id:
+                        # Advance winner to the appropriate position
+                        if position == 1:
+                            next_match.player1_id = match.winning_player_id
+                            if hasattr(match, 'player1_code') and match.player1_code:
+                                next_match.player1_code = match.player1_code
+                        else:
+                            next_match.player2_id = match.winning_player_id
+                            if hasattr(match, 'player2_code') and match.player2_code:
+                                next_match.player2_code = match.player2_code
         
-        # Get the next match
-        next_match = Match.query.get(match.next_match_id)
-        if not next_match:
-            # Next match doesn't exist
-            return False
+        # --- Second, check if this is a semifinal match (losers go to 3rd place match) ---
+        # Semifinal round is typically round 2
+        is_semifinal = (hasattr(match, 'round') and match.round == 2 and
+                    hasattr(match, 'stage') and match.stage.name == 'KNOCKOUT')
         
-        # Determine whether winner goes to position 1 or 2 in the next match
-        # This is usually based on match number, round, or some other logic
-        # Default to position 1 (player1/team1) if we can't determine
-        position = 1
-        
-        # Try to determine position based on match_order
-        # Even match_order usually goes to position 1, odd to position 2
-        if hasattr(match, 'match_order') and match.match_order is not None:
-            position = 1 if match.match_order % 2 == 0 else 2
-        
-        # For doubles match
-        if match.is_doubles:
-            winning_team_id = match.winning_team_id
-            if not winning_team_id:
-                # No winner determined
-                return False
+        if is_semifinal and ((match.is_doubles and match.losing_team_id) or 
+                            (not match.is_doubles and match.losing_player_id)):
+            # Find the 3rd place match in the same category (typically round 1.5)
+            third_place_match = Match.query.filter_by(
+                category_id=match.category_id,
+                round=1.5,
+                stage=MatchStage.PLAYOFF
+            ).first()
             
-            # Advance winner to the appropriate position
-            if position == 1:
-                next_match.team1_id = winning_team_id
-                # Copy position code if it exists
-                if hasattr(match, 'player1_code') and match.player1_code:
-                    next_match.player1_code = match.player1_code
-            else:
-                next_match.team2_id = winning_team_id
-                # Copy position code if it exists
-                if hasattr(match, 'player2_code') and match.player2_code:
-                    next_match.player2_code = match.player2_code
-        
-        # For singles match
-        else:
-            winning_player_id = match.winning_player_id
-            if not winning_player_id:
-                # No winner determined
-                return False
-            
-            # Advance winner to the appropriate position
-            if position == 1:
-                next_match.player1_id = winning_player_id
-                # Copy position code if it exists
-                if hasattr(match, 'player1_code') and match.player1_code:
-                    next_match.player1_code = match.player1_code
-            else:
-                next_match.player2_id = winning_player_id
-                # Copy position code if it exists
-                if hasattr(match, 'player2_code') and match.player2_code:
-                    next_match.player2_code = match.player2_code
-        
+            if third_place_match:
+                # Determine which position this semifinal loser should take in the 3rd place match
+                # First semifinal loser goes to position 1, second to position 2
+                position = 1
+                if hasattr(match, 'match_order') and match.match_order is not None:
+                    position = 1 if match.match_order % 2 == 0 else 2
+                
+                # For doubles match
+                if match.is_doubles and match.losing_team_id:
+                    # Advance loser to the appropriate position in 3rd place match
+                    if position == 1:
+                        third_place_match.team1_id = match.losing_team_id
+                        if hasattr(match, 'player1_code') and match.player1_code:
+                            third_place_match.player1_code = match.player1_code
+                    else:
+                        third_place_match.team2_id = match.losing_team_id
+                        if hasattr(match, 'player2_code') and match.player2_code:
+                            third_place_match.player2_code = match.player2_code
+                
+                # For singles match
+                elif not match.is_doubles and match.losing_player_id:
+                    # Advance loser to the appropriate position in 3rd place match
+                    if position == 1:
+                        third_place_match.player1_id = match.losing_player_id
+                        if hasattr(match, 'player1_code') and match.player1_code:
+                            third_place_match.player1_code = match.player1_code
+                    else:
+                        third_place_match.player2_id = match.losing_player_id
+                        if hasattr(match, 'player2_code') and match.player2_code:
+                            third_place_match.player2_code = match.player2_code
+                    
         # Save changes
         db.session.commit()
         
@@ -665,8 +689,7 @@ class BracketService:
             from app import socketio
             socketio.emit('bracket_update', {
                 'tournament_id': match.category.tournament_id,
-                'category_id': match.category_id,
-                'match_id': next_match.id
+                'category_id': match.category_id
             }, room=f'tournament_{match.category.tournament_id}')
         except ImportError:
             # SocketIO might not be available

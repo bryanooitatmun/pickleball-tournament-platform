@@ -81,10 +81,10 @@ def verify_match(match_id):
         flash('Match result successfully verified.', 'success')
         
         # If next match is available and both referee and player verified, update bracket
-        if match.next_match_id and match.referee_verified and match.player_verified:
-            from app.services import BracketService
-            BracketService.advance_winner(match)
-            flash('Winner has been advanced to the next round.', 'info')
+        # if match.next_match_id and match.referee_verified and match.player_verified:
+        #     from app.services import BracketService
+        #     BracketService.advance_winner(match)
+        #     flash('Winner has been advanced to the next round.', 'info')
             
     except Exception as e:
         db.session.rollback()

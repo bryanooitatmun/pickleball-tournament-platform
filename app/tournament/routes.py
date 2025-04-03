@@ -514,9 +514,9 @@ def results(id):
     tournament = Tournament.query.get_or_404(id)
     
     # Check if tournament is completed
-    if tournament.status != TournamentStatus.COMPLETED:
-        flash('Results are only available for completed tournaments.', 'warning')
-        return redirect(url_for('main.tournament_detail', id=id))
+    # if tournament.status != TournamentStatus.COMPLETED:
+    #     flash('Results are only available for completed tournaments.', 'warning')
+    #     return redirect(url_for('main.tournament_detail', id=id))
     
     # Get selected category (default to first category)
     categories = tournament.categories.all()
