@@ -45,8 +45,11 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                             </svg>
                             {{ tournament.location }}
+                            
                         </div>
-                        
+                        <div class="flex items-center mb-1">
+                            <h3 class="text-md font-bold mb-2">{{ tournament.venue.name }}</h3>
+                        </div>
                         {% if tournament.prize_pool %}
                         <div class="flex items-center">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -114,7 +117,9 @@
                             </svg>
                             {{ tournament.location }}
                         </div>
-                        
+                        <div class="flex items-center mb-1">
+                            <h3 class="text-md font-bold mb-2">{{ tournament.venue.name }}</h3>
+                        </div>                        
                         {% if tournament.prize_pool %}
                         <div class="flex items-center">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -160,7 +165,7 @@
                     {% endif %}
                     
                     <div class="absolute top-0 left-0 m-2 px-2 py-1 bg-gray-600 text-white text-sm rounded">
-                        {{ tournament.tier }}
+                        {{ tournament.tier.name }}
                     </div>
                     
                     <div class="absolute top-0 right-0 m-2 px-2 py-1 bg-green-600 text-white text-sm rounded">
@@ -186,7 +191,9 @@
                             </svg>
                             {{ tournament.location }}
                         </div>
-                        
+                        <div class="flex items-center mb-1">
+                            <h3 class="text-md font-bold mb-2">{{ tournament.venue.name }}</h3>
+                        </div>                             
                         {% if tournament.prize_pool %}
                         <div class="flex items-center">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
