@@ -213,7 +213,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Prize Percentage (%) - Calculated automatically
                                 </label>
-                                <div class="text-lg font-semibold text-gray-900">{{ category.prize_percentage }}%</div>
+                                <div class="text-lg font-semibold text-gray-900">{{ category.prize_percentage|round(2) }}%</div>
                                 <p class="hint-text">Percentage of total prize pool for this category, calculated automatically</p>
                                 <input type="hidden" name="prize_percentage_{{ category.id }}" value="{{ category.prize_percentage }}">
                             </div>

@@ -13,7 +13,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
             {% for tournament in ongoing_tournaments %}
             <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
-                <div class="h-48 bg-gray-200 relative">
+                <div class="h-36 bg-gray-200 relative">
                     {% if tournament.banner %}
                     <img src="/static/{{ tournament.banner }}" 
                          alt="{{ tournament.name }}" class="w-full h-full object-cover">
@@ -84,7 +84,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
             {% for tournament in upcoming_tournaments %}
             <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
-                <div class="h-48 bg-gray-200 relative">
+                <div class="h-36 bg-gray-200 relative">
                     {% if tournament.banner %}
                     <img src="/static/{{ tournament.banner }}" 
                          alt="{{ tournament.name }}" class="w-full h-full object-cover">
@@ -154,7 +154,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
             {% for tournament in past_tournaments %}
             <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
-                <div class="h-48 bg-gray-200 relative">
+                <div class="h-36 bg-gray-200 relative">
                     {% if tournament.banner %}
                     <img src="/static/{{ tournament.banner }}" 
                          alt="{{ tournament.name }}" class="w-full h-full object-cover">

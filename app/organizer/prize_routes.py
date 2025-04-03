@@ -88,6 +88,7 @@ def edit_prizes(id):
             # Update tournament totals based on updated categories
             tournament.total_cash_prize = sum(cat.prize_money or 0.0 for cat in categories)
             tournament.total_prize_value = sum(cat.total_prize_value or 0.0 for cat in categories)
+            tournament.prize_pool = tournament.total_prize_value
             db.session.commit() # Commit updated totals
 
             flash('Tournament prizes updated successfully!', 'success')

@@ -263,7 +263,6 @@ class TournamentCategory(db.Model):
         # Update flags
         current_prizes = self.prizes.all()
         self.has_merchandise = any(p.prize_type == PrizeType.MERCHANDISE for p in current_prizes)
-        self.has_trophies = any(p.prize_type == PrizeType.TROPHY for p in current_prizes)
         
         # Calculate prize percentage if we have a tournament with a non-zero total cash prize
         if self.tournament and self.tournament.total_cash_prize and self.tournament.total_cash_prize > 0:
