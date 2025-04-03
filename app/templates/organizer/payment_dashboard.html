@@ -125,7 +125,7 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
                                     {% if tournament.logo %}
-                                        <img class="h-10 w-10 rounded-full" src="{{ tournament.logo }}" alt="{{ tournament.name }}">
+                                        <img class="h-10 w-10 rounded-full" src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}">
                                     {% else %}
                                         <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
                                             <span class="text-blue-600 font-bold">{{ tournament.name[:1] }}</span>

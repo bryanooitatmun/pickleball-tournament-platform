@@ -195,7 +195,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         {% if tournament.logo %}
-                                            <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="h-10 w-10 rounded-full mr-3">
+                                            <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="h-10 w-10 rounded-full mr-3">
                                         {% else %}
                                             <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
                                                 <span class="text-blue-600 font-bold">{{ tournament.name[:1] }}</span>
@@ -276,7 +276,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         {% if tournament.logo %}
-                                            <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="h-10 w-10 rounded-full mr-3">
+                                            <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="h-10 w-10 rounded-full mr-3">
                                         {% else %}
                                             <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
                                                 <span class="text-blue-600 font-bold">{{ tournament.name[:1] }}</span>
@@ -344,7 +344,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         {% if tournament.logo %}
-                                            <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="h-10 w-10 rounded-full mr-3">
+                                            <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="h-10 w-10 rounded-full mr-3">
                                         {% else %}
                                             <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
                                                 <span class="text-blue-600 font-bold">{{ tournament.name[:1] }}</span>

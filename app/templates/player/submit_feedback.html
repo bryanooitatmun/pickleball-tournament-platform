@@ -37,7 +37,7 @@
             <div class="flex items-center">
                 {% if tournament %}
                     {% if tournament.logo %}
-                        <img src="{{ tournament.logo }}" alt="{{ tournament.name }}" class="h-16 w-16 object-contain rounded-lg mr-4">
+                        <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="h-16 w-16 object-contain rounded-lg mr-4">
                     {% else %}
                         <div class="h-16 w-16 bg-indigo-100 rounded-lg flex items-center justify-center mr-4">
                             <span class="text-indigo-600 text-xl font-bold">{{ tournament.name[:1] }}</span>
