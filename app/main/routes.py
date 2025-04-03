@@ -67,32 +67,8 @@ import os
 @bp.route('/')
 @bp.route('/index')
 def index():
-    id = 1
-    tournament = Tournament.query.get_or_404(id)
-    categories = tournament.categories.order_by(TournamentCategory.display_order).all()
-    
-    # For ongoing or completed tournaments, get matches
-    matches = {}
-    winners = {}
-    
-    if tournament.status in [TournamentStatus.ONGOING, TournamentStatus.COMPLETED]:
-        for category in categories:
-            # Fixed query: Use Match model directly instead of relationship
-            matches[category.id] = Match.query.filter_by(category_id=category.id).order_by(Match.round.desc(), Match.match_order).all()
-            
-            # For completed tournaments, get winners
-            if tournament.status == TournamentStatus.COMPLETED:
-                # Get final match for each category - Fixed query
-                final_match = Match.query.filter_by(category_id=category.id, round=1).first()
-                if final_match and hasattr(final_match, 'winner_id') and final_match.winner_id:
-                    winners[category.id] = final_match.winner
-    
-    return render_template('main/tournament_detail.html',
-                           title=tournament.name,
-                           tournament=tournament,
-                           categories=categories,
-                           matches=matches,
-                           winners=winners)
+    """Redirect to the tournament list page"""
+    return redirect(url_for('tournament.index'))
 
 
 @bp.route('/sponsors')

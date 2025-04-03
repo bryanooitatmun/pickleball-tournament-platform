@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">All Tournaments</h1>
+
+    <div class="mb-6">
+        <div class="flex justify-between items-center">
+            <h2 class="text-xl font-semibold">Ongoing Tournaments</h2>
+        </div>
+        
+        {% if ongoing_tournaments %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+            {% for tournament in ongoing_tournaments %}
+            <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
+                <div class="h-48 bg-gray-200 relative">
+                    {% if tournament.banner_image %}
+                    <img src="{{ url_for('static', filename='uploads/' + tournament.banner_image) }}" 
+                         alt="{{ tournament.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center bg-gray-100">
+                        <span class="text-gray-400">No banner image</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="absolute top-0 left-0 m-2 px-2 py-1 bg-blue-600 text-white text-sm rounded">
+                        {{ tournament.tier.name }}
+                    </div>
+                </div>
+                
+                <div class="p-4">
+                    <h3 class="text-lg font-bold mb-2">{{ tournament.name }}</h3>
+                    
+                    <div class="text-sm text-gray-600 mb-2">
+                        <div class="flex items-center mb-1">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
+                        </div>
+                        
+                        <div class="flex items-center mb-1">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            {{ tournament.location }}
+                        </div>
+                        
+                        {% if tournament.prize_pool %}
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Prize Pool: ${{ tournament.prize_pool }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" 
+                           class="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 mt-2">No upcoming tournaments scheduled.</p>
+        {% endif %}
+    </div>
+
+    <div class="mb-6">
+        <div class="flex justify-between items-center">
+            <h2 class="text-xl font-semibold">Upcoming Tournaments</h2>
+        </div>
+        
+        {% if upcoming_tournaments %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+            {% for tournament in upcoming_tournaments %}
+            <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
+                <div class="h-48 bg-gray-200 relative">
+                    {% if tournament.banner_image %}
+                    <img src="{{ url_for('static', filename='uploads/' + tournament.banner_image) }}" 
+                         alt="{{ tournament.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center bg-gray-100">
+                        <span class="text-gray-400">No banner image</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="absolute top-0 left-0 m-2 px-2 py-1 bg-blue-600 text-white text-sm rounded">
+                        {{ tournament.tier.name }}
+                    </div>
+                </div>
+                
+                <div class="p-4">
+                    <h3 class="text-lg font-bold mb-2">{{ tournament.name }}</h3>
+                    
+                    <div class="text-sm text-gray-600 mb-2">
+                        <div class="flex items-center mb-1">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
+                        </div>
+                        
+                        <div class="flex items-center mb-1">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            {{ tournament.location }}
+                        </div>
+                        
+                        {% if tournament.prize_pool %}
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Prize Pool: ${{ tournament.prize_pool }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" 
+                           class="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 mt-2">No upcoming tournaments scheduled.</p>
+        {% endif %}
+    </div>
+    
+    <div>
+        <div class="flex justify-between items-center">
+            <h2 class="text-xl font-semibold">Past Tournaments</h2>
+        </div>
+        
+        {% if past_tournaments %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+            {% for tournament in past_tournaments %}
+            <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
+                <div class="h-48 bg-gray-200 relative">
+                    {% if tournament.banner_image %}
+                    <img src="{{ url_for('static', filename='uploads/' + tournament.banner_image) }}" 
+                         alt="{{ tournament.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center bg-gray-100">
+                        <span class="text-gray-400">No banner image</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="absolute top-0 left-0 m-2 px-2 py-1 bg-gray-600 text-white text-sm rounded">
+                        {{ tournament.tier }}
+                    </div>
+                    
+                    <div class="absolute top-0 right-0 m-2 px-2 py-1 bg-green-600 text-white text-sm rounded">
+                        Completed
+                    </div>
+                </div>
+                
+                <div class="p-4">
+                    <h3 class="text-lg font-bold mb-2">{{ tournament.name }}</h3>
+                    
+                    <div class="text-sm text-gray-600 mb-2">
+                        <div class="flex items-center mb-1">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
+                        </div>
+                        
+                        <div class="flex items-center mb-1">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            {{ tournament.location }}
+                        </div>
+                        
+                        {% if tournament.prize_pool %}
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Prize Pool: ${{ tournament.prize_pool }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" 
+                           class="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
+                            View Details
+                        </a>
+                        {% if tournament.status == 'COMPLETED' %}
+                        <a href="{{ url_for('tournament.results', id=tournament.id) }}" 
+                           class="inline-block px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition ml-2">
+                            Results
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 mt-2">No past tournaments available.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -7,6 +7,26 @@ from app.services import BracketService, PlacingService, PrizeService, Registrat
 from datetime import datetime
 from app.helpers.tournament import _format_match_for_api
 
+@bp.route('/')
+@bp.route('/index')
+def index():
+    """Tournament list page showing upcoming and past tournaments"""
+
+    # Get ongoing tournaments
+    ongoing_tournaments = Tournament.query.filter_by(status=TournamentStatus.ONGOING).order_by(Tournament.start_date).all()
+
+    # Get upcoming tournaments
+    upcoming_tournaments = Tournament.query.filter_by(status=TournamentStatus.UPCOMING).order_by(Tournament.start_date).all()
+    
+    # Get past tournaments
+    past_tournaments = Tournament.query.filter_by(status=TournamentStatus.COMPLETED).order_by(Tournament.end_date.desc()).all()
+    
+    return render_template('tournament/index.html',
+                          title='All Tournaments',
+                          ongoing_tournaments=ongoing_tournaments,
+                          upcoming_tournaments=upcoming_tournaments,
+                          past_tournaments=past_tournaments)
+
 @bp.route('/<int:id>/bracket')
 def bracket(id):
     """
