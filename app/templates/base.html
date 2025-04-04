@@ -30,7 +30,7 @@
                         {% if current_user.is_authenticated %}
                             {% if current_user.is_player() %}
                                 <a href="{{ url_for('player.dashboard') }}" class="font-medium hover:text-blue-600">My Profile</a>
-                            {% elif current_user.is_organizer() %}
+                            {% elif current_user.is_organizer() or current_user.is_referee()%}
                                 <a href="{{ url_for('organizer.dashboard') }}" class="font-medium hover:text-blue-600">Organize</a>
                             {% elif current_user.is_admin() %}
                                 <a href="{{ url_for('admin.dashboard') }}" class="font-medium hover:text-blue-600">Admin</a>
@@ -69,7 +69,7 @@
             {% if current_user.is_authenticated %}
                 {% if current_user.is_player() %}
                     <a href="{{ url_for('player.dashboard') }}" class="text-gray-600 hover:text-blue-600">My Profile</a>
-                {% elif current_user.is_organizer() %}
+                {% elif current_user.is_organizer() or current_user.is_referee() %}
                     <a href="{{ url_for('organizer.dashboard') }}" class="text-gray-600 hover:text-blue-600">Organize</a>
                 {% elif current_user.is_admin() %}
                     <a href="{{ url_for('admin.dashboard') }}" class="text-gray-600 hover:text-blue-600">Admin</a>

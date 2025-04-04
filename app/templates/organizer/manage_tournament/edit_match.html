@@ -1,248 +1,411 @@
 {% extends "base.html" %}
 {% block title %}{{ title }}{% endblock %}
 
+{% block styles %}
+<style>
+    /* Custom styles for mobile responsiveness */
+    @media (max-width: 640px) {
+        .score-grid {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+        .score-grid .player-label {
+            margin-top: 0.5rem;
+        }
+        .verification-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">{{ title }}</h1>
-        <p class="text-gray-600">
-            Tournament: <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:underline">{{ tournament.name }}</a> |
-            Category: <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=match.category_id) }}" class="text-blue-600 hover:underline">{{ match.category.name }}</a>
-        </p>
+<div class="container mx-auto px-4 py-6">
+    <!-- Breadcrumbs -->
+    <div class="flex items-center text-sm text-gray-500 mb-6 flex-wrap">
+        <a href="{{ url_for('organizer.dashboard') }}" class="hover:text-blue-600">Dashboard</a>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mx-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+        <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="hover:text-blue-600">{{ tournament.name }}</a>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mx-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+        <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=match.category_id) }}" class="hover:text-blue-600">{{ match.category.name }}</a>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mx-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+        <span class="text-gray-700">Edit Match</span>
     </div>
 
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <form method="POST" class="space-y-6">
-            {{ form.hidden_tag() }}
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Match Details Section -->
-                <div class="space-y-4">
-                    <h2 class="text-xl font-semibold text-gray-700 border-b pb-2">Match Details</h2>
-                    
-                    <div>
-                        <div class="font-medium text-gray-700">Match ID: {{ match.id }}</div>
-                        <div class="font-medium text-gray-700">Round: {{ match.round_name }}</div>
-                        {% if match.group %}
-                            <div class="font-medium text-gray-700">Group: {{ match.group.name }}</div>
-                        {% endif %}
-                    </div>
-                    
-                    <div>
-                        <div class="font-medium text-gray-700 mb-1">Participants:</div>
-                        <div class="p-3 bg-gray-50 rounded-md">
-                            {% if match.is_doubles %}
-                                {% if match.team1 %}
-                                    <div class="font-medium">Team 1: {{ match.team1.player1.full_name }} / {{ match.team1.player2.full_name }}</div>
-                                {% else %}
-                                    <div class="font-medium text-gray-500">Team 1: TBD</div>
-                                {% endif %}
-                                
-                                {% if match.team2 %}
-                                    <div class="font-medium">Team 2: {{ match.team2.player1.full_name }} / {{ match.team2.player2.full_name }}</div>
-                                {% else %}
-                                    <div class="font-medium text-gray-500">Team 2: TBD</div>
-                                {% endif %}
-                            {% else %}
-                                {% if match.player1 %}
-                                    <div class="font-medium">Player 1: {{ match.player1.full_name }}</div>
-                                {% else %}
-                                    <div class="font-medium text-gray-500">Player 1: TBD</div>
-                                {% endif %}
-                                
-                                {% if match.player2 %}
-                                    <div class="font-medium">Player 2: {{ match.player2.full_name }}</div>
-                                {% else %}
-                                    <div class="font-medium text-gray-500">Player 2: TBD</div>
-                                {% endif %}
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ title }}</h1>
+        <p class="text-gray-600 mt-1">Update match information and scores</p>
+    </div>
+
+    <!-- Referee Instructions (if referee) -->
+    {% if is_referee_only %}
+    <div class="bg-blue-50 rounded-xl border border-blue-200 p-4 sm:p-6 mb-6">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-lg font-medium text-blue-800">Referee Instructions</h3>
+                <div class="mt-2 text-blue-700 text-sm">
+                    <p class="mb-2">As a referee, please follow these steps:</p>
+                    <ol class="list-decimal list-inside space-y-1">
+                        <li>Enter the correct score for each set</li>
+                        <li>Mark the match as "Completed" when all sets are finished</li>
+                        <li>Your verification will be automatically applied when you save</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <form method="POST" class="space-y-6">
+        {{ form.hidden_tag() }}
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column - Match Details -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 bg-gradient-to-r from-indigo-50 to-indigo-100 border-b border-gray-200">
+                    <h2 class="text-lg font-bold text-gray-900">Match Details</h2>
+                </div>
+                
+                <div class="p-6 space-y-6">
+                    <!-- Match Information -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="block text-gray-500">Match ID</span>
+                                <span class="block font-medium text-gray-900">{{ match.id }}</span>
+                            </div>
+                            <div>
+                                <span class="block text-gray-500">Round</span>
+                                <span class="block font-medium text-gray-900">{{ match.round_name }}</span>
+                            </div>
+                            {% if match.group %}
+                            <div>
+                                <span class="block text-gray-500">Group</span>
+                                <span class="block font-medium text-gray-900">{{ match.group.name }}</span>
+                            </div>
                             {% endif %}
                         </div>
                     </div>
-                    <!-- Only show scheduling fields for organizers, not for referees -->
+                    
+                    <!-- Participants -->
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-700 mb-3">Participants</h3>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            {% if match.is_doubles %}
+                                <div class="flex items-center mb-3">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                        <span class="font-bold text-blue-600">1</span>
+                                    </div>
+                                    <div class="ml-3">
+                                        {% if match.team1 %}
+                                            <div class="font-medium text-gray-900">{{ match.team1.player1.full_name }} / {{ match.team1.player2.full_name }}</div>
+                                        {% else %}
+                                            <div class="font-medium text-gray-400">Team 1: To Be Determined</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
+                                        <span class="font-bold text-purple-600">2</span>
+                                    </div>
+                                    <div class="ml-3">
+                                        {% if match.team2 %}
+                                            <div class="font-medium text-gray-900">{{ match.team2.player1.full_name }} / {{ match.team2.player2.full_name }}</div>
+                                        {% else %}
+                                            <div class="font-medium text-gray-400">Team 2: To Be Determined</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="flex items-center mb-3">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                        <span class="font-bold text-blue-600">1</span>
+                                    </div>
+                                    <div class="ml-3">
+                                        {% if match.player1 %}
+                                            <div class="font-medium text-gray-900">{{ match.player1.full_name }}</div>
+                                        {% else %}
+                                            <div class="font-medium text-gray-400">Player 1: To Be Determined</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
+                                        <span class="font-bold text-purple-600">2</span>
+                                    </div>
+                                    <div class="ml-3">
+                                        {% if match.player2 %}
+                                            <div class="font-medium text-gray-900">{{ match.player2.full_name }}</div>
+                                        {% else %}
+                                            <div class="font-medium text-gray-400">Player 2: To Be Determined</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Scheduling - Only show editable fields for organizers -->
                     {% if not is_referee_only %}
-                    <div class="space-y-4">
-                        <div class="form-group">
-                            {{ form.court.label(class="block text-sm font-medium text-gray-700") }}
-                            {{ form.court(class="mt-1 block p-2 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm") }}
-                            {% for error in form.court.errors %}
-                                <span class="text-red-600 text-xs">{{ error }}</span>
-                            {% endfor %}
+                        <div class="space-y-3">
+                            <h3 class="text-sm font-medium text-gray-700 mb-2">Scheduling</h3>
+                            
+                            <div class="form-group">
+                                {{ form.court.label(class="block text-sm font-medium text-gray-700") }}
+                                {{ form.court(class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm") }}
+                                {% for error in form.court.errors %}
+                                    <span class="text-red-600 text-xs">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="form-group">
+                                {{ form.scheduled_time.label(class="block text-sm font-medium text-gray-700") }}
+                                {{ form.scheduled_time(class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", type="datetime-local") }}
+                                {% for error in form.scheduled_time.errors %}
+                                    <span class="text-red-600 text-xs">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="form-group">
+                                {{ form.livestream_url.label(class="block text-sm font-medium text-gray-700") }}
+                                {{ form.livestream_url(class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm") }}
+                                {% for error in form.livestream_url.errors %}
+                                    <span class="text-red-600 text-xs">{{ error }}</span>
+                                {% endfor %}
+                            </div>
                         </div>
-                        
-                        <div class="form-group">
-                            {{ form.scheduled_time.label(class="block text-sm font-medium text-gray-700") }}
-                            {{ form.scheduled_time(class="mt-1 block p-2  w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm", type="datetime-local") }}
-                            {% for error in form.scheduled_time.errors %}
-                                <span class="text-red-600 text-xs">{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                        
-                        <div class="form-group">
-                            {{ form.livestream_url.label(class="block text-sm font-medium text-gray-700") }}
-                            {{ form.livestream_url(class="mt-1 block p-2  w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm") }}
-                            {% for error in form.livestream_url.errors %}
-                                <span class="text-red-600 text-xs">{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    </div>
                     {% else %}
-                    <!-- For referees, just show the current match information without edit fields -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-sm">
-                        <div>
-                            <span class="block font-medium text-gray-700 mb-1">Court</span>
-                            <span class="block">{{ match.court or "Not assigned" }}</span>
+                        <!-- For referees, just show current match information -->
+                        <div class="space-y-1 bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-sm font-medium text-gray-700 mb-2">Match Info</h3>
+                            
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <span class="block text-gray-500">Court</span>
+                                    <span class="block font-medium text-gray-900">{{ match.court or "Not assigned" }}</span>
+                                </div>
+                                
+                                <div>
+                                    <span class="block text-gray-500">Scheduled Time</span>
+                                    <span class="block font-medium text-gray-900">{{ match.scheduled_time.strftime('%Y-%m-%d %H:%M') if match.scheduled_time else "Not scheduled" }}</span>
+                                </div>
+                            </div>
+                            
+                            {% if match.livestream_url %}
+                            <div class="mt-3">
+                                <span class="block text-gray-500">Livestream URL</span>
+                                <a href="{{ match.livestream_url }}" target="_blank" class="block font-medium text-blue-600 hover:underline">{{ match.livestream_url }}</a>
+                            </div>
+                            {% endif %}
                         </div>
-                        
-                        <div>
-                            <span class="block font-medium text-gray-700 mb-1">Scheduled Time</span>
-                            <span class="block">{{ match.scheduled_time.strftime('%Y-%m-%d %H:%M') if match.scheduled_time else "Not scheduled" }}</span>
-                        </div>
-                    </div>
-                    
-                    {% if match.livestream_url %}
-                    <div class="mb-4 text-sm">
-                        <span class="block font-medium text-gray-700 mb-1">Livestream URL</span>
-                        <span class="block">{{ match.livestream_url }}</span>
-                    </div>
                     {% endif %}
-                    {% endif %}
-
-
                 </div>
-
-                <!-- Show a message for referees about their limited permissions -->
-                {% if is_referee_only %}
-                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <span class="material-icons text-blue-500">info</span>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-blue-700">
-                                As a referee, you can only update match scores and verify results. Contact an organizer to change other match details.
-                            </p>
-                        </div>
-                    </div>
+            </div>
+            
+            <!-- Right Column - Scores and Status -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-gray-200">
+                    <h2 class="text-lg font-bold text-gray-900">Scores & Status</h2>
                 </div>
-                {% endif %}           
-                    
-                <!-- Scores Section -->
-                <div class="space-y-4">
-                    <h2 class="text-xl font-semibold text-gray-700 border-b pb-2">Match Scores</h2>
-                    
+                
+                <div class="p-6 space-y-6">
+                    <!-- Set Count -->
                     <div class="form-group">
-                        {{ form.set_count.label(class="block text-sm font-medium text-gray-700") }}
-                        {{ form.set_count(class="mt-1 block p-2  w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm", min="0", max="5", onchange="updateSetForms()") }}
+                        <label for="set_count" class="block text-sm font-medium text-gray-700">Number of Sets</label>
+                        <div class="mt-1 flex items-center">
+                            <select id="set_count" name="set_count" 
+                                class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                onchange="updateSetForms()">
+                                {% for i in range(6) %}
+                                    <option value="{{ i }}" {% if form.set_count.data == i %}selected{% endif %}>{{ i }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="ml-2 text-sm text-gray-500">(Max 5 sets)</span>
+                        </div>
                         {% for error in form.set_count.errors %}
                             <span class="text-red-600 text-xs">{{ error }}</span>
                         {% endfor %}
                     </div>
                     
-                    <div id="scores-container" class="space-y-3">
+                    <!-- Scores -->
+                    <div id="scores-container" class="space-y-4">
                         {% for i in range(form.scores|length) %}
-                            <div id="set-{{ i+1 }}" class="set-form bg-gray-50 p-3 rounded-md{% if i >= form.set_count.data %} hidden{% endif %}">
-                                <div class="font-medium text-gray-700 mb-2">Set {{ i+1 }}</div>
-                                <div class="grid grid-cols-2 gap-4">
+                            <div id="set-{{ i+1 }}" class="set-form bg-gray-50 p-4 rounded-lg{% if i >= form.set_count.data %} hidden{% endif %}">
+                                <div class="flex justify-between items-center mb-3">
+                                    <div class="font-medium text-gray-900">Set {{ i+1 }}</div>
+                                    {% if i > 0 %}
+                                    <button type="button" onclick="removeSet({{ i+1 }})" class="text-red-600 hover:text-red-800 text-sm">Remove</button>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4 score-grid">
                                     <div class="form-group">
-                                        <label class="block text-sm font-medium text-gray-700">
-                                            {% if match.is_doubles %}
-                                                {% if match.team1 %}Team 1{% else %}Team 1 (TBD){% endif %}
-                                            {% else %}
-                                                {% if match.player1 %}{{ match.player1.full_name }}{% else %}Player 1 (TBD){% endif %}
-                                            {% endif %}
+                                        <label class="block text-sm font-medium text-gray-700 player-label">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-4 w-4 rounded-full bg-blue-100 flex items-center justify-center">
+                                                    <span class="font-bold text-blue-600 text-xs">1</span>
+                                                </div>
+                                                <span class="ml-2">
+                                                    {% if match.is_doubles %}
+                                                        {% if match.team1 %}Team 1{% else %}Team 1 (TBD){% endif %}
+                                                    {% else %}
+                                                        {% if match.player1 %}{{ match.player1.full_name }}{% else %}Player 1 (TBD){% endif %}
+                                                    {% endif %}
+                                                </span>
+                                            </div>
                                         </label>
-                                        {{ form.scores[i].player1_score(class="mt-1 block p-2  w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm", min="0") }}
+                                        {{ form.scores[i].player1_score(class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", min="0") }}
                                     </div>
+                                    
                                     <div class="form-group">
-                                        <label class="block text-sm font-medium text-gray-700">
-                                            {% if match.is_doubles %}
-                                                {% if match.team2 %}Team 2{% else %}Team 2 (TBD){% endif %}
-                                            {% else %}
-                                                {% if match.player2 %}{{ match.player2.full_name }}{% else %}Player 2 (TBD){% endif %}
-                                            {% endif %}
+                                        <label class="block text-sm font-medium text-gray-700 player-label">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-4 w-4 rounded-full bg-purple-100 flex items-center justify-center">
+                                                    <span class="font-bold text-purple-600 text-xs">2</span>
+                                                </div>
+                                                <span class="ml-2">
+                                                    {% if match.is_doubles %}
+                                                        {% if match.team2 %}Team 2{% else %}Team 2 (TBD){% endif %}
+                                                    {% else %}
+                                                        {% if match.player2 %}{{ match.player2.full_name }}{% else %}Player 2 (TBD){% endif %}
+                                                    {% endif %}
+                                                </span>
+                                            </div>
                                         </label>
-                                        {{ form.scores[i].player2_score(class="mt-1 block p-2  w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm", min="0") }}
+                                        {{ form.scores[i].player2_score(class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", min="0") }}
                                     </div>
                                 </div>
                             </div>
                         {% endfor %}
                     </div>
-
-                    <div class="space-y-4 mt-8 border-t pt-4">
-                        <h3 class="text-lg font-semibold text-gray-700 pb-2">Match Status</h3>
+                    
+                    <div id="no-sets-message" class="text-center py-4 text-gray-500{% if form.set_count.data > 0 %} hidden{% endif %}">
+                        No sets entered yet. Set the number of sets above to begin.
+                    </div>
+                    
+                    <button type="button" id="add-set-btn" onclick="addSet()" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg class="h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Set
+                    </button>
+                    
+                    <!-- Match Status -->
+                    <div class="pt-4 border-t border-gray-200">
+                        <h3 class="text-md font-medium text-gray-700 mb-3">Match Status</h3>
                         
-                        <div class="flex items-center space-x-2">
+                        <div class="space-y-4">
                             <div class="flex items-center">
-                                {{ form.completed(class="h-4 w-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500") }}
-                                {{ form.completed.label(class="ml-2 block text-sm text-gray-700") }}
-                            </div>
-                            <span class="text-xs text-gray-500">(Mark as completed when all scores are final)</span>
-                        </div>
-                    </div>                    
-                    <div class="space-y-4 mt-8">
-                        <h3 class="text-lg font-semibold text-gray-700 border-b pb-2">Verification</h3>
-                        
-                        <div class="flex items-center space-x-4 mb-2">
-                            <div class="flex-1">
-                                {% if is_referee_only %}
-                                    <!-- Referees automatically verify when they submit -->
-                                    <div class="flex items-center">
-                                        <input type="checkbox" checked disabled class="h-4 w-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500">
-                                        <label class="ml-2 block text-sm text-gray-700">
-                                            Referee Verified (your verification will be applied on save)
-                                        </label>
-                                    </div>
-                                {% else %}
-                                    <!-- Organizers can set both verifications -->
-                                    <div class="flex items-center">
-                                        {{ form.referee_verified(class="h-4 w-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500") }}
-                                        {{ form.referee_verified.label(class="ml-2 block text-sm text-gray-700") }}
-                                    </div>
-                                {% endif %}
+                                <div class="bg-gray-50 rounded-lg p-4 w-full flex items-center">
+                                    {{ form.completed(class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded") }}
+                                    <span class="ml-3 text-sm text-gray-900">{{ form.completed.label.text }}</span>
+                                    <span class="ml-2 text-xs text-gray-500">(Mark when all scores are final)</span>
+                                </div>
                             </div>
                             
-                            <div class="flex-1">
-                                {% if is_referee_only %}
-                                    <!-- Referees can't set player verification -->
-                                    <div class="flex items-center">
-                                        <input type="checkbox" {% if match.player_verified %}checked{% endif %} disabled class="h-4 w-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500">
-                                        <label class="ml-2 block text-sm text-gray-700">
-                                            Player Verified (only players or organizers can set this)
-                                        </label>
+                            <!-- Verification Section -->
+                            <div class="pt-4 border-t border-gray-200">
+                                <h3 class="text-md font-medium text-gray-700 mb-3">Result Verification</h3>
+                                
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 verification-grid">
+                                    <!-- Referee Verification -->
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        {% if is_referee_only %}
+                                            <!-- Referees automatically verify when they submit -->
+                                            <div class="flex items-center">
+                                                <input type="checkbox" checked disabled class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label class="ml-3 text-sm text-gray-900">
+                                                    Referee Verified <span class="text-xs text-green-600">(applied on save)</span>
+                                                </label>
+                                            </div>
+                                        {% else %}
+                                            <!-- Organizers can set both verifications -->
+                                            <div class="flex items-center">
+                                                {{ form.referee_verified(class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded") }}
+                                                <span class="ml-3 text-sm text-gray-900">{{ form.referee_verified.label.text }}</span>
+                                            </div>
+                                        {% endif %}
                                     </div>
-                                {% else %}
-                                    <!-- Organizers can set player verification -->
-                                    <div class="flex items-center">
-                                        {{ form.player_verified(class="h-4 w-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500") }}
-                                        {{ form.player_verified.label(class="ml-2 block text-sm text-gray-700") }}
+                                    
+                                    <!-- Player Verification -->
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        {% if is_referee_only %}
+                                            <!-- Referees can't set player verification -->
+                                            <div class="flex items-center">
+                                                <input type="checkbox" {% if match.player_verified %}checked{% endif %} disabled class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label class="ml-3 text-sm text-gray-900">
+                                                    Player Verified
+                                                    {% if not match.player_verified %}
+                                                    <span class="text-xs text-gray-500">(pending)</span>
+                                                    {% endif %}
+                                                </label>
+                                            </div>
+                                        {% else %}
+                                            <!-- Organizers can set player verification -->
+                                            <div class="flex items-center">
+                                                {{ form.player_verified(class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded") }}
+                                                <span class="ml-3 text-sm text-gray-900">{{ form.player_verified.label.text }}</span>
+                                            </div>
+                                        {% endif %}
                                     </div>
-                                {% endif %}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="flex justify-between items-center">
+            <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=match.category_id) }}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Category
+            </a>
             
-            <div class="flex justify-between pt-6 border-t">
-                <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=match.category_id) }}" class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Cancel
-                </a>
-                <button type="submit" class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Save Match
-                </button>
-            </div>
-        </form>
-    </div>
+            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Save Match Details
+            </button>
+        </div>
+    </form>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
     function updateSetForms() {
-        const setCount = document.getElementById('set_count').value;
+        const setCount = parseInt(document.getElementById('set_count').value);
         const setForms = document.querySelectorAll('.set-form');
+        const noSetsMessage = document.getElementById('no-sets-message');
         
+        // Show/hide message when no sets
+        if (setCount === 0) {
+            noSetsMessage.classList.remove('hidden');
+        } else {
+            noSetsMessage.classList.add('hidden');
+        }
+        
+        // Show/hide set forms based on count
         setForms.forEach((form, index) => {
             if (index < setCount) {
                 form.classList.remove('hidden');
@@ -250,6 +413,39 @@
                 form.classList.add('hidden');
             }
         });
+    }
+    
+    function addSet() {
+        const setCountElement = document.getElementById('set_count');
+        const currentCount = parseInt(setCountElement.value);
+        
+        if (currentCount < 5) { // Maximum 5 sets
+            setCountElement.value = currentCount + 1;
+            updateSetForms();
+        } else {
+            alert('Maximum number of sets (5) reached');
+        }
+    }
+    
+    function removeSet(setNum) {
+        const setCountElement = document.getElementById('set_count');
+        const currentCount = parseInt(setCountElement.value);
+        
+        if (currentCount > 0) {
+            // Hide the last set
+            const setToRemove = document.getElementById(`set-${currentCount}`);
+            setToRemove.classList.add('hidden');
+            
+            // Clear the scores in the removed set
+            const player1ScoreInput = setToRemove.querySelector('input[name$="player1_score"]');
+            const player2ScoreInput = setToRemove.querySelector('input[name$="player2_score"]');
+            if (player1ScoreInput) player1ScoreInput.value = '';
+            if (player2ScoreInput) player2ScoreInput.value = '';
+            
+            // Update the set count
+            setCountElement.value = currentCount - 1;
+            updateSetForms();
+        }
     }
     
     // Initialize on page load

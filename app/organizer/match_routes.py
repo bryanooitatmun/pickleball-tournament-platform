@@ -416,9 +416,9 @@ def bulk_edit_matches(id, category_id):
     
     # Get all matches for this category
     matches = Match.query.filter_by(category_id=category_id).order_by(
-        Match.stage, Match.round, Match.match_order
+        Match.stage
     ).all()
-    
+    print(matches)
     form = BulkMatchForm()
     
     # Handle form submission

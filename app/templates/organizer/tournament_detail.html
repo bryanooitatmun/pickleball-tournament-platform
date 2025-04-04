@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Manage Tournament: {{ tournament.name }}{% endblock %}
+{% block title %}{% if is_referee_only %}Referee: {{ tournament.name }}{% else %}Manage Tournament: {{ tournament.name }}{% endif %}{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
@@ -12,15 +12,17 @@
                 </svg>
                 Back to Dashboard
             </a>
-            <h1 class="text-2xl font-bold text-gray-800">Manage Tournament: {{ tournament.name }}</h1>
+            <h1 class="text-2xl font-bold text-gray-800">{% if is_referee_only %}Referee: {{ tournament.name }}{% else %}Manage Tournament: {{ tournament.name }}{% endif %}</h1>
         </div>
         <div class="flex space-x-4">
+            {% if not is_referee_only %}
             <a href="{{ url_for('organizer.edit_tournament', id=tournament.id) }}" class="btn btn-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                 </svg>
                 Edit Tournament
             </a>
+            {% endif %}
             <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="btn btn-secondary">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
@@ -118,8 +120,83 @@
         </div>
     </div>
 
+    {% if is_referee_only %}
+    <!-- Referee Match Management Section -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+        <div class="px-6 py-4 bg-blue-600 text-white flex justify-between items-center">
+            <h2 class="text-xl font-bold">Match Management</h2>
+        </div>
+        <div class="p-6">
+            <div class="bg-blue-50 rounded-lg p-4 mb-6">
+                <p class="text-blue-800">As a referee, you can view and update match scores for this tournament. Select a category below to view and manage its matches.</p>
+            </div>
+            
+            {% if categories %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for category in categories %}
+                        <a href="{{ url_for('organizer.manage_category', id=tournament.id, category_id=category.id) }}" 
+                           class="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                           <h3 class="font-medium text-gray-900 mb-1">{{ category.name }}</h3>
+                           <p class="text-sm text-gray-500">Click to view matches</p>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center text-gray-500 py-4">
+                    <p>No categories have been added to this tournament yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Tournament Schedule -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+        <div class="px-6 py-4 bg-gray-800 text-white">
+            <h2 class="text-xl font-bold">Quick Links</h2>
+        </div>
+        <div class="p-6">
+            <ul class="divide-y divide-gray-200">
+                <li class="py-3">
+                    <a href="{{ url_for('tournament.bracket', id=tournament.id) }}" class="flex items-center text-gray-700 hover:text-blue-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                        </svg>
+                        View Brackets
+                    </a>
+                </li>
+                <li class="py-3">
+                    <a href="{{ url_for('tournament.participants', id=tournament.id) }}" class="flex items-center text-gray-700 hover:text-blue-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        View Participants
+                    </a>
+                </li>
+                <li class="py-3">
+                    <a href="{{ url_for('tournament.schedule', id=tournament.id) }}" class="flex items-center text-gray-700 hover:text-blue-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        View Schedule
+                    </a>
+                </li>
+                {% if tournament.status.value == 'ongoing' %}
+                    <li class="py-3">
+                        <a href="{{ url_for('tournament.live_scoring', id=tournament.id) }}" class="flex items-center text-gray-700 hover:text-blue-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            Live Scoring
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+{% else %}
     <!-- Categories and Registrations -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+{% endif %}
         <!-- Categories Section -->
         <div class="lg:col-span-2">
             <div class="bg-white rounded-lg shadow-md overflow-hidden">

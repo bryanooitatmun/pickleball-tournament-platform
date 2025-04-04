@@ -6,7 +6,7 @@ from app.organizer import bp # Import the blueprint
 # Import necessary models using the new structure
 from app.models import (Tournament, TournamentCategory, Registration, Match, Group,
                        CategoryType, TournamentFormat, TournamentStatus)
-from app.decorators import organizer_required
+from app.decorators import organizer_required, referee_or_organizer_required
 # Import helpers if needed for bracket generation logic called from here
 from app.helpers.tournament import (
     _generate_group_stage,
@@ -188,13 +188,16 @@ def edit_categories(id):
 
 @bp.route('/tournament/<int:id>/manage_category/<int:category_id>', methods=['GET', 'POST'])
 @login_required
-@organizer_required
+@referee_or_organizer_required
 def manage_category(id, category_id):
     tournament = Tournament.query.get_or_404(id)
     category = TournamentCategory.query.get_or_404(category_id)
 
-    # Permissions check
-    if not current_user.is_admin() and tournament.organizer_id != current_user.id:
+    # Check if user is referee only (not also an organizer or admin)
+    is_referee_only = current_user.is_referee() and not current_user.is_organizer() and not current_user.is_admin()
+
+    # Permissions check for non-referees
+    if not is_referee_only and not current_user.is_admin() and tournament.organizer_id != current_user.id:
         flash('You do not have permission to manage this tournament.', 'danger')
         return redirect(url_for('main.tournament_detail', id=id)) # Redirect to public view
     if category.tournament_id != tournament.id:
@@ -346,4 +349,5 @@ def manage_category(id, category_id):
                           groups=groups,
                           prize_dist_data=prize_dist_data,
                           points_dist_data=points_dist_data,
-                          default_placements=default_placements)
+                          default_placements=default_placements,
+                          is_referee_only=is_referee_only)

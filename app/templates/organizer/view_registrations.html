@@ -2,58 +2,96 @@
 
 {% block title %}Tournament Registrations{% endblock %}
 
+{% block styles %}
+<style>
+    /* Custom styles for mobile responsiveness */
+    @media (max-width: 768px) {
+        .filter-chips {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .registration-table {
+            display: block;
+            overflow-x: auto;
+        }
+        .filter-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    /* Filter chip styling */
+    .filter-chip {
+        transition: all 0.2s;
+    }
+    
+    .filter-chip.active {
+        background-color: rgb(37, 99, 235);
+        color: white;
+    }
+    
+    .filter-chip:hover:not(.active) {
+        background-color: rgb(243, 244, 246);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mx-auto px-4 py-6">
-    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
-        <h1 class="text-3xl font-bold mb-3 md:mb-0">Tournament Registrations</h1>
-        <div class="flex gap-2">
-            <a href="{{ url_for('organizer.dashboard') }}" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md">
-                Back to Dashboard
-            </a>
+    <!-- Dashboard Header -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Tournament Registrations</h1>
+            <p class="text-gray-600 mt-1">Manage player registrations across tournaments</p>
         </div>
+        <a href="{{ url_for('organizer.dashboard') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Dashboard
+        </a>
     </div>
 
     <!-- Filters -->
-    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <h2 class="text-lg font-bold mb-4">Filters</h2>
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6 border border-gray-100">
+        <h2 class="text-lg font-bold mb-4">Filter Registrations</h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="space-y-6">
             <!-- Status Filter -->
             <div>
-                <h3 class="text-sm font-medium text-gray-500 mb-2">Registration Status</h3>
-                <div class="flex flex-wrap gap-2">
+                <h3 class="text-sm font-medium text-gray-700 mb-2">Registration Status</h3>
+                <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 filter-chips">
                     <a href="{{ url_for('organizer.view_registrations', status='pending', tournament=tournament_filter, category=category_filter) }}" 
-                    class="px-4 py-2 rounded-md {% if status_filter == 'pending' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
-                        Pending Verification
+                       class="filter-chip text-center px-3 py-2 rounded-md text-sm {% if status_filter == 'pending' %}active{% else %}bg-white border border-gray-200{% endif %}">
+                        Pending
                     </a>
                     <a href="{{ url_for('organizer.view_registrations', status='approved', tournament=tournament_filter, category=category_filter) }}"
-                    class="px-4 py-2 rounded-md {% if status_filter == 'approved' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
+                       class="filter-chip text-center px-3 py-2 rounded-md text-sm {% if status_filter == 'approved' %}active{% else %}bg-white border border-gray-200{% endif %}">
                         Approved
                     </a>
                     <a href="{{ url_for('organizer.view_registrations', status='checked_in', tournament=tournament_filter, category=category_filter) }}"
-                    class="px-4 py-2 rounded-md {% if status_filter == 'checked_in' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
+                       class="filter-chip text-center px-3 py-2 rounded-md text-sm {% if status_filter == 'checked_in' %}active{% else %}bg-white border border-gray-200{% endif %}">
                         Checked In
                     </a>
                     <a href="{{ url_for('organizer.view_registrations', status='not_checked_in', tournament=tournament_filter, category=category_filter) }}"
-                    class="px-4 py-2 rounded-md {% if status_filter == 'not_checked_in' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
+                       class="filter-chip text-center px-3 py-2 rounded-md text-sm {% if status_filter == 'not_checked_in' %}active{% else %}bg-white border border-gray-200{% endif %}">
                         Not Checked In
                     </a>
                     <a href="{{ url_for('organizer.view_registrations', status='rejected', tournament=tournament_filter, category=category_filter) }}"
-                    class="px-4 py-2 rounded-md {% if status_filter == 'rejected' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
+                       class="filter-chip text-center px-3 py-2 rounded-md text-sm {% if status_filter == 'rejected' %}active{% else %}bg-white border border-gray-200{% endif %}">
                         Rejected
                     </a>
                     <a href="{{ url_for('organizer.view_registrations', status='all', tournament=tournament_filter, category=category_filter) }}"
-                    class="px-4 py-2 rounded-md {% if status_filter == 'all' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200{% endif %}">
+                       class="filter-chip text-center px-3 py-2 rounded-md text-sm {% if status_filter == 'all' %}active{% else %}bg-white border border-gray-200{% endif %}">
                         All Statuses
                     </a>
                 </div>
             </div>
-
-            <!-- Tournament Filter -->
-            <div>
-                <h3 class="text-sm font-medium text-gray-500 mb-2">Tournament</h3>
-                <div class="relative">
-                    <select id="tournamentFilter" onchange="changeTournament(this.value)" class="block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            
+            <!-- Tournament & Category Filter -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 filter-grid">
+                <!-- Tournament Filter -->
+                <div>
+                    <label for="tournamentFilter" class="block text-sm font-medium text-gray-700 mb-2">Tournament</label>
+                    <select id="tournamentFilter" onchange="changeTournament(this.value)" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                         <option value="all" {% if tournament_filter == 'all' %}selected{% endif %}>All Tournaments</option>
                         {% for tournament in all_tournaments %}
                         <option value="{{ tournament.id }}" {% if tournament_filter|int == tournament.id %}selected{% endif %}>
@@ -62,13 +100,11 @@
                         {% endfor %}
                     </select>
                 </div>
-            </div>
 
-            <!-- Category Filter -->
-            <div>
-                <h3 class="text-sm font-medium text-gray-500 mb-2">Category</h3>
-                <div class="relative">
-                    <select id="categoryFilter" onchange="changeCategory(this.value)" class="block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <!-- Category Filter -->
+                <div>
+                    <label for="categoryFilter" class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <select id="categoryFilter" onchange="changeCategory(this.value)" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                         <option value="all" {% if category_filter == 'all' %}selected{% endif %}>All Categories</option>
                         {% for category in categories %}
                         {% if tournament_filter == 'all' or tournament_filter|int == category.tournament_id %}
@@ -83,40 +119,59 @@
         </div>
     </div>
 
-    <!-- Registrations List -->
-    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div class="p-6 border-b border-gray-200">
-            <h2 class="text-lg font-bold">
-                {% if status_filter == 'pending' %}
-                    Pending Registrations
-                {% elif status_filter == 'approved' %}
-                    Approved Registrations
-                {% elif status_filter == 'rejected' %}
-                    Rejected Registrations
-                {% else %}
-                    All Registrations
+    <!-- Current Filters Summary -->
+    <div class="flex flex-wrap items-center gap-2 mb-4 text-sm">
+        <span class="text-gray-600">Showing:</span>
+        <span class="font-medium bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full">
+            {% if status_filter == 'pending' %}
+                Pending Verification
+            {% elif status_filter == 'approved' %}
+                Approved
+            {% elif status_filter == 'checked_in' %}
+                Checked In
+            {% elif status_filter == 'not_checked_in' %}
+                Not Checked In
+            {% elif status_filter == 'rejected' %}
+                Rejected
+            {% else %}
+                All Statuses
+            {% endif %}
+        </span>
+        
+        {% if tournament_filter != 'all' %}
+            {% for tournament in all_tournaments %}
+                {% if tournament_filter|int == tournament.id %}
+                    <span class="font-medium bg-blue-50 text-blue-700 px-3 py-1 rounded-full">
+                        {{ tournament.name }}
+                    </span>
                 {% endif %}
-                
-                {% if tournament_filter != 'all' %}
-                    {% for tournament in all_tournaments %}
-                        {% if tournament_filter|int == tournament.id %}
-                            for {{ tournament.name }}
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
+            {% endfor %}
+        {% else %}
+            <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full">All Tournaments</span>
+        {% endif %}
 
-                {% if category_filter != 'all' %}
-                    {% for category in categories %}
-                        {% if category_filter|int == category.id %}
-                            ({{ category.name }})
-                        {% endif %}
-                    {% endfor %}
+        {% if category_filter != 'all' %}
+            {% for category in categories %}
+                {% if category_filter|int == category.id %}
+                    <span class="font-medium bg-purple-50 text-purple-700 px-3 py-1 rounded-full">
+                        {{ category.name }}
+                    </span>
                 {% endif %}
-            </h2>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Registrations List -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+        <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Registrations</h2>
+            <p class="text-sm text-gray-600">
+                {{ registrations|length }} registration{{ "s" if registrations|length != 1 }} found
+            </p>
         </div>
 
         {% if registrations %}
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto registration-table">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
@@ -124,16 +179,10 @@
                             Player
                         </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Date
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Status
                         </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Check-in
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Actions
                         </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Tournament
@@ -144,30 +193,33 @@
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Partner
                         </th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="divide-y divide-gray-200">
                     {% for reg in registrations %}
-                    <tr class="hover:bg-gray-50">
+                    <tr class="hover:bg-gray-50 transition-colors">
                         <!-- Player -->
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
-                                <div class="flex-shrink-0 h-10 w-10">
+                                <div class="flex-shrink-0 h-8 w-8">
                                     {% if reg.player and reg.player.profile_image %}
-                                        <img class="h-10 w-10 rounded-full" src="{{ reg.player.profile_image }}" alt="">
+                                        <img class="h-8 w-8 rounded-full object-cover" src="{{ reg.player.profile_image }}" alt="">
                                     {% elif reg.player %}
-                                        <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                        <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
                                             <span class="text-blue-600 font-bold">{{ reg.player.full_name[:1] }}</span>
                                         </div>
                                     {% elif reg.player1_name %}
-                                        <div class="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+                                        <div class="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
                                             <span class="text-gray-600 font-bold">{{ reg.player1_name[:1] }}</span>
                                         </div>
                                     {% else %}
-                                        <div class="h-10 w-10 rounded-full bg-gray-100"></div>
+                                        <div class="h-8 w-8 rounded-full bg-gray-100"></div>
                                     {% endif %}
                                 </div>
-                                <div class="ml-4">
+                                <div class="ml-3">
                                     <div class="text-sm font-medium text-gray-900">
                                         {% if reg.player %}
                                             {{ reg.player.full_name }}
@@ -177,46 +229,53 @@
                                             Unknown Player
                                         {% endif %}
                                     </div>
-                                    <div class="text-sm text-gray-500">
-                                        {% if reg.player and reg.player.user %}
-                                            {{ reg.player.user.email }}
-                                        {% elif reg.player1_email %}
-                                            {{ reg.player1_email }}
-                                        {% endif %}
+                                    <div class="text-xs text-gray-500">
+                                        {{ reg.registration_date.strftime('%b %d, %Y') }}
                                     </div>
                                 </div>
                             </div>
                         </td>
                         
-                        <!-- Date -->
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ reg.registration_date.strftime('%b %d, %Y') }}
-                        </td>
-                        
                         <!-- Status -->
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if reg.payment_status == 'pending' %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-yellow-400" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
                                     Payment Required
                                 </span>
                             {% elif reg.payment_status == 'uploaded' %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-blue-400" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
                                     Pending Verification
                                 </span>
                             {% elif reg.payment_status == 'paid' %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
                                     Approved
                                 </span>
                             {% elif reg.payment_status == 'rejected' %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-red-400" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
                                     Rejected
                                 </span>
                             {% endif %}
                         </td>
+                        
                         <!-- Check in -->
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if reg.checked_in %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
                                     Checked In
                                 </span>
                                 {% if reg.check_in_time %}
@@ -225,7 +284,7 @@
                                     </div>
                                 {% endif %}
                             {% elif reg.payment_verified %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                     Not Checked In
                                 </span>
                                 <button type="button" 
@@ -237,33 +296,10 @@
                                 <span class="text-gray-400 text-xs">Not Applicable</span>
                             {% endif %}
                         </td>
-                        <!-- Actions -->
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <a href="{{ url_for('organizer.view_registration', id=reg.id) }}" class="text-blue-600 hover:text-blue-900">
-                                View
-                            </a>
-                            
-                            {# {% if reg.payment_status == 'uploaded' and not reg.payment_verified %}
-                            <span class="mx-1">|</span>
-                            <form method="POST" action="{{ url_for('organizer.verify_registration', id=reg.id) }}" class="inline">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                <button type="submit" class="text-green-600 hover:text-green-900">
-                                    Approve
-                                </button>
-                            </form>
-                            <span class="mx-1">|</span>
-                            <button type="button" 
-                                    class="text-red-600 hover:text-red-900 reject-btn"
-                                    data-tournament-id="{{ reg.category.tournament.id }}"
-                                    data-registration-id="{{ reg.id }}">
-                                Reject
-                            </button>
-                            {% endif %} #}
-                        </td>
                         
                         <!-- Tournament -->
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">{{ reg.category.tournament.name }}</div>
+                            <div class="text-sm font-medium text-gray-900">{{ reg.category.tournament.name }}</div>
                             <div class="text-xs text-gray-500">
                                 {{ reg.category.tournament.start_date.strftime('%b %d') }}-{{ reg.category.tournament.end_date.strftime('%d, %Y') }}
                             </div>
@@ -271,23 +307,34 @@
                         
                         <!-- Category -->
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">{{ reg.category.name }}</div>
+                            <div class="text-sm font-medium text-gray-900">{{ reg.category.name }}</div>
                             <div class="text-xs text-gray-500">{{ reg.category.category_type.value }}</div>
                         </td>
                         
                         <!-- Partner -->
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">
+                            <div class="text-sm">
                                 {% if reg.partner %}
-                                    {{ reg.partner.full_name }}
+                                    <span class="font-medium text-gray-900">{{ reg.partner.full_name }}</span>
                                 {% elif reg.player2_name %}
-                                    {{ reg.player2_name }}
+                                    <span class="font-medium text-gray-900">{{ reg.player2_name }}</span>
                                 {% elif reg.category.is_doubles() %}
-                                    <span class="text-yellow-600">No Partner</span>
+                                    <span class="text-yellow-600 text-sm">No Partner</span>
                                 {% else %}
-                                    <span class="text-gray-400">N/A</span>
+                                    <span class="text-gray-400 text-sm">N/A</span>
                                 {% endif %}
                             </div>
+                        </td>
+                        
+                        <!-- Actions -->
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <a href="{{ url_for('organizer.view_registration', id=reg.id) }}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                View Details
+                            </a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -295,7 +342,7 @@
             </table>
         </div>
         {% else %}
-        <div class="p-6 text-center">
+        <div class="p-8 text-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
@@ -318,11 +365,13 @@
   <form method="POST" id="rejectForm" action="#">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     
-    <div class="bg-red-50 px-4 py-3 border-b border-red-100">
+    <div class="bg-red-50 px-4 py-3 border-b border-red-100 rounded-t-lg">
       <div class="flex justify-between items-center">
         <h3 class="text-lg font-medium text-red-800">Reject Payment</h3>
-        <button type="button" class="closeModal text-gray-500 hover:text-gray-700">
-          &times;
+        <button type="button" class="closeModal text-gray-500 hover:text-gray-700 focus:outline-none">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
       </div>
     </div>
@@ -332,15 +381,15 @@
       
       <div class="mb-4">
         <label for="rejection_reason" class="block text-sm font-medium text-gray-700 mb-1">Rejection Reason:</label>
-        <textarea id="rejection_reason" name="rejection_reason" class="w-full border border-gray-300 rounded-md px-3 py-2" rows="4" required></textarea>
+        <textarea id="rejection_reason" name="rejection_reason" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-red-500 focus:border-red-500" rows="4" required placeholder="e.g., Invalid payment proof, amount doesn't match fee, etc."></textarea>
       </div>
     </div>
     
-    <div class="bg-gray-50 px-4 py-3 flex justify-end">
-      <button type="button" class="closeModal mr-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+    <div class="bg-gray-50 px-4 py-3 flex justify-end rounded-b-lg">
+      <button type="button" class="closeModal mr-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
         Cancel
       </button>
-      <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+      <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
         Confirm Rejection
       </button>
     </div>
@@ -370,60 +419,7 @@
     window.location.href = url.toString();
   }
   
-  // Update category dropdown based on selected tournament
-  function updateCategoryOptions() {
-    const tournamentId = document.getElementById('tournamentFilter').value;
-    const categorySelect = document.getElementById('categoryFilter');
-    const allCategories = Array.from(categorySelect.querySelectorAll('option')).slice(1); // Skip "All Categories" option
-    
-    // First hide all category options except "All Categories"
-    allCategories.forEach(option => {
-      option.style.display = 'none';
-    });
-    
-    // Show relevant categories based on selected tournament
-    if (tournamentId === 'all') {
-      allCategories.forEach(option => {
-        option.style.display = '';
-      });
-    } else {
-      allCategories.forEach(option => {
-        const categoryTournamentId = option.dataset.tournamentId;
-        if (categoryTournamentId === tournamentId) {
-          option.style.display = '';
-        }
-      });
-    }
-    
-    // If current category is not valid for selected tournament, reset to "All Categories"
-    const currentCategory = categorySelect.value;
-    const isValidCategory = tournamentId === 'all' || 
-                            currentCategory === 'all' || 
-                            Array.from(categorySelect.querySelectorAll('option:not([style*="display: none"])')).some(opt => opt.value === currentCategory);
-    
-    if (!isValidCategory) {
-      categorySelect.value = 'all';
-    }
-  }
-  
   document.addEventListener('DOMContentLoaded', function() {
-    // Add tournament ID as data attribute to category options
-    const categorySelect = document.getElementById('categoryFilter');
-    const categoryOptions = categorySelect.querySelectorAll('option');
-    
-    categoryOptions.forEach(option => {
-      if (option.value !== 'all') {
-        const tournamentId = option.parentElement.dataset.tournamentId;
-        option.dataset.tournamentId = tournamentId;
-      }
-    });
-    
-    // Update categories when page loads
-    //updateCategoryOptions();
-    
-    // Update categories when tournament changes
-    document.getElementById('tournamentFilter').addEventListener('change', updateCategoryOptions);
-    
     // Modal handling
     const modalBackdrop = document.getElementById('modalBackdrop');
     const rejectModal = document.getElementById('rejectModal');
@@ -466,6 +462,7 @@
       e.stopPropagation();
     });
 
+    // Check-in button functionality
     checkinButtons.forEach(button => {
       button.addEventListener('click', function() {
         const registrationId = this.dataset.registrationId;
@@ -500,7 +497,7 @@
         
         // Handle player check-in event
         socket.on('player_checked_in', function(data) {
-          // Refresh the page when a player is checked in (you can implement a more elegant update if preferred)
+          // Refresh the page when a player is checked in
           window.location.reload();
         });
         
@@ -511,7 +508,6 @@
         });
       }
     }
-    
   });
 </script>
 {% endblock %}

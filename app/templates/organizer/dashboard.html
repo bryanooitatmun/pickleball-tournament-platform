@@ -1,389 +1,446 @@
 {% extends "base.html" %}
 
-{% block title %}Organizer Dashboard{% endblock %}
+{% block title %}{% if is_referee_only %}Referee Dashboard{% else %}Organizer Dashboard{% endif %}{% endblock %}
+
+{% block styles %}
+<style>
+    @media (max-width: 640px) {
+        .tournament-card {
+            grid-template-columns: 1fr;
+        }
+        .tournament-card .action-col {
+            grid-column: span 1;
+            text-align: left;
+            margin-top: 0.5rem;
+        }
+        .stat-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-6">
-    <div class="flex flex-wrap justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold">Organizer Dashboard</h1>
-        {# <div>
-            <a href="{{ url_for('organizer.create_tournament') }}" class="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+<div class="container mx-auto px-4 pb-16">
+    <!-- Dashboard Header -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
+                {% if is_referee_only %}Referee Dashboard{% else %}Organizer Dashboard{% endif %}
+            </h1>
+            <p class="text-gray-600 mt-1">
+                {% if is_referee_only %}Manage match scores and verification{% else %}Manage tournaments, registrations and matches{% endif %}
+            </p>
+        </div>
+        {# {% if not is_referee_only %}
+        <div class="flex space-x-2">
+            <a href="{{ url_for('organizer.create_tournament') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
                 Create Tournament
             </a>
-        </div> #}
+        </div>
+        {% endif %} #}
     </div>
     
     <!-- Status Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-500 mb-1">Total Tournaments</p>
-                    <h2 class="text-3xl font-bold">{{ total_tournaments }}</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 stat-grid">
+        <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100 transition-all hover:shadow-md">
+            <div class="flex flex-col h-full">
+                <div class="mb-2">
+                    <span class="inline-block p-2 rounded-full bg-blue-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                    </span>
                 </div>
-                <div class="text-blue-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                </div>
+                <h3 class="text-sm font-medium text-gray-500">Total Tournaments</h3>
+                <p class="text-2xl sm:text-3xl font-bold mt-1 text-gray-900">{{ total_tournaments }}</p>
             </div>
         </div>
         
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-500 mb-1">Upcoming</p>
-                    <h2 class="text-3xl font-bold">{{ upcoming_count }}</h2>
+        <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100 transition-all hover:shadow-md">
+            <div class="flex flex-col h-full">
+                <div class="mb-2">
+                    <span class="inline-block p-2 rounded-full bg-green-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </span>
                 </div>
-                <div class="text-green-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                </div>
+                <h3 class="text-sm font-medium text-gray-500">Upcoming</h3>
+                <p class="text-2xl sm:text-3xl font-bold mt-1 text-gray-900">{{ upcoming_count }}</p>
             </div>
         </div>
         
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-500 mb-1">Ongoing</p>
-                    <h2 class="text-3xl font-bold">{{ ongoing_count }}</h2>
+        <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100 transition-all hover:shadow-md">
+            <div class="flex flex-col h-full">
+                <div class="mb-2">
+                    <span class="inline-block p-2 rounded-full bg-yellow-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </span>
                 </div>
-                <div class="text-yellow-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                </div>
+                <h3 class="text-sm font-medium text-gray-500">Ongoing</h3>
+                <p class="text-2xl sm:text-3xl font-bold mt-1 text-gray-900">{{ ongoing_count }}</p>
             </div>
         </div>
         
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-500 mb-1">Completed</p>
-                    <h2 class="text-3xl font-bold">{{ completed_count }}</h2>
+        <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100 transition-all hover:shadow-md">
+            <div class="flex flex-col h-full">
+                <div class="mb-2">
+                    <span class="inline-block p-2 rounded-full bg-purple-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                        </svg>
+                    </span>
                 </div>
-                <div class="text-purple-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                    </svg>
-                </div>
+                <h3 class="text-sm font-medium text-gray-500">Completed</h3>
+                <p class="text-2xl sm:text-3xl font-bold mt-1 text-gray-900">{{ completed_count }}</p>
             </div>
         </div>
     </div>
     
-    <!-- Payment Summary & Action Items -->
+    <!-- Main Dashboard Content -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {% if not is_referee_only %}
         <!-- Payment Summary Card -->
-        <div class="md:col-span-2 bg-white rounded-lg shadow-sm p-6">
-            <h2 class="text-xl font-bold mb-4">Payment Status</h2>
+        <div class="md:col-span-2 bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-gray-900">Payment Status</h2>
+                <a href="{{ url_for('organizer.payment_dashboard') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
+                    View Details
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
+            </div>
             
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div class="text-center bg-gray-50 p-4 rounded-lg">
-                    <div class="text-blue-600 text-xl font-bold">{{ total_registrations }}</div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="text-blue-700 text-xl font-bold">{{ total_registrations }}</div>
                     <div class="text-sm text-gray-500">Total Registrations</div>
                 </div>
-                <div class="text-center bg-gray-50 p-4 rounded-lg">
+                <div class="bg-gray-50 rounded-lg p-4">
                     <div class="text-yellow-600 text-xl font-bold">{{ pending_payments }}</div>
                     <div class="text-sm text-gray-500">Pending Verification</div>
                 </div>
-                <div class="text-center bg-gray-50 p-4 rounded-lg">
+                <div class="bg-gray-50 rounded-lg p-4">
                     <div class="text-green-600 text-xl font-bold">{{ approved_payments }}</div>
                     <div class="text-sm text-gray-500">Verified Payments</div>
                 </div>
-                <div class="text-center bg-gray-50 p-4 rounded-lg">
+                <div class="bg-gray-50 rounded-lg p-4">
                     <div class="text-purple-600 text-xl font-bold">${{ total_revenue }}</div>
                     <div class="text-sm text-gray-500">Total Revenue</div>
                 </div>
             </div>
             
             <div class="flex justify-between items-center mt-4">
-                <span class="text-sm text-gray-500">Last updated: {{ now.strftime('%b %d, %Y %H:%M') }}</span>
-                <a href="{{ url_for('organizer.payment_dashboard') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                    View Payment Dashboard →
-                </a>
+                <span class="text-xs text-gray-500">Last updated: {{ now.strftime('%b %d, %Y %H:%M') }}</span>
             </div>
         </div>
         
         <!-- Action Items Card -->
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <h2 class="text-xl font-bold mb-4">Action Items</h2>
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Action Items</h2>
             
-            <ul class="space-y-4">
+            <div class="space-y-3">
                 {% if pending_payments > 0 %}
-                <li>
-                    <a href="{{ url_for('organizer.view_registrations', status='pending') }}" class="flex items-center p-3 bg-yellow-50 rounded-lg hover:bg-yellow-100">
-                        <div class="p-2 bg-yellow-100 rounded-full mr-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <span class="font-medium">{{ pending_payments }} payment{% if pending_payments != 1 %}s{% endif %} pending verification</span>
-                        </div>
-                    </a>
-                </li>
+                <a href="{{ url_for('organizer.view_registrations', status='pending') }}" class="flex items-center p-3 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
+                    <div class="p-2 bg-yellow-100 rounded-full mr-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="font-medium text-sm">{{ pending_payments }} payment{% if pending_payments != 1 %}s{% endif %} pending</span>
+                    </div>
+                </a>
                 {% endif %}
                 
                 {% if upcoming_tournaments %}
-                <li>
-                    <a href="{{ url_for('organizer.tournament_detail', id=upcoming_tournaments[0].id) }}" class="flex items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100">
-                        <div class="p-2 bg-blue-100 rounded-full mr-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
+                <a href="{{ url_for('organizer.tournament_detail', id=upcoming_tournaments[0].id) }}" class="flex items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                    <div class="p-2 bg-blue-100 rounded-full mr-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="font-medium text-sm">Next tournament</span>
+                        <div class="text-xs text-gray-500">
+                            {{ upcoming_tournaments[0].name }} ({{ upcoming_tournaments[0].start_date.strftime('%b %d') }})
                         </div>
-                        <div>
-                            <span class="font-medium">Next tournament: {{ upcoming_tournaments[0].name }}</span>
-                            <div class="text-xs text-gray-500">
-                                Starts {{ upcoming_tournaments[0].start_date.strftime('%b %d, %Y') }}
-                            </div>
-                        </div>
-                    </a>
-                </li>
+                    </div>
+                </a>
                 {% endif %}
                 
-                {# <li>
-                    <a href="{{ url_for('organizer.create_tournament') }}" class="flex items-center p-3 bg-green-50 rounded-lg hover:bg-green-100">
-                        <div class="p-2 bg-green-100 rounded-full mr-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                        </div>
-                        <div>
-                            <span class="font-medium">Create a new tournament</span>
-                        </div>
-                    </a>
-                </li> #}
-            </ul>
+                {# <a href="{{ url_for('organizer.create_tournament') }}" class="flex items-center p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                    <div class="p-2 bg-green-100 rounded-full mr-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="font-medium text-sm">Create a new tournament</span>
+                    </div>
+                </a> #}
+            </div>
         </div>
-    </div>
-    
-    <!-- Tournaments Tables -->
-    <div class="grid grid-cols-1 gap-8">
-        <!-- Upcoming Tournaments -->
-        {% if upcoming_tournaments %}
-        <div class="bg-white rounded-lg shadow-sm">
-            <div class="p-6 border-b border-gray-200">
-                <h2 class="text-xl font-bold">Upcoming Tournaments</h2>
+        {% else %}
+        <!-- Referee Match Actions -->
+        <div class="md:col-span-3 bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-gray-900">Referee Actions</h2>
             </div>
             
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Tournament
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Dates
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Location
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Registrations
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% for tournament in upcoming_tournaments %}
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        {% if tournament.logo %}
-                                            <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="h-10 w-10 rounded-full mr-3">
-                                        {% else %}
-                                            <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
-                                                <span class="text-blue-600 font-bold">{{ tournament.name[:1] }}</span>
-                                            </div>
-                                        {% endif %}
-                                        <div>
-                                            <div class="text-sm font-medium text-gray-900">{{ tournament.name }}</div>
-                                            <div class="text-sm text-gray-500">{{ tournament.format.value }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-900 mr-3">
-                                        Manage
-                                    </a>
-                                    <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="text-gray-600 hover:text-gray-900">
-                                        View
-                                    </a>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ tournament.location }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    {% if tournament.registration_counts %}
-                                        <span class="font-medium">{{ tournament.registration_counts.total }}</span>
-                                        <span class="text-sm text-gray-500">registrations</span>
-                                        
-                                        {% if tournament.registration_counts.pending > 0 %}
-                                            <div class="mt-1">
-                                                <span class="px-2 py-0.5 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
-                                                    {{ tournament.registration_counts.pending }} pending
-                                                </span>
-                                            </div>
-                                        {% endif %}
-                                    {% else %}
-                                        <span class="text-gray-500">No registrations</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="bg-blue-50 rounded-lg p-4 mb-4">
+                <div class="flex items-start">
+                    <div class="p-2 bg-blue-100 rounded-full mr-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold mb-1">Referee Guidelines</h3>
+                        <p class="text-sm text-gray-700">As a referee, you can update match scores and verify match results. Browse tournaments below to find and score matches.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Tournaments Section -->
+    <div class="space-y-8">
+        <!-- Ongoing Tournaments (Show first for referees) -->
+        {% if ongoing_tournaments %}
+        <div class="border border-gray-200 bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 bg-gradient-to-r from-yellow-50 to-yellow-100 border-b border-gray-200">
+                <h2 class="text-lg font-bold text-gray-900">Ongoing Tournaments</h2>
+            </div>
+            
+            <div class="divide-y divide-gray-200">
+                {% for tournament in ongoing_tournaments %}
+                    <div class="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-8 gap-4 items-center tournament-card hover:bg-gray-50 transition-colors">
+                        <div class="sm:col-span-4 flex items-center">
+                            {% if tournament.logo %}
+                                <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="h-12 w-12 rounded-lg object-cover mr-4">
+                            {% else %}
+                                <div class="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center mr-4">
+                                    <span class="text-blue-600 font-bold text-xl">{{ tournament.name[:1] }}</span>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <div class="font-medium text-gray-900">{{ tournament.name }}</div>
+                                <div class="text-sm text-gray-500 mt-1">{{ tournament.format.value }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="sm:col-span-2 text-sm text-gray-500">
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
+                            </div>
+                            <div class="flex items-center mt-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                {{ tournament.location }}
+                            </div>
+                        </div>
+                        
+                        <div class="sm:col-span-2 flex justify-end items-center space-x-2 action-col">
+                            <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                {% if is_referee_only %}View Matches{% else %}Manage{% endif %}
+                            </a>
+                            {% if not is_referee_only %}
+                            <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="px-3 py-2 text-gray-600 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
+                                Preview
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
         </div>
         {% endif %}
         
-        <!-- Ongoing Tournaments -->
-        {% if ongoing_tournaments %}
-        <div class="bg-white rounded-lg shadow-sm">
-            <div class="p-6 border-b border-gray-200">
-                <h2 class="text-xl font-bold">Ongoing Tournaments</h2>
+        <!-- Upcoming Tournaments -->
+        {% if upcoming_tournaments %}
+        <div class="border border-gray-200 bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 bg-gradient-to-r from-green-50 to-green-100 border-b border-gray-200">
+                <h2 class="text-lg font-bold text-gray-900">Upcoming Tournaments</h2>
             </div>
             
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Tournament
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Dates
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Location
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% for tournament in ongoing_tournaments %}
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        {% if tournament.logo %}
-                                            <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="h-10 w-10 rounded-full mr-3">
-                                        {% else %}
-                                            <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
-                                                <span class="text-blue-600 font-bold">{{ tournament.name[:1] }}</span>
-                                            </div>
-                                        {% endif %}
-                                        <div>
-                                            <div class="text-sm font-medium text-gray-900">{{ tournament.name }}</div>
-                                            <div class="text-sm text-gray-500">{{ tournament.format.value }}</div>
-                                        </div>
+            <div class="divide-y divide-gray-200">
+                {% for tournament in upcoming_tournaments %}
+                    <div class="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-8 gap-4 items-center tournament-card hover:bg-gray-50 transition-colors">
+                        <div class="sm:col-span-3 flex items-center">
+                            {% if tournament.logo %}
+                                <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="h-12 w-12 rounded-lg object-cover mr-4">
+                            {% else %}
+                                <div class="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center mr-4">
+                                    <span class="text-blue-600 font-bold text-xl">{{ tournament.name[:1] }}</span>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <div class="font-medium text-gray-900">{{ tournament.name }}</div>
+                                <div class="text-sm text-gray-500 mt-1">{{ tournament.format.value }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="sm:col-span-2 text-sm text-gray-500">
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
+                            </div>
+                            <div class="flex items-center mt-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                {{ tournament.location }}
+                            </div>
+                        </div>
+                        
+                        {% if not is_referee_only %}
+                        <div class="sm:col-span-2 text-sm">
+                            {% if tournament.registration_counts %}
+                                <div>
+                                    <span class="font-medium">{{ tournament.registration_counts.total }}</span>
+                                    <span class="text-gray-500">registrations</span>
+                                </div>
+                                    
+                                {% if tournament.registration_counts.pending > 0 %}
+                                    <div class="mt-1">
+                                        <span class="px-2 py-1 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
+                                            {{ tournament.registration_counts.pending }} pending
+                                        </span>
                                     </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-900 mr-3">
-                                        Manage
-                                    </a>
-                                    <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="text-gray-600 hover:text-gray-900">
-                                        View
-                                    </a>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ tournament.location }}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-gray-500">No registrations</span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="sm:col-span-{% if is_referee_only %}3{% else %}1{% endif %} flex justify-end items-center space-x-2 action-col">
+                            <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                {% if is_referee_only %}View Matches{% else %}Manage{% endif %}
+                            </a>
+                            {% if not is_referee_only %}
+                            <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="px-3 py-2 text-gray-600 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
+                                Preview
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
         </div>
         {% endif %}
         
         <!-- Completed Tournaments -->
         {% if completed_tournaments %}
-        <div class="bg-white rounded-lg shadow-sm">
-            <div class="p-6 border-b border-gray-200">
-                <h2 class="text-xl font-bold">Completed Tournaments</h2>
+        <div class="border border-gray-200 bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 bg-gradient-to-r from-purple-50 to-purple-100 border-b border-gray-200">
+                <h2 class="text-lg font-bold text-gray-900">Completed Tournaments</h2>
             </div>
             
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Tournament
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Dates
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Location
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Revenue
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% for tournament in completed_tournaments %}
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        {% if tournament.logo %}
-                                            <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="h-10 w-10 rounded-full mr-3">
-                                        {% else %}
-                                            <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
-                                                <span class="text-blue-600 font-bold">{{ tournament.name[:1] }}</span>
-                                            </div>
-                                        {% endif %}
-                                        <div>
-                                            <div class="text-sm font-medium text-gray-900">{{ tournament.name }}</div>
-                                            <div class="text-sm text-gray-500">{{ tournament.format.value }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ tournament.location }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <div class="divide-y divide-gray-200">
+                {% for tournament in completed_tournaments %}
+                    <div class="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-8 gap-4 items-center tournament-card hover:bg-gray-50 transition-colors">
+                        <div class="sm:col-span-3 flex items-center">
+                            {% if tournament.logo %}
+                                <img src="{{ url_for('static', filename=tournament.logo) }}" alt="{{ tournament.name }}" class="h-12 w-12 rounded-lg object-cover mr-4">
+                            {% else %}
+                                <div class="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center mr-4">
+                                    <span class="text-blue-600 font-bold text-xl">{{ tournament.name[:1] }}</span>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <div class="font-medium text-gray-900">{{ tournament.name }}</div>
+                                <div class="text-sm text-gray-500 mt-1">{{ tournament.format.value }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="sm:col-span-2 text-sm text-gray-500">
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                {{ tournament.start_date.strftime('%b %d') }} - {{ tournament.end_date.strftime('%b %d, %Y') }}
+                            </div>
+                            <div class="flex items-center mt-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                {{ tournament.location }}
+                            </div>
+                        </div>
+                        
+                        {% if not is_referee_only %}
+                        <div class="sm:col-span-2 text-sm">
+                            <div>
+                                <span class="font-medium">Revenue:</span>
+                                <span class="text-gray-900">
                                     {% if tournament.revenue %}
                                         ${{ tournament.revenue }}
                                     {% else %}
                                         -
                                     {% endif %}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    {# <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="text-blue-600 hover:text-blue-900 mr-3">
-                                        View Report
-                                    </a> #}
-                                    <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="text-gray-600 hover:text-gray-900">
-                                        View
-                                    </a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                </span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="sm:col-span-{% if is_referee_only %}3{% else %}1{% endif %} flex justify-end items-center space-x-2 action-col">
+                            <a href="{{ url_for('organizer.tournament_detail', id=tournament.id) }}" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                View
+                            </a>
+                            {% if not is_referee_only %}
+                            <a href="{{ url_for('main.tournament_detail', id=tournament.id) }}" class="px-3 py-2 text-gray-600 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
+                                Details
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
         </div>
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Add any dashboard-specific JavaScript here
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mobile responsive enhancements
+        if (window.innerWidth < 640) {
+            // Any mobile-specific JS adjustments
+        }
+    });
+</script>
 {% endblock %}

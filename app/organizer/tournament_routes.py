@@ -7,15 +7,18 @@ from app.organizer import bp # Import the blueprint
 from app.organizer.forms import TournamentForm, TournamentPaymentForm, TournamentGiftsForm # Import relevant forms
 from app.models import (Tournament, TournamentCategory, Registration, TournamentStatus,
                        TournamentTier, TournamentFormat) # Use new import path
-from app.decorators import organizer_required
+from app.decorators import organizer_required, referee_or_organizer_required
 from app.helpers.registration import save_picture # Assuming this helper handles image saving
 
 # --- Dashboard Routes ---
 
 @bp.route('/dashboard')
 @login_required
-@organizer_required
+@referee_or_organizer_required
 def dashboard():
+    # Check if user is referee only (not also an organizer or admin)
+    is_referee_only = current_user.is_referee() and not current_user.is_organizer() and not current_user.is_admin()
+    
     # Get tournaments organized by this user or all if admin
     if current_user.is_admin():
         tournaments_query = Tournament.query
@@ -89,7 +92,7 @@ def dashboard():
     completed_count = len(completed_tournaments)
 
     return render_template('organizer/dashboard.html',
-                           title='Organizer Dashboard',
+                           title='Dashboard',
                            upcoming_tournaments=upcoming_tournaments,
                            ongoing_tournaments=ongoing_tournaments,
                            completed_tournaments=completed_tournaments,
@@ -101,7 +104,8 @@ def dashboard():
                            pending_payments=pending_payments,
                            approved_payments=approved_payments,
                            total_revenue=total_revenue,
-                           now=datetime.now())
+                           now=datetime.now(),
+                           is_referee_only=is_referee_only)
 
 
 @bp.route('/dashboard/payments')
@@ -212,12 +216,15 @@ def create_tournament():
 
 @bp.route('/tournament/<int:id>')
 @login_required
-@organizer_required
+@referee_or_organizer_required
 def tournament_detail(id):
     tournament = Tournament.query.get_or_404(id)
+    
+    # Check if user is referee only (not also an organizer or admin)
+    is_referee_only = current_user.is_referee() and not current_user.is_organizer() and not current_user.is_admin()
 
-    # Check if current user is the organizer or an admin
-    if not current_user.is_admin() and tournament.organizer_id != current_user.id:
+    # Check if current user is the organizer or an admin (if not referee)
+    if not is_referee_only and not current_user.is_admin() and tournament.organizer_id != current_user.id:
         flash('You do not have permission to view this tournament management page.', 'danger')
         return redirect(url_for('organizer.dashboard'))
 
@@ -247,7 +254,8 @@ def tournament_detail(id):
                            tournament=tournament,
                            categories=categories,
                            registrations=registrations, # Pass relevant registrations
-                           registration_counts=registration_counts)
+                           registration_counts=registration_counts,
+                           is_referee_only=is_referee_only)
 
 
 @bp.route('/tournament/<int:id>/edit', methods=['GET', 'POST'])
