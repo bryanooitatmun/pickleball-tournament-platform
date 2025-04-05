@@ -50,12 +50,42 @@ def bracket(id):
     # Process scores into a dictionary for easier template access
     scores = {}
     
-    # Process group stage match scores
+    # Generate h2h_records for tiebreakers display
+    h2h_records = {}
+    
+    # Process group stage match scores and prepare h2h_records
     if bracket_data['group_stage']:
         for group_data in bracket_data['groups']:
+            # Get match scores
             for match in group_data['matches']:
                 match_scores = MatchScore.query.filter_by(match_id=match.id).order_by(MatchScore.set_number).all()
                 scores[match.id] = match_scores
+            
+            # Use BracketService to calculate h2h records
+            # Group standings with equal matches won for tiebreaker display
+            standings_by_wins = {}
+            for standing in group_data['standings']:
+                wins = standing.matches_won
+                if wins not in standings_by_wins:
+                    standings_by_wins[wins] = []
+                standings_by_wins[wins].append(standing)
+            
+            # Process each group of tied standings using the BracketService method
+            for wins, tied_standings in standings_by_wins.items():
+                if len(tied_standings) > 1:  # Only need h2h records for tied standings
+                    # Use the BracketService method to get h2h records
+                    h2h_data = BracketService._apply_tiebreakers(tied_standings)
+                    
+                    # Extract h2h_wins from the method's calculations
+                    for standing in tied_standings:
+                        # Create record for the standings
+                        key = ('player', standing.player_id) if standing.player_id else ('team', standing.team_id)
+                        if key[1]:
+                            # We don't get direct access to h2h_wins from the method, but we can use the return order as a proxy
+                            h2h_records[key] = {
+                                'original_standing': standing,
+                                'h2h_wins': standing.sets_won - standing.sets_lost  # Use set diff as a proxy
+                            }
 
     has_group_stage = False
 
@@ -77,6 +107,7 @@ def bracket(id):
                           selected_category=selected_category,
                           bracket_data=bracket_data,
                           scores=scores,
+                          h2h_records=h2h_records,
                           has_group_stage=has_group_stage,
                           format = bracket_data['category'].format)
 

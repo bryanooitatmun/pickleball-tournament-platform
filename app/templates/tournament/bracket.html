@@ -452,6 +452,7 @@
                 <div class="tab" data-tab="knockout-stage">Knockout Stage</div>
             </div>
             
+            <!-- Group Stage Tab Content -->
             <div class="tab-content active" id="group-stage">
                 <!-- Group Stage Display -->
                 <div class="group-stage mt-4">
@@ -474,70 +475,82 @@
                                         </svg>
                                     </button>
                                 </div>
-                                <table class="group-standings">
-                                    <thead>
-                                        <tr>
-                                            <th>Team</th>
-                                            <th class="text-center">W</th>
-                                            <th class="text-center">L</th>
-                                            <th class="text-center">Sets</th>
-                                            <th class="text-center tiebreaker-stat hidden">Points</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for standing in group_data.standings|sort(attribute='position') %}
-                                            <tr class="{% if standing.position <= selected_category.teams_advancing_per_group %}advancing{% endif %}">
-                                                <td>
-                                                    {% if selected_category.is_doubles() %}
-                                                        {% if standing.team %}
-                                                            <div class="flex items-center">
-                                                                <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                                                                    {% if standing.team.player1.profile_image %}
-                                                                        <img src="{{ standing.team.player1.profile_image }}" 
-                                                                            class="w-6 h-6 rounded-full object-cover" 
-                                                                            alt="{{ standing.team.player1.full_name }}">
-                                                                    {% else %}
-                                                                        <span class="text-blue-600 text-xs font-bold">{{ standing.team.player1.full_name[:1] }}</span>
-                                                                    {% endif %}
-                                                                </div>
-                                                                {{ standing.team.player1.full_name.split()[-1] }}/{{ standing.team.player2.full_name.split()[-1] }}
-                                                                <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position if standing.position != 999 else '-' }}</span>
-                                                            </div>
-                                                        {% else %}
-                                                            TBD
-                                                        {% endif %}
-                                                    {% else %}
-                                                        {% if standing.player %}
-                                                            <div class="flex items-center">
-                                                                <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                                                                    {% if standing.player.profile_image %}
-                                                                        <img src="{{ standing.player.profile_image }}" 
-                                                                            class="w-6 h-6 rounded-full object-cover" 
-                                                                            alt="{{ standing.player.full_name }}">
-                                                                    {% else %}
-                                                                        <span class="text-blue-600 text-xs font-bold">{{ standing.player.full_name[:1] }}</span>
-                                                                    {% endif %}
-                                                                </div>
-                                                                {{ standing.player.full_name }}
-                                                                <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position if standing.position != 999 else '-' }}</span>
-                                                            </div>
-                                                        {% else %}
-                                                            TBD
-                                                        {% endif %}
-                                                    {% endif %}
-                                                </td>
-                                                <td class="text-center">{{ standing.matches_won }}</td>
-                                                <td class="text-center">{{ standing.matches_lost }}</td>
-                                                <td class="text-center">
-                                                    {{ standing.sets_won }}-{{ standing.sets_lost }}
-                                                </td>
-                                                <td class="text-center tiebreaker-stat hidden">
-                                                    {{ standing.points_won }}-{{ standing.points_lost }}
-                                                </td>
+                                
+                                <!-- Add overflow container to prevent table overflow -->
+                                <div class="overflow-x-auto">
+                                    <table class="group-standings w-full">
+                                        <thead>
+                                            <tr>
+                                                <th>Team</th>
+                                                <th class="text-center">W</th>
+                                                <th class="text-center">L</th>
+                                                <th class="text-center">Sets</th>
+                                                <th class="text-center tiebreaker-stat hidden">H2H</th>
+                                                <th class="text-center tiebreaker-stat hidden">Points</th>
                                             </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {% for standing in group_data.standings|sort(attribute='position') %}
+                                                <tr class="{% if standing.position <= selected_category.teams_advancing_per_group %}advancing{% endif %}">
+                                                    <td>
+                                                        {% if selected_category.is_doubles() %}
+                                                            {% if standing.team %}
+                                                                <div class="flex items-center">
+                                                                    <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                                                        {% if standing.team.player1.profile_image %}
+                                                                            <img src="{{ standing.team.player1.profile_image }}" 
+                                                                                class="w-6 h-6 rounded-full object-cover" 
+                                                                                alt="{{ standing.team.player1.full_name }}">
+                                                                        {% else %}
+                                                                            <span class="text-blue-600 text-xs font-bold">{{ standing.team.player1.full_name[:1] }}</span>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                    {{ standing.team.player1.full_name.split()[-1] }}/{{ standing.team.player2.full_name.split()[-1] }}
+                                                                    <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position if standing.position != 999 else '-' }}</span>
+                                                                </div>
+                                                            {% else %}
+                                                                TBD
+                                                            {% endif %}
+                                                        {% else %}
+                                                            {% if standing.player %}
+                                                                <div class="flex items-center">
+                                                                    <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                                                        {% if standing.player.profile_image %}
+                                                                            <img src="{{ standing.player.profile_image }}" 
+                                                                                class="w-6 h-6 rounded-full object-cover" 
+                                                                                alt="{{ standing.player.full_name }}">
+                                                                        {% else %}
+                                                                            <span class="text-blue-600 text-xs font-bold">{{ standing.player.full_name[:1] }}</span>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                    {{ standing.player.full_name }}
+                                                                    <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position if standing.position != 999 else '-' }}</span>
+                                                                </div>
+                                                            {% else %}
+                                                                TBD
+                                                            {% endif %}
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-center">{{ standing.matches_won }}</td>
+                                                    <td class="text-center">{{ standing.matches_lost }}</td>
+                                                    <td class="text-center">
+                                                        {{ standing.sets_won }}-{{ standing.sets_lost }}
+                                                    </td>
+                                                    <td class="text-center tiebreaker-stat hidden">
+                                                        {% for key, value in h2h_records.items() if (standing.player_id and key[1] == standing.player_id) or (standing.team_id and key[1] == standing.team_id) %}
+                                                            {{ value.h2h_wins }}
+                                                        {% else %}
+                                                            -
+                                                        {% endfor %}
+                                                    </td>
+                                                    <td class="text-center tiebreaker-stat hidden">
+                                                        {{ standing.points_won }}-{{ standing.points_lost }}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
                                 
                                 <!-- Group matches -->
                                 <div class="p-3">
@@ -613,6 +626,7 @@
                     </div>
                 </div>
             </div>
+    
             
             <div class="tab-content" id="knockout-stage">
                 <!-- Knockout Stage Display -->

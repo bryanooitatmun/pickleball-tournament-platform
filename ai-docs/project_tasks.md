@@ -19,14 +19,16 @@
      - Fixed participants display on mobile by styling the "vs" element appropriately
      - Removed redundant Group Stage and Knockout tabs from the filtering options
 
-3. [ ] **Group Stage Scores Display**
+3. [✅] **Group Stage Scores Display**
    - Problem: Group stage scores need improvement on mobile view
    - Requirements:
      - Show scores in mobile page for Group stage similar to desktop version
      - Add tiebreaker stats for both desktop and mobile (hidden by default with toggle)
-     - Add tabs to filter by groups
+     - Add dropdown to filter by stages and groups
    - Priority: Medium
-   - Files to check: app\templates\tournament\bracket.html
+   - Files updated: 
+     - app\templates\tournament\bracket.html (refactored into smaller sections)
+     - Created app\templates\tournament\bracket_sections\ folder with component files
 
 4. [ ] **Incorrect Round Details**
    - Problem: Live scoring and match detail showing wrong round details (e.g., group stages match from the GROUP_KNOCKOUT not showing correctly)

@@ -89,7 +89,7 @@ def create_venue():
             db.session.rollback()
             flash(f'Error creating venue: {e}', 'danger')
 
-    return render_template('organizer/create_venue.html', # Consider moving templates
+    return render_template('organizer/edit_tournament/create_venue.html', # Consider moving templates
                           title='Create Venue',
                           form=form)
 

@@ -649,7 +649,7 @@
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200 matchlist">
                                             {% for match in matches_by_stage.knockout[1].matches %}
-                                                {% include 'tournament/_match_row.html' %}
+                                                {% include 'tournament/result_sections/_match_row.html' %}
                                             {% endfor %}
                                         </tbody>
                                     </table>
@@ -679,7 +679,7 @@
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200 matchlist">
                                             {% for match in matches_by_stage.knockout[1.5].matches %}
-                                                {% include 'tournament/_match_row.html' %}
+                                                {% include 'tournament/result_sections/_match_row.html' %}
                                             {% endfor %}
                                         </tbody>
                                     </table>
@@ -703,7 +703,7 @@
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200 matchlist">
                                             {% for match in matches_by_stage.knockout[2].matches %}
-                                                {% include 'tournament/_match_row.html' %}
+                                                {% include 'tournament/result_sections/_match_row.html' %}
                                             {% endfor %}
                                         </tbody>
                                     </table>
@@ -740,7 +740,7 @@
                                             </thead>
                                             <tbody class="bg-white divide-y divide-gray-200 matchlist">
                                                 {% for match in round_data.matches %}
-                                                    {% include 'tournament/_match_row.html' %}
+                                                    {% include 'tournament/result_sections/_match_row.html' %}
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -768,7 +768,7 @@
                                                 </thead>
                                                 <tbody class="bg-white divide-y divide-gray-200 matchlist">
                                                     {% for match in group_matches %}
-                                                        {% include 'tournament/_match_row.html' %}
+                                                        {% include 'tournament/result_sections/_match_row.html' %}
                                                     {% endfor %}
                                                 </tbody>
                                             </table>
