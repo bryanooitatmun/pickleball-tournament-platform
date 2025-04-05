@@ -1783,10 +1783,11 @@
         const tiebreakerToggles = document.querySelectorAll('.tiebreaker-toggle');
 
         // Initialize the bracket visualization once the DOM is fully loaded
+        {% if  (bracket_data and bracket_data.knockout_rounds) %}
         if (document.getElementById('tournament-bracket')) {
             const bracketViz = new BracketVisualization('tournament-bracket');
         }
-        
+        {% endif %}
         tiebreakerToggles.forEach(toggle => {
             toggle.addEventListener('click', function() {
                 // Get the parent group box
