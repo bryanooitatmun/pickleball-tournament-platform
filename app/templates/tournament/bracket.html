@@ -405,10 +405,12 @@
         <h1 class="text-xl font-semibold">{{format.value}}</h1>
         
         <!-- Stage/Group Filter Dropdown -->
+        
+        {% if has_group_stage %}
         <div class="w-full lg:max-w-xs">
-            <label for="stage-filter" class="block text-sm font-medium text-gray-700 mb-1">Filter by Stage</label>
+            <label for="stage-filter" class="block text-sm font-medium text-gray-700 mb-1">Filter by Group</label>
             <select id="stage-filter" class="p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                <option value="all">All Stages</option>
+                <option value="all">All Groups</option>
                 {% if bracket_data.groups %}
                     <optgroup label="Group Stage">
                         {% for group_data in bracket_data.groups %}
@@ -416,33 +418,28 @@
                         {% endfor %}
                     </optgroup>
                 {% endif %}
-                {% if bracket_data.knockout_rounds %}
-                    <optgroup label="Knockout Stage">
-                        {% for round_num in bracket_data.knockout_rounds|sort(reverse=true) %}
-                            {% if round_num == 1 %}
-                                {% set round_name = 'Final' %}
-                            {% elif round_num == 1.5 %}
-                                {% set round_name = '3rd Place' %}
-                            {% elif round_num == 2 %}
-                                {% set round_name = 'Semifinals' %}
-                            {% elif round_num == 3 %}
-                                {% set round_name = 'Quarterfinals' %}
-                            {% elif round_num == 4 %}
-                                {% set round_name = 'Round of 16' %}
-                            {% elif round_num == 5 %}
-                                {% set round_name = 'Round of 32' %}
-                            {% elif round_num == 6 %}
-                                {% set round_name = 'Round of 64' %}
-                            {% else %}
-                                {% set round_name = 'Round ' ~ round_num %}
-                            {% endif %}
-                            <option value="round-{{ round_num }}">{{ round_name }}</option>
-                        {% endfor %}
-                    </optgroup>
-                {% endif %}
             </select>
         </div>
+        {% endif %}
     </div>
+    
+        <!-- Message for when no brackets are generated at all -->
+    {% if not bracket_data or (not bracket_data.groups and not bracket_data.knockout_rounds) %}
+        <div class="rounded-md bg-blue-50 p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3 flex-1 md:flex md:justify-between">
+                    <p class="text-sm text-blue-700">
+                        Brackets have not been generated for this category yet. Please check back later.
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
     
     {% if has_group_stage %}
         <!-- For Group + Knockout format - DESKTOP VIEW -->
@@ -629,6 +626,24 @@
     
             
             <div class="tab-content" id="knockout-stage">
+                <!-- Message for when group stage exists but knockout doesn't -->
+                {% if bracket_data.groups and not bracket_data.knockout_rounds %}
+                    <div class="rounded-md bg-yellow-50 p-4 my-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-yellow-800">Group stage is incomplete</h3>
+                                <div class="mt-2 text-sm text-yellow-700">
+                                    <p>The knockout stage is not available yet. Check back later for the final bracket.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
                 <!-- Knockout Stage Display -->
                 <div id="tournament-bracket" class="bracket-container">
                     {% for round_num in bracket_data.knockout_rounds|sort(reverse=true) %}
@@ -1109,6 +1124,24 @@
                 
                 <!-- Mobile Knockout Stage Tab Content -->
                 <div class="tab-content" id="mobile-knockout-stage">
+                    <!-- Mobile message for when group stage exists but knockout doesn't -->
+                    {% if bracket_data.groups and not bracket_data.knockout_rounds %}
+                        <div class="rounded-md bg-yellow-50 p-4 my-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-yellow-800">Group stage is incomplete</h3>
+                                    <div class="mt-2 text-sm text-yellow-700">
+                                        <p>The knockout stage is not available yet. Check back later for the final bracket.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
                     <!-- Mobile Round Navigation -->
                     <div class="mobile-rounds-nav">
                         {% set round_names = {
