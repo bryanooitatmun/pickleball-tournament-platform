@@ -30,10 +30,13 @@
      - app\templates\tournament\bracket.html (refactored into smaller sections)
      - Created app\templates\tournament\bracket_sections\ folder with component files
 
-4. [ ] **Incorrect Round Details**
+4. [✅] **Incorrect Round Details**
    - Problem: Live scoring and match detail showing wrong round details (e.g., group stages match from the GROUP_KNOCKOUT not showing correctly)
    - Priority: High
-   - Files to check: Match model, (app\templates\tournament\live_scoring.html, app\templates\tournament\match_detail.html)
+   - Files updated: 
+     - app\models\match_models.py (enhanced round_name property for group stage matches)
+     - app\templates\tournament\live_scoring.html (updated to use match.round_name)
+     - app\templates\tournament\match_detail.html (updated to use match.round_name in all places)
 
 5. [ ] **Tournament/Category Editing Issue**
    - Problem: Potential bug in edit tournament/category/prizes functionality

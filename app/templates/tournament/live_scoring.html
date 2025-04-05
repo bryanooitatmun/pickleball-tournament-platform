@@ -31,22 +31,7 @@
                     <div class="p-4">
                         <div class="flex justify-between items-center mb-3">
                             <div class="text-sm text-gray-500">
-                                {{ match.category.category_type.value }} • 
-                                {% if match.round == 1 %}
-                                    Final
-                                {% elif match.round == 1.5 %}
-                                    3rd Place
-                                {% elif match.round == 2 %}
-                                    Semifinal
-                                {% elif match.round == 3 %}
-                                    Quarterfinal
-                                {% elif match.round == 4 %}
-                                    Round of 16
-                                {% elif match.round == 5 %}
-                                    Round of 32
-                                {% else %}
-                                    Round {{ match.round }}
-                                {% endif %}
+                                {{ match.category.category_type.value }} • {{ match.round_name }}
                             </div>
                             <div class="text-sm text-gray-500">
                                 {% if match.court %}Court {{ match.court }}{% endif %}

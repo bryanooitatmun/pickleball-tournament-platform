@@ -155,7 +155,11 @@ class Match(db.Model):
         """Get human-readable round name based on round number"""
         if self.stage == MatchStage.GROUP:
             group_name = self.group.name if self.group else ''
-            return f"Group {group_name} Round"
+            # Include round number for group stage if available
+            if self.round:
+                return f"Group {group_name} Round {self.round}"
+            else:
+                return f"Group {group_name}"
 
         # Ensure round is not None
         if self.round is None:

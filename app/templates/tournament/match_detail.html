@@ -88,21 +88,10 @@
                     <div class="flex items-center">
                         {% if not match.completed %}
                         <span class="live-indicator"></span>
-                        <h1 class="text-xl font-bold">LIVE:
+                        <h1 class="text-xl font-bold">LIVE: {{ match.round_name }}
                         {% else %}
-                        <h1 class="text-xl font-bold">
+                        <h1 class="text-xl font-bold">{{ match.round_name }}
                         {% endif %}
-                            {% if match.round == 1 %}
-                                Final
-                            {% elif match.round == 1.5 %}
-                                Third Place Match
-                            {% elif match.round == 2 %}
-                                Semifinal
-                            {% elif match.round == 3 %}
-                                Quarterfinal
-                            {% else %}
-                                Round of {{ 2 ** match.round }}
-                            {% endif %}
                         </h1>
                     </div>
                     <div class="text-right flex items-center">
@@ -378,17 +367,7 @@
                                 <div>
                                     <dt class="text-sm font-medium text-gray-500">Round</dt>
                                     <dd class="mt-1 text-sm text-gray-900">
-                                        {% if match.round == 1 %}
-                                            Final
-                                        {% elif match.round == 1.5 %}
-                                            Third Place Match
-                                        {% elif match.round == 2 %}
-                                            Semifinal
-                                        {% elif match.round == 3 %}
-                                            Quarterfinal
-                                        {% else %}
-                                            Round of {{ 2 ** match.round }}
-                                        {% endif %}
+                                        {{ match.round_name }}
                                     </dd>
                                 </div>
                                 <div>
