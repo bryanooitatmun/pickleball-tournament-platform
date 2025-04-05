@@ -194,14 +194,14 @@
                     <div class="mt-1 flex items-center">
                         <div class="w-24 h-24 rounded-full overflow-hidden bg-gray-100 mr-4">
                             {% if profile.profile_image %}
-                                <img src="{{ url_for('static', filename=profile.profile_image) }}" alt="Current Profile Image" class="w-full h-full object-cover">
+                                <img src="{{ url_for('static', filename=profile.profile_image) }}" alt="Current Profile Image" class="w-full h-full object-cover profile-image">
                             {% else %}
                                 <div class="w-full h-full flex items-center justify-center">
                                     <span class="text-gray-400 text-lg">No Image</span>
                                 </div>
                             {% endif %}
                         </div>
-                        {{ form.profile_image(class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100") }}
+                        {{ form.profile_image(class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100", accept="image/jpeg,image/png,image/jpg") }}
                         {% for error in form.profile_image.errors %}
                             <span class="text-red-600 text-xs">{{ error }}</span>
                         {% endfor %}
@@ -214,14 +214,14 @@
                     <div class="mt-1 flex items-center">
                         <div class="w-24 h-24 rounded overflow-hidden bg-gray-100 mr-4">
                             {% if profile.action_image %}
-                                <img src="{{ url_for('static', filename=profile.action_image) }}" alt="Current Action Image" class="w-full h-full object-cover">
+                                <img src="{{ url_for('static', filename=profile.action_image) }}" alt="Current Action Image" class="w-full h-full object-cover venue-image">
                             {% else %}
                                 <div class="w-full h-full flex items-center justify-center">
                                     <span class="text-gray-400 text-lg">No Image</span>
                                 </div>
                             {% endif %}
                         </div>
-                        {{ form.action_image(class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100") }}
+                        {{ form.action_image(class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100", accept="image/jpeg,image/png,image/jpg") }}
                         {% for error in form.action_image.errors %}
                             <span class="text-red-600 text-xs">{{ error }}</span>
                         {% endfor %}
@@ -234,14 +234,14 @@
                     <div class="mt-1 flex items-center">
                         <div class="w-24 h-12 rounded overflow-hidden bg-gray-100 mr-4">
                             {% if profile.banner_image %}
-                                <img src="{{ url_for('static', filename=profile.banner_image) }}" alt="Current Banner Image" class="w-full h-full object-cover">
+                                <img src="{{ url_for('static', filename=profile.banner_image) }}" alt="Current Banner Image" class="w-full h-full object-cover banner-image">
                             {% else %}
                                 <div class="w-full h-full flex items-center justify-center">
                                     <span class="text-gray-400 text-xs">No Image</span>
                                 </div>
                             {% endif %}
                         </div>
-                        {{ form.banner_image(class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100") }}
+                        {{ form.banner_image(class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100", accept="image/jpeg,image/png,image/jpg") }}
                         {% for error in form.banner_image.errors %}
                             <span class="text-red-600 text-xs">{{ error }}</span>
                         {% endfor %}

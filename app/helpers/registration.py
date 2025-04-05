@@ -7,7 +7,7 @@ from PIL import Image
 import io
 import os
 
-def resize_image(image_data, max_size=1024, quality=85):
+def resize_image(image_data, max_size=1024, quality=85, subfolder=None):
     """
     Resize an image to a maximum width or height while maintaining aspect ratio
     
@@ -15,6 +15,7 @@ def resize_image(image_data, max_size=1024, quality=85):
         image_data: The binary image data
         max_size: Maximum width or height in pixels
         quality: JPEG quality (1-100)
+        subfolder: Type of image (profile_pics, banner_pics, etc.) to apply specific handling
         
     Returns:
         Binary data of the resized image
@@ -26,7 +27,34 @@ def resize_image(image_data, max_size=1024, quality=85):
         # Convert to RGB if it's in RGBA mode (for PNG with transparency)
         if img.mode == 'RGBA':
             img = img.convert('RGB')
+        
+        # Set desired aspect ratios and handling based on image type
+        if subfolder == 'profile_pics':
+            # For profile pictures, crop to square if needed
+            if img.width != img.height:
+                # Take the smaller dimension
+                min_dimension = min(img.width, img.height)
+                # Calculate crop box to create a centered square
+                left = (img.width - min_dimension) // 2
+                top = (img.height - min_dimension) // 2
+                right = left + min_dimension
+                bottom = top + min_dimension
+                # Crop the image to a square
+                img = img.crop((left, top, right, bottom))
+        elif subfolder == 'banner_pics':
+            # For banners, ensure wide format (3:1 ratio)
+            # If it's not wide enough, add padding
+            target_ratio = 3.0  # 3:1 aspect ratio
+            current_ratio = img.width / img.height
             
+            if current_ratio < target_ratio:
+                # Image is not wide enough, add horizontal padding
+                new_width = int(img.height * target_ratio)
+                new_img = Image.new('RGB', (new_width, img.height), (255, 255, 255))  # White background
+                paste_x = (new_width - img.width) // 2  # Center horizontally
+                new_img.paste(img, (paste_x, 0))
+                img = new_img
+        
         # Check if resize is needed
         if img.width > max_size or img.height > max_size:
             # Calculate new dimensions maintaining aspect ratio
@@ -90,14 +118,15 @@ def save_payment_proof(proof_file, registration_id):
 
 def save_picture(picture, subfolder='tournament_pics', additional_text=''):
     """
-    Save and resize payment proof image
+    Save and resize image with specific handling based on image type
     
     Args:
-        proof_file: The uploaded file
-        registration_id: The registration ID
+        picture: The uploaded file (from form)
+        subfolder: The subfolder to save to (e.g. profile_pics, tournament_logos)
+        additional_text: Additional text to prepend to filename (e.g. user_id)
         
     Returns:
-        The path to the saved file
+        The relative path to the saved file for database storage
     """
     try:
         if isinstance(picture, str):
@@ -116,9 +145,18 @@ def save_picture(picture, subfolder='tournament_pics', additional_text=''):
             Image.open(io.BytesIO(file_data))
         except Exception:
             raise ValueError("Uploaded file is not a valid image")
-            
-        # Resize image
-        resized_data = resize_image(file_data)
+        
+        # Set max size based on image type
+        max_size = 1024  # Default max size
+        if subfolder in ['tournament_logos', 'profile_pics', 'sponsor_logos']:
+            max_size = 800  # Square images for logos/profiles
+        elif subfolder in ['tournament_banners', 'banner_pics']:
+            max_size = 1500  # Larger for banners
+        elif subfolder in ['venue_images']:
+            max_size = 1200  # Medium for venue images
+        
+        # Resize image with appropriate handling based on subfolder
+        resized_data = resize_image(file_data, max_size=max_size, subfolder=subfolder)
         
         # Create secure filename
         original_filename = secure_filename(picture.filename)
@@ -136,7 +174,7 @@ def save_picture(picture, subfolder='tournament_pics', additional_text=''):
         # Return relative path for database
         return os.path.join('uploads', subfolder, filename)
     except Exception as e:
-        current_app.logger.error(f"Error saving payment proof: {e}")
+        current_app.logger.error(f"Error saving image: {e}")
         raise ValueError(str(e))
 
 

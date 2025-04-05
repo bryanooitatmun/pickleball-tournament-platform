@@ -234,8 +234,188 @@
                     this.parentElement.style.display = 'none';
                 });
             });
+            
+            // Image upload validation
+            const imageInputs = document.querySelectorAll('input[type="file"][accept*="image"]');
+            
+            imageInputs.forEach(input => {
+                // Add change event listener to all image inputs
+                input.addEventListener('change', validateImageUpload);
+                
+                // Find the form this input belongs to
+                const form = input.closest('form');
+                if (form) {
+                    // Add a submit event listener to validate all images before submission
+                    form.addEventListener('submit', function(event) {
+                        const fileInputs = form.querySelectorAll('input[type="file"][accept*="image"]');
+                        let isValid = true;
+                        
+                        fileInputs.forEach(fileInput => {
+                            // Only validate if a file is selected
+                            if (fileInput.files && fileInput.files.length > 0) {
+                                if (!validateImageUpload({ target: fileInput, preventDefault: () => { isValid = false; } })) {
+                                    isValid = false;
+                                }
+                            }
+                        });
+                        
+                        if (!isValid) {
+                            event.preventDefault();
+                        }
+                    });
+                }
+            });
+            
+            function validateImageUpload(event) {
+                const input = event.target;
+                const file = input.files[0];
+                
+                // Reset previous validation
+                removeValidationMessage(input);
+                
+                // If no file selected, skip validation
+                if (!file) return true;
+                
+                // Validate file type
+                const acceptedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+                if (!acceptedTypes.includes(file.type)) {
+                    showValidationMessage(input, 'Please select a valid image file (JPEG, PNG).');
+                    input.value = ''; // Clear the input
+                    if (event.preventDefault) event.preventDefault();
+                    return false;
+                }
+                
+                // Validate file size (max 5MB)
+                const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+                if (file.size > maxSize) {
+                    showValidationMessage(input, 'Image file is too large. Maximum size is 5MB.');
+                    input.value = ''; // Clear the input
+                    if (event.preventDefault) event.preventDefault();
+                    return false;
+                }
+                
+                // Create image object to check dimensions
+                const img = new Image();
+                const objectUrl = URL.createObjectURL(file);
+                
+                img.onload = function() {
+                    URL.revokeObjectURL(objectUrl);
+                    
+                    // Check dimensions based on input id or class
+                    if (input.id.includes('profile') || input.name.includes('profile')) {
+                        // Profile images should be square or close to it
+                        const aspectRatio = img.width / img.height;
+                        if (aspectRatio < 0.75 || aspectRatio > 1.25) {
+                            showValidationMessage(input, 'Profile image should be approximately square (1:1 ratio).');
+                            input.value = ''; // Clear the input
+                            return false;
+                        }
+                    } else if (input.id.includes('banner') || input.name.includes('banner')) {
+                        // Banner images should be wider than tall
+                        const aspectRatio = img.width / img.height;
+                        if (aspectRatio < 2) {
+                            showValidationMessage(input, 'Banner image should be wide format (at least 2:1 ratio).');
+                            input.value = ''; // Clear the input
+                            return false;
+                        }
+                    }
+                    
+                    // Image preview (if preview element exists)
+                    const previewContainer = input.parentElement.querySelector('.image-preview');
+                    if (previewContainer) {
+                        previewContainer.innerHTML = '';
+                        const previewImg = document.createElement('img');
+                        previewImg.src = objectUrl;
+                        previewImg.className = 'max-w-full max-h-48 object-contain mt-2';
+                        previewContainer.appendChild(previewImg);
+                    }
+                };
+                
+                img.src = objectUrl;
+                return true;
+            }
+            
+            function showValidationMessage(input, message) {
+                // Create validation message element
+                const validationMessage = document.createElement('div');
+                validationMessage.className = 'text-red-600 text-sm mt-1 image-validation-message';
+                validationMessage.textContent = message;
+                
+                // Insert after the input or its parent label/div
+                const parent = input.parentElement;
+                parent.insertBefore(validationMessage, input.nextSibling);
+                
+                // Optionally, show an alert for immediate attention
+                alert(message);
+            }
+            
+            function removeValidationMessage(input) {
+                // Find and remove any existing validation message
+                const parent = input.parentElement;
+                const validationMessages = parent.querySelectorAll('.image-validation-message');
+                validationMessages.forEach(message => message.remove());
+            }
         });
     </script>
+    
+    <!-- CSS for image display -->
+    <style>
+        /* Maintain aspect ratio for all images */
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        /* Specific styles for different image types */
+        .profile-image {
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+        }
+        
+        .banner-image {
+            aspect-ratio: 3 / 1;
+            object-fit: cover;
+            width: 100%;
+        }
+        
+        .tournament-logo {
+            aspect-ratio: 1 / 1;
+            object-fit: contain;
+        }
+        
+        .sponsor-logo {
+            aspect-ratio: 1 / 1;
+            object-fit: contain;
+            max-height: 100px;
+        }
+        
+        .venue-image {
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+        }
+        
+        .door-gifts-image {
+            aspect-ratio: 4 / 3;
+            object-fit: contain;
+        }
+        
+        .payment-qr {
+            aspect-ratio: 1 / 1;
+            object-fit: contain;
+            max-width: 200px;
+        }
+        
+        /* File input styling */
+        input[type="file"][accept*="image"] {
+            position: relative;
+        }
+        
+        .image-validation-message {
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+            color: #dc2626;
+        }
+    </style>
     {% block scripts %}{% endblock %}
 </body>
 </html>
