@@ -1,0 +1,10 @@
+<!-- For Group + Knockout format - DESKTOP VIEW -->
+        <div id="desktop-tournament-bracket" class="desktop-bracket-container tab-container">
+            <div class="tabs">
+                <div class="tab active" data-tab="group-stage">Group Stage</div>
+                <div class="tab" data-tab="knockout-stage">Knockout Stage</div>
+            </div>
+            
+            {% include 'tournament/bracket_sections/_group_stage_desktop.html' %}
+            {% include 'tournament/bracket_sections/_knockout_stage_desktop.html' %}
+        </div>

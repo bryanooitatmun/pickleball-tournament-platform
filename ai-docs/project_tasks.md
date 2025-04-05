@@ -38,11 +38,12 @@
      - app\templates\tournament\live_scoring.html (updated to use match.round_name)
      - app\templates\tournament\match_detail.html (updated to use match.round_name in all places)
 
-5. [ ] **Tournament/Category Editing Issue**
+5. [✅] **Tournament/Category Editing Issue**
    - Problem: Potential bug in edit tournament/category/prizes functionality
    - Details: An input exists that wipes out all category details
    - Priority: High
-   - Files to check: (app\templates\organizer\edit_categories.html, app\templates\organizer\edit_prizes.html, app\templates\organizer\edit_tournament.html) and routes
+   - Files updated:
+     - app\organizer\category_routes.py (fixed category update logic to prevent data loss)
 
 6. [ ] **Image Aspect Ratio Problem**
    - Problem: Images throughout platform don't maintain aspect ratio
@@ -53,7 +54,15 @@
 
 ## Feature Implementations
 
-1. [ ] **Admin Account Management**
+1. [✅] **User Interface Improvements**
+   - Problem: Category and prize editing interfaces were difficult to use with many categories/prizes
+   - Solution: Redesigned interfaces with collapsible sections, quick navigation, search, and mobile optimization
+   - Priority: Medium
+   - Files updated:
+     - app\templates\organizer\edit_categories.html (complete redesign with improved navigation)
+     - app\templates\organizer\edit_prizes.html (complete redesign with improved navigation and prize type management)
+
+2. [ ] **Admin Account Management**
    - Feature: Admin should be able to create accounts, create tournaments, and assign referee and organizer roles to tournaments
    - Priority: High
    - Files to check: Admin routes, user management logic, tournament assignment functionality

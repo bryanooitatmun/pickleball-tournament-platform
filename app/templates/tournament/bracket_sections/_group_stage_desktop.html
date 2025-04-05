@@ -1,0 +1,174 @@
+<!-- Group Stage Tab Content -->
+            <div class="tab-content active" id="group-stage">
+                <!-- Group Stage Display -->
+                <div class="group-stage mt-4">
+                    <h2 class="text-xl font-semibold mb-4">Group Stage Results</h2>
+                    
+                    <!-- Group containers -->
+                    <div class="group-container">
+                        {% for group_data in bracket_data.groups %}
+                            <div class="group-box" data-group="group-{{ group_data.group.name }}">
+                                <div class="group-header">Group {{ group_data.group.name }}</div>
+                                
+                                <!-- Group standings -->
+                                <!-- Toggle for tiebreaker stats -->
+                                <div class="flex justify-end p-2">
+                                    <button type="button" class="tiebreaker-toggle text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                                        <span class="show-text">Show Tiebreaker Stats</span>
+                                        <span class="hide-text hidden">Hide Tiebreaker Stats</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                
+                                <!-- Add overflow container to prevent table overflow -->
+                                <div class="overflow-x-auto">
+                                    <table class="group-standings w-full">
+                                        <thead>
+                                            <tr>
+                                                <th>Team</th>
+                                                <th class="text-center">W</th>
+                                                <th class="text-center">L</th>
+                                                <th class="text-center">Sets</th>
+                                                <th class="text-center tiebreaker-stat hidden">H2H</th>
+                                                <th class="text-center tiebreaker-stat hidden">Points</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for standing in group_data.standings|sort(attribute='position') %}
+                                                <tr class="{% if standing.position <= selected_category.teams_advancing_per_group %}advancing{% endif %}">
+                                                    <td>
+                                                        {% if selected_category.is_doubles() %}
+                                                            {% if standing.team %}
+                                                                <div class="flex items-center">
+                                                                    <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                                                        {% if standing.team.player1.profile_image %}
+                                                                            <img src="{{ standing.team.player1.profile_image }}" 
+                                                                                class="w-6 h-6 rounded-full object-cover" 
+                                                                                alt="{{ standing.team.player1.full_name }}">
+                                                                        {% else %}
+                                                                            <span class="text-blue-600 text-xs font-bold">{{ standing.team.player1.full_name[:1] }}</span>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                    {{ standing.team.player1.full_name.split()[-1] }}/{{ standing.team.player2.full_name.split()[-1] }}
+                                                                    <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position if standing.position != 999 else '-' }}</span>
+                                                                </div>
+                                                            {% else %}
+                                                                TBD
+                                                            {% endif %}
+                                                        {% else %}
+                                                            {% if standing.player %}
+                                                                <div class="flex items-center">
+                                                                    <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                                                        {% if standing.player.profile_image %}
+                                                                            <img src="{{ standing.player.profile_image }}" 
+                                                                                class="w-6 h-6 rounded-full object-cover" 
+                                                                                alt="{{ standing.player.full_name }}">
+                                                                        {% else %}
+                                                                            <span class="text-blue-600 text-xs font-bold">{{ standing.player.full_name[:1] }}</span>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                    {{ standing.player.full_name }}
+                                                                    <span class="ml-2 position-code">{{ group_data.group.name }}{{ standing.position if standing.position != 999 else '-' }}</span>
+                                                                </div>
+                                                            {% else %}
+                                                                TBD
+                                                            {% endif %}
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-center">{{ standing.matches_won }}</td>
+                                                    <td class="text-center">{{ standing.matches_lost }}</td>
+                                                    <td class="text-center">
+                                                        {{ standing.sets_won }}-{{ standing.sets_lost }}
+                                                    </td>
+                                                    <td class="text-center tiebreaker-stat hidden">
+                                                        {% for key, value in h2h_records.items() if (standing.player_id and key[1] == standing.player_id) or (standing.team_id and key[1] == standing.team_id) %}
+                                                            {{ value.h2h_wins }}
+                                                        {% else %}
+                                                            -
+                                                        {% endfor %}
+                                                    </td>
+                                                    <td class="text-center tiebreaker-stat hidden">
+                                                        {{ standing.points_won }}-{{ standing.points_lost }}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Group matches -->
+                                <div class="p-3">
+                                    <h4 class="text-sm font-medium mb-2">Match Results</h4>
+                                    {% for match in group_data.matches %}
+                                        <div class="text-sm mb-2 pb-2 {% if not loop.last %}border-b border-gray-100{% endif %}">
+                                            <div class="flex justify-between mb-1">
+                                                <div>
+                                                    {% if selected_category.is_doubles() %}
+                                                        {% if match.team1 %}
+                                                            {{ match.team1.player1.full_name.split()[-1] }}/{{ match.team1.player2.full_name.split()[-1] }}
+                                                            {% if match.player1_code %}<span class="position-code">{{ match.player1_code }}</span>{% endif %}
+                                                        {% else %}
+                                                            {% if match.player1_code %}<span class="position-code">{{ match.player1_code }}</span>{% else %}TBD{% endif %}
+                                                        {% endif %}
+                                                    {% else %}
+                                                        {% if match.player1 %}
+                                                            {{ match.player1.full_name }}
+                                                            {% if match.player1_code %}<span class="position-code">{{ match.player1_code }}</span>{% endif %}
+                                                        {% else %}
+                                                            {% if match.player1_code %}<span class="position-code">{{ match.player1_code }}</span>{% else %}TBD{% endif %}
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </div>
+                                                
+                                                <div>
+                                                    {% if match.completed and match.id in scores %}
+                                                        {% for score in scores[match.id] %}
+                                                            <span class="{% if score.player1_score > score.player2_score %}font-medium text-green-600{% endif %}">
+                                                                {{ score.player1_score }}
+                                                            </span>
+                                                            {% if not loop.last %} - {% endif %}
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex justify-between">
+                                                <div>
+                                                    {% if selected_category.is_doubles() %}
+                                                        {% if match.team2 %}
+                                                            {{ match.team2.player1.full_name.split()[-1] }}/{{ match.team2.player2.full_name.split()[-1] }}
+                                                            {% if match.player2_code %}<span class="position-code">{{ match.player2_code }}</span>{% endif %}
+                                                        {% else %}
+                                                            {% if match.player2_code %}<span class="position-code">{{ match.player2_code }}</span>{% else %}TBD{% endif %}
+                                                        {% endif %}
+                                                    {% else %}
+                                                        {% if match.player2 %}
+                                                            {{ match.player2.full_name }}
+                                                            {% if match.player2_code %}<span class="position-code">{{ match.player2_code }}</span>{% endif %}
+                                                        {% else %}
+                                                            {% if match.player2_code %}<span class="position-code">{{ match.player2_code }}</span>{% else %}TBD{% endif %}
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </div>
+                                                
+                                                <div>
+                                                    {% if match.completed and match.id in scores %}
+                                                        {% for score in scores[match.id] %}
+                                                            <span class="{% if score.player2_score > score.player1_score %}font-medium text-green-600{% endif %}">
+                                                                {{ score.player2_score }}
+                                                            </span>
+                                                            {% if not loop.last %} - {% endif %}
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>

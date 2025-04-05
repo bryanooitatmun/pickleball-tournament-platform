@@ -1,0 +1,13 @@
+<!-- MOBILE VIEW for Group + Knockout format -->
+        <div id="mobile-tournament-bracket" class="mobile-bracket-container">
+            <!-- Mobile tabs for Group Stage / Knockout -->
+            <div class="tab-container mb-4">
+                <div class="tabs">
+                    <div class="tab active" data-tab="mobile-group-stage">Group Stage</div>
+                    <div class="tab" data-tab="mobile-knockout-stage">Knockout Stage</div>
+                </div>
+                
+                {% include 'tournament/bracket_sections/_group_stage_mobile.html' %}
+                {% include 'tournament/bracket_sections/_knockout_stage_mobile.html' %}
+            </div>
+        </div>

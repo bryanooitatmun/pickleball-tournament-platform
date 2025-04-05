@@ -8,11 +8,14 @@
         display: flex;
         margin-bottom: 2rem;
         border-bottom: 1px solid #e5e7eb;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
     
     .edit-tab {
         padding: 0.75rem 1.5rem;
         font-weight: 500;
+        white-space: nowrap;
         border-bottom: 2px solid transparent;
         margin-right: 1rem;
     }
@@ -27,14 +30,21 @@
         border-radius: 0.5rem;
         margin-bottom: 1.5rem;
         overflow: hidden;
+        transition: box-shadow 0.2s;
+    }
+    
+    .category-card:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
     
     .category-header {
-        background-color: #e5e7eb;
         padding: 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .category-header:hover {
+        background-color: #e5e7eb;
     }
     
     .category-body {
@@ -45,10 +55,17 @@
         color: #6b7280;
         cursor: pointer;
         transition: color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 9999px;
     }
     
     .category-action:hover {
         color: #1f2937;
+        background-color: #e5e7eb;
     }
     
     .category-action.text-red-500:hover {
@@ -60,12 +77,43 @@
         border-radius: 0.5rem;
         padding: 1.5rem;
         margin-top: 2rem;
+        transition: border-color 0.2s;
+    }
+    
+    .new-category-card:hover {
+        border-color: #3b82f6;
     }
     
     .hint-text {
         font-size: 0.875rem;
         color: #6b7280;
         margin-top: 0.25rem;
+    }
+    
+    .sticky-sidebar {
+        position: sticky;
+        top: 1rem;
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+    }
+    
+    .search-highlight {
+        background-color: #fef3c7;
+    }
+    
+    @media (max-width: 768px) {
+        .edit-tabs {
+            padding-bottom: 0.5rem;
+        }
+        
+        .category-body {
+            padding: 1rem;
+        }
+    }
+    
+    /* Transition for expand/collapse */
+    .rotate-180 {
+        transform: rotate(180deg);
     }
 </style>
 {% endblock %}
@@ -103,236 +151,305 @@
         </a>
     </div>
     
-    <form method="POST" class="space-y-6">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Sidebar (on larger screens) -->
+        <div class="lg:col-span-1 hidden lg:block">
+            <div class="sticky-sidebar bg-white rounded-lg shadow-sm p-4">
+                <h3 class="text-lg font-medium mb-3">Quick Navigation</h3>
+                <div class="mb-4">
+                    <input type="text" id="category-search" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Search categories...">
+                </div>
+                <div class="flex space-x-2 mb-3">
+                    <button type="button" id="expand-all" class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Expand All
+                    </button>
+                    <button type="button" id="collapse-all" class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Collapse All
+                    </button>
+                </div>
+                <div class="max-h-96 overflow-y-auto">
+                    <ul class="space-y-2">
+                        {% for category in categories %}
+                        <li>
+                            <a href="#category-{{ category.id }}" class="text-blue-600 hover:text-blue-800 category-link">
+                                {{ category.name }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                        <li class="mt-4 pt-4 border-t border-gray-200">
+                            <a href="#new-categories-container" class="text-green-600 hover:text-green-800">
+                                + Add New Category
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
         
-        <!-- Existing Categories -->
-        <div>
-            <h2 class="text-xl font-semibold mb-4">Existing Categories</h2>
-            
-            {% if categories %}
-                {% for category in categories %}
-                <div class="category-card" id="category-{{ category.id }}">
-                    <div class="category-header">
-                        <h3 class="font-medium">{{ category.name }}</h3>
-                        <div class="flex items-center">
-                            <div class="category-action mr-4" onclick="toggleCategory('{{ category.id }}')">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                </svg>
+        <!-- Main content -->
+        <div class="lg:col-span-3">
+            <form method="POST" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <!-- Mobile navigation dropdown -->
+                <div class="block lg:hidden mb-4">
+                    <label for="category-jump" class="block text-sm font-medium text-gray-700 mb-1">Jump to Category</label>
+                    <select id="category-jump" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Select a category</option>
+                        {% for category in categories %}
+                        <option value="#category-{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                        <option value="#new-categories-container">+ Add New Category</option>
+                    </select>
+                </div>
+                
+                <!-- Search box (for mobile) -->
+                <div class="block lg:hidden mb-4">
+                    <label for="category-search-mobile" class="block text-sm font-medium text-gray-700 mb-1">Search Categories</label>
+                    <input type="text" id="category-search-mobile" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Type to search categories...">
+                </div>
+                
+                <!-- Mobile expand/collapse buttons -->
+                <div class="block lg:hidden mb-4 flex space-x-2">
+                    <button type="button" id="expand-all-mobile" class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Expand All
+                    </button>
+                    <button type="button" id="collapse-all-mobile" class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Collapse All
+                    </button>
+                </div>
+                
+                <!-- Existing Categories -->
+                <div>
+                    <h2 class="text-xl font-semibold mb-4">Existing Categories</h2>
+                    
+                    {% if categories %}
+                        {% for category in categories %}
+                        <div class="category-card" id="category-{{ category.id }}">
+                            <div class="category-header flex items-center justify-between p-4 bg-gray-100 hover:bg-gray-200 transition duration-150" onclick="toggleCategory('{{ category.id }}')">
+                                <div class="flex items-center">
+                                    <span class="toggle-icon mr-2 transform transition-transform duration-200" id="toggle-icon-{{ category.id }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        </svg>
+                                    </span>
+                                    <h3 class="font-medium text-gray-900">{{ category.name }}</h3>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-2">{{ category.category_type.value }}</span>
+                                    <div class="category-action text-red-500 rounded-full p-1 hover:bg-red-100" onclick="event.stopPropagation(); confirmDeleteCategory('{{ category.id }}')">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="category-action text-red-500" onclick="confirmDeleteCategory('{{ category.id }}')">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
+                            
+                            <div class="category-body hidden" id="category-body-{{ category.id }}">
+                                <input type="hidden" name="category_id" value="{{ category.id }}">
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            Category Name <span class="text-red-600">*</span>
+                                        </label>
+                                        <input type="text" name="name_{{ category.id }}" value="{{ category.name }}" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                               required>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            Category Type <span class="text-red-600">*</span>
+                                        </label>
+                                        <select name="category_type_{{ category.id }}" 
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                                required>
+                                            {% for type_value, type_name in category_types %}
+                                            <option value="{{ type_value }}" {% if category.category_type.value == type_value %}selected{% endif %}>
+                                                {{ type_name }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            Max Participants
+                                        </label>
+                                        <input type="number" name="max_participants_{{ category.id }}" value="{{ category.max_participants }}" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                               min="0">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            Registration Fee (RM)
+                                        </label>
+                                        <input type="number" name="registration_fee_{{ category.id }}" value="{{ category.registration_fee }}" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                               min="0" step="0.01">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            Points Awarded
+                                        </label>
+                                        <input type="number" name="points_awarded_{{ category.id }}" value="{{ category.points_awarded }}" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                               min="0">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            Format <span class="text-red-600">*</span>
+                                        </label>
+                                        <select name="format_{{ category.id }}" 
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                                required>
+                                            {% for format_value, format_name in tournament_formats %}
+                                            <option value="{{ format_value }}" {% if category.format.value == format_value %}selected{% endif %}>
+                                                {{ format_name }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            Display Order
+                                        </label>
+                                        <input type="number" name="display_order_{{ category.id }}" value="{{ category.display_order }}" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                               min="1">
+                                        <p class="hint-text">Lower number = higher in display order</p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            Prize Percentage (%) - Calculated automatically
+                                        </label>
+                                        <div class="text-lg font-semibold text-gray-900">{{ category.prize_percentage|round(2) }}%</div>
+                                        <p class="hint-text">Percentage of total prize pool for this category, calculated automatically</p>
+                                        <input type="hidden" name="prize_percentage_{{ category.id }}" value="{{ category.prize_percentage }}">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            Prize Money (RM) - Calculated automatically
+                                        </label>
+                                        <div class="text-lg font-semibold text-gray-900">RM{{ category.prize_money|int }}</div>
+                                        <p class="hint-text">Total cash prize for this category, calculated from individual prizes</p>
+                                        <input type="hidden" name="prize_money_{{ category.id }}" value="{{ category.prize_money }}">
+                                    </div>
+                                </div>
+                                
+                                <div class="my-6 border-t border-gray-200 pt-4">
+                                    <h4 class="font-medium mb-3 text-gray-700">Restrictions</h4>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                                Min DUPR Rating
+                                            </label>
+                                            <input type="number" name="min_dupr_rating_{{ category.id }}" value="{{ category.min_dupr_rating }}" 
+                                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                                   min="0" max="8" step="0.1">
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                                Max DUPR Rating
+                                            </label>
+                                            <input type="number" name="max_dupr_rating_{{ category.id }}" value="{{ category.max_dupr_rating }}" 
+                                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                                   min="0" max="8" step="0.1">
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                                Gender Restriction
+                                            </label>
+                                            <select name="gender_restriction_{{ category.id }}" 
+                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                                <option value="">No Restriction</option>
+                                                <option value="male" {% if category.gender_restriction == 'male' %}selected{% endif %}>Male Only</option>
+                                                <option value="female" {% if category.gender_restriction == 'female' %}selected{% endif %}>Female Only</option>
+                                                <option value="mixed" {% if category.gender_restriction == 'mixed' %}selected{% endif %}>Mixed Only</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                                Min Age
+                                            </label>
+                                            <input type="number" name="min_age_{{ category.id }}" value="{{ category.min_age }}" 
+                                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                                   min="0" max="100">
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                                Max Age
+                                            </label>
+                                            <input type="number" name="max_age_{{ category.id }}" value="{{ category.max_age }}" 
+                                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                                   min="0" max="100">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                        Description
+                                    </label>
+                                    <textarea name="description_{{ category.id }}" rows="4" 
+                                              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">{{ category.description }}</textarea>
+                                </div>
                             </div>
                         </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-gray-500 italic">No categories added yet. Add a new category below.</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Add New Category -->
+                <div id="new-categories-container">
+                    <h2 class="text-xl font-semibold mb-4">Add New Categories</h2>
+                    <div id="new-categories">
+                        <!-- New category forms will be added here -->
                     </div>
                     
-                    <div class="category-body" id="category-body-{{ category.id }}">
-                        <input type="hidden" name="category_id" value="{{ category.id }}">
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Category Name <span class="text-red-600">*</span>
-                                </label>
-                                <input type="text" name="name_{{ category.id }}" value="{{ category.name }}" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                       required>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Category Type <span class="text-red-600">*</span>
-                                </label>
-                                <select name="category_type_{{ category.id }}" 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                        required>
-                                    {% for type_value, type_name in category_types %}
-                                    <option value="{{ type_value }}" {% if category.category_type.value == type_value %}selected{% endif %}>
-                                        {{ type_name }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Max Participants
-                                </label>
-                                <input type="number" name="max_participants_{{ category.id }}" value="{{ category.max_participants }}" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                       min="0">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Registration Fee (RM)
-                                </label>
-                                <input type="number" name="registration_fee_{{ category.id }}" value="{{ category.registration_fee }}" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                       min="0" step="0.01">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Points Awarded
-                                </label>
-                                <input type="number" name="points_awarded_{{ category.id }}" value="{{ category.points_awarded }}" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                       min="0">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Format <span class="text-red-600">*</span>
-                                </label>
-                                <select name="format_{{ category.id }}" 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                        required>
-                                    {% for format_value, format_name in tournament_formats %}
-                                    <option value="{{ format_value }}" {% if category.format.value == format_value %}selected{% endif %}>
-                                        {{ format_name }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Display Order
-                                </label>
-                                <input type="number" name="display_order_{{ category.id }}" value="{{ category.display_order }}" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                       min="1">
-                                <p class="hint-text">Lower number = higher in display order</p>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Prize Percentage (%) - Calculated automatically
-                                </label>
-                                <div class="text-lg font-semibold text-gray-900">{{ category.prize_percentage|round(2) }}%</div>
-                                <p class="hint-text">Percentage of total prize pool for this category, calculated automatically</p>
-                                <input type="hidden" name="prize_percentage_{{ category.id }}" value="{{ category.prize_percentage }}">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Prize Money (RM) - Calculated automatically
-                                </label>
-                                <div class="text-lg font-semibold text-gray-900">RM{{ category.prize_money|int }}</div>
-                                <p class="hint-text">Total cash prize for this category, calculated from individual prizes</p>
-                                <input type="hidden" name="prize_money_{{ category.id }}" value="{{ category.prize_money }}">
-                            </div>
-                        </div>
-                        
-                        <h4 class="font-medium mb-3 text-gray-700">Restrictions</h4>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Min DUPR Rating
-                                </label>
-                                <input type="number" name="min_dupr_rating_{{ category.id }}" value="{{ category.min_dupr_rating }}" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                       min="0" max="8" step="0.1">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Max DUPR Rating
-                                </label>
-                                <input type="number" name="max_dupr_rating_{{ category.id }}" value="{{ category.max_dupr_rating }}" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                       min="0" max="8" step="0.1">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Gender Restriction
-                                </label>
-                                <select name="gender_restriction_{{ category.id }}" 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="">No Restriction</option>
-                                    <option value="male" {% if category.gender_restriction == 'male' %}selected{% endif %}>Male Only</option>
-                                    <option value="female" {% if category.gender_restriction == 'female' %}selected{% endif %}>Female Only</option>
-                                    <option value="mixed" {% if category.gender_restriction == 'mixed' %}selected{% endif %}>Mixed Only</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Min Age
-                                </label>
-                                <input type="number" name="min_age_{{ category.id }}" value="{{ category.min_age }}" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                       min="0" max="100">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Max Age
-                                </label>
-                                <input type="number" name="max_age_{{ category.id }}" value="{{ category.max_age }}" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                       min="0" max="100">
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Description
-                            </label>
-                            <textarea name="description_{{ category.id }}" rows="4" 
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">{{ category.description }}</textarea>
-                        </div>
+                    <button type="button" id="add-category-btn" class="mt-4 inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Add New Category
+                    </button>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="flex justify-between mt-8 pt-4 border-t border-gray-200">
+                    <a href="{{ url_for('organizer.edit_tournament', id=tournament.id) }}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Back to Details
+                    </a>
+                    
+                    <div>
+                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 relative group">
+                            <span>Save Categories</span>
+                            <span class="absolute top-0 right-0 -mt-2 -mr-2 bg-green-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                ✓
+                            </span>
+                        </button>
                     </div>
                 </div>
-                {% endfor %}
-            {% else %}
-                <p class="text-gray-500 italic">No categories added yet. Add a new category below.</p>
-            {% endif %}
+            </form>
         </div>
-        
-        <!-- Add New Category -->
-        <div id="new-categories-container">
-            <h2 class="text-xl font-semibold mb-4">Add New Categories</h2>
-            <div id="new-categories">
-                <!-- New category forms will be added here -->
-            </div>
-            
-            <button type="button" id="add-category-btn" class="mt-4 inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Add New Category
-            </button>
-        </div>
-        
-        <!-- Submit Button -->
-        <div class="flex justify-between mt-8">
-            <a href="{{ url_for('organizer.edit_tournament', id=tournament.id) }}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                </svg>
-                Back to Details
-            </a>
-            
-            <div>
-                <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                    Save Categories
-                </button>
-                {# <a href="{{ url_for('organizer.edit_prizes', id=tournament.id) }}" class="ml-2 inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200">
-                    Skip to Prizes
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                </a> #}
-            </div>
-        </div>
-    </form>
+    </div>
 </div>
 
 <!-- Delete Confirmation Modal -->
@@ -357,9 +474,54 @@
 <script>
     let newCategoryCount = 0;
     
-    // Add new category form
-    document.getElementById('add-category-btn').addEventListener('click', function() {
-        addNewCategoryForm();
+    // Initialize the page when loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Collapse all categories by default
+        document.querySelectorAll('.category-body').forEach(function(body) {
+            body.classList.add('hidden');
+        });
+        
+        // Set up event listeners
+        document.getElementById('add-category-btn').addEventListener('click', addNewCategoryForm);
+        
+        // Set up the category jump menu
+        setupCategoryJumpMenu();
+        
+        // Set up expand/collapse all buttons
+        document.getElementById('expand-all').addEventListener('click', expandAll);
+        document.getElementById('collapse-all').addEventListener('click', collapseAll);
+        
+        // Set up mobile versions of the buttons
+        if (document.getElementById('expand-all-mobile')) {
+            document.getElementById('expand-all-mobile').addEventListener('click', expandAll);
+        }
+        if (document.getElementById('collapse-all-mobile')) {
+            document.getElementById('collapse-all-mobile').addEventListener('click', collapseAll);
+        }
+        
+        // Set up search functionality
+        document.getElementById('category-search').addEventListener('input', searchCategories);
+        if (document.getElementById('category-search-mobile')) {
+            document.getElementById('category-search-mobile').addEventListener('input', searchCategoriesMobile);
+        }
+        
+        // Set up category links
+        document.querySelectorAll('.category-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const categoryId = targetId.replace('#category-', '');
+                
+                // Scroll to the category
+                document.querySelector(targetId).scrollIntoView({ behavior: 'smooth' });
+                
+                // Expand the category
+                const body = document.getElementById(`category-body-${categoryId}`);
+                const icon = document.getElementById(`toggle-icon-${categoryId}`);
+                body.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            });
+        });
     });
     
     function addNewCategoryForm() {
@@ -370,7 +532,7 @@
             <div class="new-category-card" id="new-category-${index}">
                 <div class="flex justify-between mb-4">
                     <h3 class="font-medium">New Category</h3>
-                    <button type="button" class="category-action text-red-500" onclick="removeNewCategory(${index})">
+                    <button type="button" class="category-action text-red-500 rounded-full p-1 hover:bg-red-100" onclick="removeNewCategory(${index})">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -459,56 +621,58 @@
                     </div>
                 </div>
                 
-                <h4 class="font-medium mb-3 text-gray-700">Restrictions</h4>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Min DUPR Rating
-                        </label>
-                        <input type="number" name="new_min_dupr_rating" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                               min="0" max="8" step="0.1">
-                    </div>
+                <div class="my-6 border-t border-gray-200 pt-4">
+                    <h4 class="font-medium mb-3 text-gray-700">Restrictions</h4>
                     
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Max DUPR Rating
-                        </label>
-                        <input type="number" name="new_max_dupr_rating" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                               min="0" max="8" step="0.1">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Gender Restriction
-                        </label>
-                        <select name="new_gender_restriction" 
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                            <option value="">No Restriction</option>
-                            <option value="male">Male Only</option>
-                            <option value="female">Female Only</option>
-                            <option value="mixed">Mixed Only</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Min Age
-                        </label>
-                        <input type="number" name="new_min_age" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                               min="0" max="100">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Max Age
-                        </label>
-                        <input type="number" name="new_max_age" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                               min="0" max="100">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Min DUPR Rating
+                            </label>
+                            <input type="number" name="new_min_dupr_rating" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                min="0" max="8" step="0.1">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Max DUPR Rating
+                            </label>
+                            <input type="number" name="new_max_dupr_rating" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                min="0" max="8" step="0.1">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Gender Restriction
+                            </label>
+                            <select name="new_gender_restriction" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">No Restriction</option>
+                                <option value="male">Male Only</option>
+                                <option value="female">Female Only</option>
+                                <option value="mixed">Mixed Only</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Min Age
+                            </label>
+                            <input type="number" name="new_min_age" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                min="0" max="100">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Max Age
+                            </label>
+                            <input type="number" name="new_max_age" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                min="0" max="100">
+                        </div>
                     </div>
                 </div>
                 
@@ -517,12 +681,15 @@
                         Description
                     </label>
                     <textarea name="new_description" rows="4" 
-                              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
                 </div>
             </div>
         `;
         
         container.insertAdjacentHTML('beforeend', newCategoryHtml);
+        
+        // Scroll to the new category
+        document.getElementById(`new-category-${index}`).scrollIntoView({ behavior: 'smooth' });
     }
     
     function removeNewCategory(index) {
@@ -534,10 +701,14 @@
     
     function toggleCategory(id) {
         const body = document.getElementById(`category-body-${id}`);
-        if (body.style.display === 'none') {
-            body.style.display = 'block';
+        const icon = document.getElementById(`toggle-icon-${id}`);
+        
+        if (body.classList.contains('hidden')) {
+            body.classList.remove('hidden');
+            icon.classList.add('rotate-180');
         } else {
-            body.style.display = 'none';
+            body.classList.add('hidden');
+            icon.classList.remove('rotate-180');
         }
     }
     
@@ -565,6 +736,86 @@
         }
         
         closeDeleteModal();
+    }
+    
+    function expandAll() {
+        document.querySelectorAll('.category-body').forEach(body => {
+            body.classList.remove('hidden');
+        });
+        document.querySelectorAll('.toggle-icon').forEach(icon => {
+            icon.classList.add('rotate-180');
+        });
+    }
+    
+    function collapseAll() {
+        document.querySelectorAll('.category-body').forEach(body => {
+            body.classList.add('hidden');
+        });
+        document.querySelectorAll('.toggle-icon').forEach(icon => {
+            icon.classList.remove('rotate-180');
+        });
+    }
+    
+    function searchCategories() {
+        const searchTerm = document.getElementById('category-search').value.toLowerCase();
+        searchCategoriesWithTerm(searchTerm);
+    }
+    
+    function searchCategoriesMobile() {
+        const searchTerm = document.getElementById('category-search-mobile').value.toLowerCase();
+        searchCategoriesWithTerm(searchTerm);
+    }
+    
+    function searchCategoriesWithTerm(searchTerm) {
+        const categories = document.querySelectorAll('.category-card');
+        
+        categories.forEach(category => {
+            const categoryName = category.querySelector('.category-header h3').textContent.toLowerCase();
+            const categoryType = category.querySelector('.category-header .bg-blue-100').textContent.toLowerCase();
+            
+            if (categoryName.includes(searchTerm) || categoryType.includes(searchTerm)) {
+                category.classList.remove('hidden');
+                // Highlight the matching text
+                if (searchTerm) {
+                    highlightText(category.querySelector('.category-header h3'), searchTerm);
+                } else {
+                    // Remove highlights when search is cleared
+                    unhighlightText(category.querySelector('.category-header h3'));
+                }
+            } else {
+                category.classList.add('hidden');
+            }
+        });
+    }
+    
+    function highlightText(element, searchTerm) {
+        const text = element.textContent;
+        const regex = new RegExp(`(${searchTerm})`, 'gi');
+        element.innerHTML = text.replace(regex, '<span class="search-highlight">$1</span>');
+    }
+    
+    function unhighlightText(element) {
+        element.innerHTML = element.textContent;
+    }
+    
+    function setupCategoryJumpMenu() {
+        const jumpMenu = document.getElementById('category-jump');
+        if (!jumpMenu) return;
+        
+        jumpMenu.addEventListener('change', function() {
+            const target = this.value;
+            if (target) {
+                document.querySelector(target).scrollIntoView({ behavior: 'smooth' });
+                // Ensure the category is expanded if it's a category
+                if (target.startsWith('#category-')) {
+                    const id = target.replace('#category-', '');
+                    const body = document.getElementById(`category-body-${id}`);
+                    const icon = document.getElementById(`toggle-icon-${id}`);
+                    body.classList.remove('hidden');
+                    icon.classList.add('rotate-180');
+                }
+            }
+        });
     }
 </script>
 {% endblock %}

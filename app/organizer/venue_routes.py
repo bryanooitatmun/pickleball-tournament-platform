@@ -38,7 +38,7 @@ def edit_venue(id):
             
         db.session.commit()
         flash('Tournament venue updated successfully.', 'success')
-        return redirect(url_for('organizer.edit_tournament', id=id))
+        return redirect(url_for('organizer.edit_venue', id=id))
     
     # Get all venues for dropdown
     venues = Venue.query.order_by(Venue.name).all()

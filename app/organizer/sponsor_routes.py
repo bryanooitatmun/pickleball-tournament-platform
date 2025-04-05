@@ -51,7 +51,7 @@ def edit_sponsors(id):
         
         db.session.commit()
         flash('Tournament sponsors updated successfully.', 'success')
-        return redirect(url_for('organizer.edit_tournament', id=id))
+        return redirect(url_for('organizer.edit_sponsors', id=id))
     
     # Get all sponsors for selection
     all_sponsors = PlatformSponsor.query.order_by(

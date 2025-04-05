@@ -31,7 +31,8 @@ def edit_categories(id):
     categories = tournament.categories.order_by(TournamentCategory.display_order).all()
 
     if request.method == 'POST':
-        updated_category_ids = []
+        # Track which categories were updated (by ID) and which new ones were added
+        category_ids_from_form = []
         new_categories_added = False
 
         # --- Process existing categories ---
@@ -40,7 +41,7 @@ def edit_categories(id):
                 category_id = int(category_id_str)
                 category = TournamentCategory.query.get(category_id)
                 if category and category.tournament_id == tournament.id:
-                    updated_category_ids.append(category.id)
+                    category_ids_from_form.append(category.id)
                     # Update fields
                     category.name = request.form.get(f'name_{category_id}')
                     category.category_type = CategoryType(request.form.get(f'category_type_{category_id}'))
@@ -138,8 +139,8 @@ def edit_categories(id):
         try:
             db.session.commit()
             flash_messages = []
-            if updated_category_ids:
-                flash_messages.append(f'Updated {len(updated_category_ids)} categories.')
+            if category_ids_from_form:
+                flash_messages.append(f'Updated {len(category_ids_from_form)} categories.')
             if new_categories_added:
                  flash_messages.append('Added new categories.')
             if deleted_category_names:
@@ -165,7 +166,7 @@ def edit_categories(id):
             db.session.commit() # Commit again after calculations
 
             # Redirect to prize editing or back to tournament detail
-            return redirect(url_for('organizer.edit_prizes', id=tournament.id))
+            return redirect(url_for('organizer.edit_categories', id=tournament.id))
 
         except Exception as e:
             db.session.rollback()

@@ -1,0 +1,300 @@
+
+<script src="{{ url_for('static', filename='js/bracket-visualization.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bracket-mobile.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tiebreakerToggles = document.querySelectorAll('.tiebreaker-toggle');
+
+        // Initialize the bracket visualization once the DOM is fully loaded
+        {% if  (bracket_data and bracket_data.knockout_rounds) %}
+        if (document.getElementById('tournament-bracket')) {
+            const bracketViz = new BracketVisualization('tournament-bracket');
+        }
+        {% endif %}
+        tiebreakerToggles.forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                // Get the parent group box
+                const groupBox = this.closest('.group-box');
+                
+                // Toggle show/hide text
+                const showText = this.querySelector('.show-text');
+                const hideText = this.querySelector('.hide-text');
+                showText.classList.toggle('hidden');
+                hideText.classList.toggle('hidden');
+                
+                // Find all tiebreaker stats within this group box
+                let tiebreakerElements;
+                if (groupBox) {
+                    tiebreakerElements = groupBox.querySelectorAll('.tiebreaker-stat');
+                } else {
+                    // If not within a group box (for standalone toggles)
+                    const tabContent = this.closest('.tab-content');
+                    tiebreakerElements = tabContent.querySelectorAll('.tiebreaker-stat');
+                }
+                
+                // Toggle visibility of tiebreaker stats
+                tiebreakerElements.forEach(element => {
+                    element.classList.toggle('hidden');
+                });
+            });
+        });
+        
+        // Stage/Group filtering functionality
+        const stageFilter = document.getElementById('stage-filter');
+        if (stageFilter) {
+            stageFilter.addEventListener('change', function() {
+                const filterValue = this.value;
+                
+                // All group boxes (desktop and mobile)
+                const groupBoxes = document.querySelectorAll('.group-box');
+                // All knockout round elements
+                const knockoutRounds = document.querySelectorAll('.bracket-round');
+                // Third place match container
+                const thirdPlaceMatch = document.querySelector('.third-place-match');
+                // Group stage tab content
+                const groupStageTab = document.getElementById('group-stage');
+                const mobileGroupStageTab = document.getElementById('mobile-group-stage');
+                // Knockout stage tab content
+                const knockoutStageTab = document.getElementById('knockout-stage');
+                const mobileKnockoutStageTab = document.getElementById('mobile-knockout-stage');
+                // Mobile round views
+                const mobileRoundViews = document.querySelectorAll('.mobile-round-view');
+                
+                // Show/hide appropriate content based on filter
+                if (filterValue === 'all') {
+                    // Show all content
+                    groupBoxes.forEach(box => box.style.display = '');
+                    knockoutRounds.forEach(round => round.style.display = '');
+                    if (thirdPlaceMatch) thirdPlaceMatch.style.display = '';
+                    
+                    // If tabs exist, show the active tab
+                    if (groupStageTab && knockoutStageTab) {
+                        const activeTabDesktop = document.querySelector('.tab.active');
+                        if (activeTabDesktop) {
+                            const activeContentDesktop = document.getElementById(activeTabDesktop.dataset.tab);
+                            if (activeContentDesktop) activeContentDesktop.classList.add('active');
+                        }
+                    }
+                    
+                    if (mobileGroupStageTab && mobileKnockoutStageTab) {
+                        const activeTabMobile = document.querySelector('.tab.active');
+                        if (activeTabMobile) {
+                            const activeContentMobile = document.getElementById(activeTabMobile.dataset.tab);
+                            if (activeContentMobile) activeContentMobile.classList.add('active');
+                        }
+                    }
+                } else if (filterValue.startsWith('group-')) {
+                    // Filter to specific group
+                    const groupName = filterValue;
+                    
+                    // Show group stage tabs and hide knockout
+                    if (groupStageTab) {
+                        groupStageTab.classList.add('active');
+                        document.querySelector('.tab[data-tab="group-stage"]').classList.add('active');
+                    }
+                    if (knockoutStageTab) {
+                        knockoutStageTab.classList.remove('active');
+                        document.querySelector('.tab[data-tab="knockout-stage"]').classList.remove('active');
+                    }
+                    
+                    if (mobileGroupStageTab) {
+                        mobileGroupStageTab.classList.add('active');
+                        document.querySelector('.tab[data-tab="mobile-group-stage"]').classList.add('active');
+                    }
+                    if (mobileKnockoutStageTab) {
+                        mobileKnockoutStageTab.classList.remove('active');
+                        document.querySelector('.tab[data-tab="mobile-knockout-stage"]').classList.remove('active');
+                    }
+                    
+                    // Show only the selected group
+                    groupBoxes.forEach(box => {
+                        if (box.dataset.group === groupName) {
+                            box.style.display = '';
+                        } else {
+                            box.style.display = 'none';
+                        }
+                    });
+                } else if (filterValue.startsWith('round-')) {
+                    // Filter to specific knockout round
+                    const roundNum = filterValue.split('-')[1];
+                    
+                    // Show knockout stage tabs and hide group
+                    if (knockoutStageTab) {
+                        knockoutStageTab.classList.add('active');
+                        document.querySelector('.tab[data-tab="knockout-stage"]').classList.add('active');
+                    }
+                    if (groupStageTab) {
+                        groupStageTab.classList.remove('active');
+                        document.querySelector('.tab[data-tab="group-stage"]').classList.remove('active');
+                    }
+                    
+                    if (mobileKnockoutStageTab) {
+                        mobileKnockoutStageTab.classList.add('active');
+                        document.querySelector('.tab[data-tab="mobile-knockout-stage"]').classList.add('active');
+                    }
+                    if (mobileGroupStageTab) {
+                        mobileGroupStageTab.classList.remove('active');
+                        document.querySelector('.tab[data-tab="mobile-group-stage"]').classList.remove('active');
+                    }
+                    
+                    // Show only the selected round in desktop view
+                    knockoutRounds.forEach(round => {
+                        // Extract the round number from the HTML structure or data attribute
+                        const roundIndicator = round.querySelector('.round-indicator');
+                        const roundClass = roundIndicator ? roundIndicator.className : '';
+                        const roundMatch = roundClass.match(/round-indicator-r(\d+(?:\.5)?)/);
+                        const thisRoundNum = roundMatch ? roundMatch[1] : null;
+                        
+                        if (thisRoundNum === roundNum) {
+                            round.style.display = '';
+                        } else {
+                            round.style.display = 'none';
+                        }
+                    });
+                    
+                    // Handle 3rd place match separately
+                    if (roundNum === '1.5') {
+                        if (thirdPlaceMatch) thirdPlaceMatch.style.display = '';
+                    } else {
+                        if (thirdPlaceMatch) thirdPlaceMatch.style.display = 'none';
+                    }
+                    
+                    // For mobile view, activate the corresponding mobile round tab
+                    mobileRoundViews.forEach(view => {
+                        const viewId = view.id;
+                        if (viewId === `mobile-round-${roundNum}`) {
+                            view.classList.add('active');
+                            // Activate the corresponding tab
+                            const tab = document.querySelector(`.mobile-round-tab[data-round="${roundNum}"]`);
+                            if (tab) tab.classList.add('active');
+                        } else {
+                            view.classList.remove('active');
+                            // Deactivate other tabs
+                            const roundFromId = viewId.split('-')[2];
+                            const tab = document.querySelector(`.mobile-round-tab[data-round="${roundFromId}"]`);
+                            if (tab) tab.classList.remove('active');
+                        }
+                    });
+                } else if (filterValue === 'playoff') {
+                    // Show only the 3rd place playoff match
+                    // Hide all content except the third place match
+                    groupBoxes.forEach(box => box.style.display = 'none');
+                    knockoutRounds.forEach(round => round.style.display = 'none');
+                    if (thirdPlaceMatch) thirdPlaceMatch.style.display = '';
+                    
+                    // Show knockout stage tabs and hide group
+                    if (knockoutStageTab) {
+                        knockoutStageTab.classList.add('active');
+                        document.querySelector('.tab[data-tab="knockout-stage"]').classList.add('active');
+                    }
+                    if (groupStageTab) {
+                        groupStageTab.classList.remove('active');
+                        document.querySelector('.tab[data-tab="group-stage"]').classList.remove('active');
+                    }
+                    
+                    if (mobileKnockoutStageTab) {
+                        mobileKnockoutStageTab.classList.add('active');
+                        document.querySelector('.tab[data-tab="mobile-knockout-stage"]').classList.add('active');
+                    }
+                    if (mobileGroupStageTab) {
+                        mobileGroupStageTab.classList.remove('active');
+                        document.querySelector('.tab[data-tab="mobile-group-stage"]').classList.remove('active');
+                    }
+                    
+                    // For mobile view, activate the 1.5 round
+                    mobileRoundViews.forEach(view => {
+                        const viewId = view.id;
+                        if (viewId === 'mobile-round-1.5') {
+                            view.classList.add('active');
+                            // Activate the corresponding tab
+                            const tab = document.querySelector('.mobile-round-tab[data-round="1.5"]');
+                            if (tab) tab.classList.add('active');
+                        } else {
+                            view.classList.remove('active');
+                            // Deactivate other tabs
+                            const roundFromId = viewId.split('-')[2];
+                            const tab = document.querySelector(`.mobile-round-tab[data-round="${roundFromId}"]`);
+                            if (tab) tab.classList.remove('active');
+                        }
+                    });
+                }
+            });
+        }
+
+
+        // Tab functionality for group stage + knockout format
+        const tabs = document.querySelectorAll('.tab');
+        if (tabs.length > 0) {
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Get the parent tab container
+                    const tabContainer = this.closest('.tabs');
+                    
+                    // Find tabs only in this container (to avoid affecting other tab groups)
+                    const siblingTabs = tabContainer.querySelectorAll('.tab');
+                    
+                    // Remove active class from sibling tabs
+                    siblingTabs.forEach(t => t.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Get the container that holds the content
+                    const contentContainer = tabContainer.closest('.tab-container');
+                    
+                    // Hide all tab content in this container
+                    const tabContents = contentContainer.querySelectorAll('.tab-content');
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Show the selected tab content
+                    const tabId = this.getAttribute('data-tab');
+                    contentContainer.querySelector('#' + tabId).classList.add('active');
+                    
+                    // Reinitialize bracket visualization if showing knockout stage
+                    if (tabId === 'knockout-stage' || tabId === 'mobile-knockout-stage') {
+                        // Small delay to ensure DOM is updated
+                        setTimeout(() => {
+                            if (document.getElementById('tournament-bracket')) {
+                                // Clear any existing visualizations
+                                const container = document.getElementById('tournament-bracket');
+                                const existingSvg = container.querySelector('.bracket-connectors');
+                                if (existingSvg) {
+                                    existingSvg.remove();
+                                }
+                                
+                                // Initialize new visualization
+                                const bracketViz = new BracketVisualization('tournament-bracket');
+                            }
+                        }, 100);
+                    }
+                });
+            });
+        }
+        
+        // Mobile round navigation
+        const mobileRoundTabs = document.querySelectorAll('.mobile-round-tab');
+        if (mobileRoundTabs.length > 0) {
+            mobileRoundTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs
+                    mobileRoundTabs.forEach(t => t.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Hide all round views
+                    const roundViews = document.querySelectorAll('.mobile-round-view');
+                    roundViews.forEach(view => {
+                        view.classList.remove('active');
+                    });
+                    
+                    // Show the selected round view
+                    const roundNum = this.getAttribute('data-round');
+                    document.getElementById('mobile-round-' + roundNum).classList.add('active');
+                });
+            });
+        }
+    });
+</script>
