@@ -5,6 +5,19 @@
 {% block styles %}
 {{ super() }}
 <style>
+    /* Tiebreaker toggle styling */
+    .tiebreaker-stat.hidden {
+        display: none;
+    }
+    
+    .tiebreaker-toggle:hover svg {
+        transform: translateY(2px);
+    }
+    
+    .tiebreaker-toggle .hide-text.hidden,
+    .tiebreaker-toggle .show-text.hidden {
+        display: none;
+    }
     /* Bracket styling - Desktop */
     .bracket-container {
         width: 100%;
@@ -388,7 +401,48 @@
 
 <!-- Tournament Bracket and Results -->
 <div class="bg-white p-4 rounded-lg shadow-sm mb-8">
-    <h1 class="text-xl font-semibold mb-4">{{format.value}}</h1>
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+        <h1 class="text-xl font-semibold">{{format.value}}</h1>
+        
+        <!-- Stage/Group Filter Dropdown -->
+        <div class="w-full lg:max-w-xs">
+            <label for="stage-filter" class="block text-sm font-medium text-gray-700 mb-1">Filter by Stage</label>
+            <select id="stage-filter" class="p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="all">All Stages</option>
+                {% if bracket_data.groups %}
+                    <optgroup label="Group Stage">
+                        {% for group_data in bracket_data.groups %}
+                            <option value="group-{{ group_data.group.name }}">Group {{ group_data.group.name }}</option>
+                        {% endfor %}
+                    </optgroup>
+                {% endif %}
+                {% if bracket_data.knockout_rounds %}
+                    <optgroup label="Knockout Stage">
+                        {% for round_num in bracket_data.knockout_rounds|sort(reverse=true) %}
+                            {% if round_num == 1 %}
+                                {% set round_name = 'Final' %}
+                            {% elif round_num == 1.5 %}
+                                {% set round_name = '3rd Place' %}
+                            {% elif round_num == 2 %}
+                                {% set round_name = 'Semifinals' %}
+                            {% elif round_num == 3 %}
+                                {% set round_name = 'Quarterfinals' %}
+                            {% elif round_num == 4 %}
+                                {% set round_name = 'Round of 16' %}
+                            {% elif round_num == 5 %}
+                                {% set round_name = 'Round of 32' %}
+                            {% elif round_num == 6 %}
+                                {% set round_name = 'Round of 64' %}
+                            {% else %}
+                                {% set round_name = 'Round ' ~ round_num %}
+                            {% endif %}
+                            <option value="round-{{ round_num }}">{{ round_name }}</option>
+                        {% endfor %}
+                    </optgroup>
+                {% endif %}
+            </select>
+        </div>
+    </div>
     
     {% if has_group_stage %}
         <!-- For Group + Knockout format - DESKTOP VIEW -->
@@ -406,10 +460,20 @@
                     <!-- Group containers -->
                     <div class="group-container">
                         {% for group_data in bracket_data.groups %}
-                            <div class="group-box">
+                            <div class="group-box" data-group="group-{{ group_data.group.name }}">
                                 <div class="group-header">Group {{ group_data.group.name }}</div>
                                 
                                 <!-- Group standings -->
+                                <!-- Toggle for tiebreaker stats -->
+                                <div class="flex justify-end p-2">
+                                    <button type="button" class="tiebreaker-toggle text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                                        <span class="show-text">Show Tiebreaker Stats</span>
+                                        <span class="hide-text hidden">Hide Tiebreaker Stats</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+                                </div>
                                 <table class="group-standings">
                                     <thead>
                                         <tr>
@@ -417,6 +481,7 @@
                                             <th class="text-center">W</th>
                                             <th class="text-center">L</th>
                                             <th class="text-center">Sets</th>
+                                            <th class="text-center tiebreaker-stat hidden">Points</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -465,6 +530,9 @@
                                                 <td class="text-center">{{ standing.matches_lost }}</td>
                                                 <td class="text-center">
                                                     {{ standing.sets_won }}-{{ standing.sets_lost }}
+                                                </td>
+                                                <td class="text-center tiebreaker-stat hidden">
+                                                    {{ standing.points_won }}-{{ standing.points_lost }}
                                                 </td>
                                             </tr>
                                         {% endfor %}
@@ -891,8 +959,19 @@
                 <div class="tab-content active" id="mobile-group-stage">
                     <div class="mt-4">
                         {% for group_data in bracket_data.groups %}
-                            <div class="bg-white rounded-lg shadow-sm mb-6">
+                            <div class="bg-white rounded-lg shadow-sm mb-6 group-box" data-group="group-{{ group_data.group.name }}">
                                 <div class="group-header">Group {{ group_data.group.name }}</div>
+                                
+                                <!-- Toggle for tiebreaker stats (mobile) -->
+                                <div class="flex justify-end p-2">
+                                    <button type="button" class="tiebreaker-toggle text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                                        <span class="show-text">Show Tiebreaker Stats</span>
+                                        <span class="hide-text hidden">Hide Tiebreaker Stats</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+                                </div>
                                 
                                 <!-- Mobile Group Standings -->
                                 <table class="group-standings">
@@ -901,6 +980,7 @@
                                             <th>Team</th>
                                             <th class="text-center">W-L</th>
                                             <th class="text-center">Sets</th>
+                                            <th class="text-center tiebreaker-stat hidden">Points</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -931,10 +1011,83 @@
                                                 <td class="text-center">
                                                     {{ standing.sets_won }}-{{ standing.sets_lost }}
                                                 </td>
+                                                <td class="text-center tiebreaker-stat hidden">
+                                                    {{ standing.points_won }}-{{ standing.points_lost }}
+                                                </td>
                                             </tr>
                                         {% endfor %}
                                     </tbody>
                                 </table>
+                                
+                                <!-- Mobile Group Matches (added to match desktop) -->
+                                <div class="p-3">
+                                    <h4 class="text-sm font-medium mb-2">Match Results</h4>
+                                    {% for match in group_data.matches %}
+                                        <div class="text-sm mb-2 pb-2 {% if not loop.last %}border-b border-gray-100{% endif %}">
+                                            <div class="flex justify-between mb-1">
+                                                <div>
+                                                    {% if selected_category.is_doubles() %}
+                                                        {% if match.team1 %}
+                                                            {{ match.team1.player1.full_name.split()[-1] }}/{{ match.team1.player2.full_name.split()[-1] }}
+                                                            {% if match.player1_code %}<span class="position-code">{{ match.player1_code }}</span>{% endif %}
+                                                        {% else %}
+                                                            {% if match.player1_code %}<span class="position-code">{{ match.player1_code }}</span>{% else %}TBD{% endif %}
+                                                        {% endif %}
+                                                    {% else %}
+                                                        {% if match.player1 %}
+                                                            {{ match.player1.full_name }}
+                                                            {% if match.player1_code %}<span class="position-code">{{ match.player1_code }}</span>{% endif %}
+                                                        {% else %}
+                                                            {% if match.player1_code %}<span class="position-code">{{ match.player1_code }}</span>{% else %}TBD{% endif %}
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </div>
+                                                
+                                                <div>
+                                                    {% if match.completed and match.id in scores %}
+                                                        {% for score in scores[match.id] %}
+                                                            <span class="{% if score.player1_score > score.player2_score %}font-medium text-green-600{% endif %}">
+                                                                {{ score.player1_score }}
+                                                            </span>
+                                                            {% if not loop.last %} - {% endif %}
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex justify-between">
+                                                <div>
+                                                    {% if selected_category.is_doubles() %}
+                                                        {% if match.team2 %}
+                                                            {{ match.team2.player1.full_name.split()[-1] }}/{{ match.team2.player2.full_name.split()[-1] }}
+                                                            {% if match.player2_code %}<span class="position-code">{{ match.player2_code }}</span>{% endif %}
+                                                        {% else %}
+                                                            {% if match.player2_code %}<span class="position-code">{{ match.player2_code }}</span>{% else %}TBD{% endif %}
+                                                        {% endif %}
+                                                    {% else %}
+                                                        {% if match.player2 %}
+                                                            {{ match.player2.full_name }}
+                                                            {% if match.player2_code %}<span class="position-code">{{ match.player2_code }}</span>{% endif %}
+                                                        {% else %}
+                                                            {% if match.player2_code %}<span class="position-code">{{ match.player2_code }}</span>{% else %}TBD{% endif %}
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </div>
+                                                
+                                                <div>
+                                                    {% if match.completed and match.id in scores %}
+                                                        {% for score in scores[match.id] %}
+                                                            <span class="{% if score.player2_score > score.player1_score %}font-medium text-green-600{% endif %}">
+                                                                {{ score.player2_score }}
+                                                            </span>
+                                                            {% if not loop.last %} - {% endif %}
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
                             </div>
                         {% endfor %}
                     </div>
@@ -1580,11 +1733,224 @@
 <script src="{{ url_for('static', filename='js/bracket-mobile.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const tiebreakerToggles = document.querySelectorAll('.tiebreaker-toggle');
+
         // Initialize the bracket visualization once the DOM is fully loaded
         if (document.getElementById('tournament-bracket')) {
             const bracketViz = new BracketVisualization('tournament-bracket');
         }
         
+        tiebreakerToggles.forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                // Get the parent group box
+                const groupBox = this.closest('.group-box');
+                
+                // Toggle show/hide text
+                const showText = this.querySelector('.show-text');
+                const hideText = this.querySelector('.hide-text');
+                showText.classList.toggle('hidden');
+                hideText.classList.toggle('hidden');
+                
+                // Find all tiebreaker stats within this group box
+                let tiebreakerElements;
+                if (groupBox) {
+                    tiebreakerElements = groupBox.querySelectorAll('.tiebreaker-stat');
+                } else {
+                    // If not within a group box (for standalone toggles)
+                    const tabContent = this.closest('.tab-content');
+                    tiebreakerElements = tabContent.querySelectorAll('.tiebreaker-stat');
+                }
+                
+                // Toggle visibility of tiebreaker stats
+                tiebreakerElements.forEach(element => {
+                    element.classList.toggle('hidden');
+                });
+            });
+        });
+        
+        // Stage/Group filtering functionality
+        const stageFilter = document.getElementById('stage-filter');
+        if (stageFilter) {
+            stageFilter.addEventListener('change', function() {
+                const filterValue = this.value;
+                
+                // All group boxes (desktop and mobile)
+                const groupBoxes = document.querySelectorAll('.group-box');
+                // All knockout round elements
+                const knockoutRounds = document.querySelectorAll('.bracket-round');
+                // Third place match container
+                const thirdPlaceMatch = document.querySelector('.third-place-match');
+                // Group stage tab content
+                const groupStageTab = document.getElementById('group-stage');
+                const mobileGroupStageTab = document.getElementById('mobile-group-stage');
+                // Knockout stage tab content
+                const knockoutStageTab = document.getElementById('knockout-stage');
+                const mobileKnockoutStageTab = document.getElementById('mobile-knockout-stage');
+                // Mobile round views
+                const mobileRoundViews = document.querySelectorAll('.mobile-round-view');
+                
+                // Show/hide appropriate content based on filter
+                if (filterValue === 'all') {
+                    // Show all content
+                    groupBoxes.forEach(box => box.style.display = '');
+                    knockoutRounds.forEach(round => round.style.display = '');
+                    if (thirdPlaceMatch) thirdPlaceMatch.style.display = '';
+                    
+                    // If tabs exist, show the active tab
+                    if (groupStageTab && knockoutStageTab) {
+                        const activeTabDesktop = document.querySelector('.tab.active');
+                        if (activeTabDesktop) {
+                            const activeContentDesktop = document.getElementById(activeTabDesktop.dataset.tab);
+                            if (activeContentDesktop) activeContentDesktop.classList.add('active');
+                        }
+                    }
+                    
+                    if (mobileGroupStageTab && mobileKnockoutStageTab) {
+                        const activeTabMobile = document.querySelector('.tab.active');
+                        if (activeTabMobile) {
+                            const activeContentMobile = document.getElementById(activeTabMobile.dataset.tab);
+                            if (activeContentMobile) activeContentMobile.classList.add('active');
+                        }
+                    }
+                } else if (filterValue.startsWith('group-')) {
+                    // Filter to specific group
+                    const groupName = filterValue;
+                    
+                    // Show group stage tabs and hide knockout
+                    if (groupStageTab) {
+                        groupStageTab.classList.add('active');
+                        document.querySelector('.tab[data-tab="group-stage"]').classList.add('active');
+                    }
+                    if (knockoutStageTab) {
+                        knockoutStageTab.classList.remove('active');
+                        document.querySelector('.tab[data-tab="knockout-stage"]').classList.remove('active');
+                    }
+                    
+                    if (mobileGroupStageTab) {
+                        mobileGroupStageTab.classList.add('active');
+                        document.querySelector('.tab[data-tab="mobile-group-stage"]').classList.add('active');
+                    }
+                    if (mobileKnockoutStageTab) {
+                        mobileKnockoutStageTab.classList.remove('active');
+                        document.querySelector('.tab[data-tab="mobile-knockout-stage"]').classList.remove('active');
+                    }
+                    
+                    // Show only the selected group
+                    groupBoxes.forEach(box => {
+                        if (box.dataset.group === groupName) {
+                            box.style.display = '';
+                        } else {
+                            box.style.display = 'none';
+                        }
+                    });
+                } else if (filterValue.startsWith('round-')) {
+                    // Filter to specific knockout round
+                    const roundNum = filterValue.split('-')[1];
+                    
+                    // Show knockout stage tabs and hide group
+                    if (knockoutStageTab) {
+                        knockoutStageTab.classList.add('active');
+                        document.querySelector('.tab[data-tab="knockout-stage"]').classList.add('active');
+                    }
+                    if (groupStageTab) {
+                        groupStageTab.classList.remove('active');
+                        document.querySelector('.tab[data-tab="group-stage"]').classList.remove('active');
+                    }
+                    
+                    if (mobileKnockoutStageTab) {
+                        mobileKnockoutStageTab.classList.add('active');
+                        document.querySelector('.tab[data-tab="mobile-knockout-stage"]').classList.add('active');
+                    }
+                    if (mobileGroupStageTab) {
+                        mobileGroupStageTab.classList.remove('active');
+                        document.querySelector('.tab[data-tab="mobile-group-stage"]').classList.remove('active');
+                    }
+                    
+                    // Show only the selected round in desktop view
+                    knockoutRounds.forEach(round => {
+                        // Extract the round number from the HTML structure or data attribute
+                        const roundIndicator = round.querySelector('.round-indicator');
+                        const roundClass = roundIndicator ? roundIndicator.className : '';
+                        const roundMatch = roundClass.match(/round-indicator-r(\d+(?:\.5)?)/);
+                        const thisRoundNum = roundMatch ? roundMatch[1] : null;
+                        
+                        if (thisRoundNum === roundNum) {
+                            round.style.display = '';
+                        } else {
+                            round.style.display = 'none';
+                        }
+                    });
+                    
+                    // Handle 3rd place match separately
+                    if (roundNum === '1.5') {
+                        if (thirdPlaceMatch) thirdPlaceMatch.style.display = '';
+                    } else {
+                        if (thirdPlaceMatch) thirdPlaceMatch.style.display = 'none';
+                    }
+                    
+                    // For mobile view, activate the corresponding mobile round tab
+                    mobileRoundViews.forEach(view => {
+                        const viewId = view.id;
+                        if (viewId === `mobile-round-${roundNum}`) {
+                            view.classList.add('active');
+                            // Activate the corresponding tab
+                            const tab = document.querySelector(`.mobile-round-tab[data-round="${roundNum}"]`);
+                            if (tab) tab.classList.add('active');
+                        } else {
+                            view.classList.remove('active');
+                            // Deactivate other tabs
+                            const roundFromId = viewId.split('-')[2];
+                            const tab = document.querySelector(`.mobile-round-tab[data-round="${roundFromId}"]`);
+                            if (tab) tab.classList.remove('active');
+                        }
+                    });
+                } else if (filterValue === 'playoff') {
+                    // Show only the 3rd place playoff match
+                    // Hide all content except the third place match
+                    groupBoxes.forEach(box => box.style.display = 'none');
+                    knockoutRounds.forEach(round => round.style.display = 'none');
+                    if (thirdPlaceMatch) thirdPlaceMatch.style.display = '';
+                    
+                    // Show knockout stage tabs and hide group
+                    if (knockoutStageTab) {
+                        knockoutStageTab.classList.add('active');
+                        document.querySelector('.tab[data-tab="knockout-stage"]').classList.add('active');
+                    }
+                    if (groupStageTab) {
+                        groupStageTab.classList.remove('active');
+                        document.querySelector('.tab[data-tab="group-stage"]').classList.remove('active');
+                    }
+                    
+                    if (mobileKnockoutStageTab) {
+                        mobileKnockoutStageTab.classList.add('active');
+                        document.querySelector('.tab[data-tab="mobile-knockout-stage"]').classList.add('active');
+                    }
+                    if (mobileGroupStageTab) {
+                        mobileGroupStageTab.classList.remove('active');
+                        document.querySelector('.tab[data-tab="mobile-group-stage"]').classList.remove('active');
+                    }
+                    
+                    // For mobile view, activate the 1.5 round
+                    mobileRoundViews.forEach(view => {
+                        const viewId = view.id;
+                        if (viewId === 'mobile-round-1.5') {
+                            view.classList.add('active');
+                            // Activate the corresponding tab
+                            const tab = document.querySelector('.mobile-round-tab[data-round="1.5"]');
+                            if (tab) tab.classList.add('active');
+                        } else {
+                            view.classList.remove('active');
+                            // Deactivate other tabs
+                            const roundFromId = viewId.split('-')[2];
+                            const tab = document.querySelector(`.mobile-round-tab[data-round="${roundFromId}"]`);
+                            if (tab) tab.classList.remove('active');
+                        }
+                    });
+                }
+            });
+        }
+
+
         // Tab functionality for group stage + knockout format
         const tabs = document.querySelectorAll('.tab');
         if (tabs.length > 0) {
@@ -1662,3 +2028,5 @@
     });
 </script>
 {% endblock %}
+
+
