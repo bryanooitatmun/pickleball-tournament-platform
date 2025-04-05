@@ -330,7 +330,7 @@
 <!-- Reject Payment Modal -->
 <div class="modal-backdrop" id="modalBackdrop">
     <div class="modal-container" id="rejectModal">
-    <form method="POST" action="{{ url_for('organizer.reject_registration', id=tournament.id, registration_id=registration.id) }}">
+    <form method="POST" action="{{ url_for('organizer.reject_registration', id=registration.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         
         <div class="bg-red-50 px-4 py-3 border-b border-red-100">

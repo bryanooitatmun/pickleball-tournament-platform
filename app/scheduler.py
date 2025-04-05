@@ -15,14 +15,14 @@ def init_scheduler(app):
         scheduler.init_app(app)
     
     # Add scheduled jobs
-    if not scheduler.get_job('check_upcoming_matches'):
-        scheduler.add_job(
-            id='check_upcoming_matches',
-            func=check_upcoming_matches,
-            trigger='interval',
-            hours=1,  # Run every hour
-            replace_existing=True
-        )
+    # if not scheduler.get_job('check_upcoming_matches'):
+    #     scheduler.add_job(
+    #         id='check_upcoming_matches',
+    #         func=check_upcoming_matches,
+    #         trigger='interval',
+    #         hours=1,  # Run every hour
+    #         replace_existing=True
+    #     )
     
     # Start the scheduler
     if not scheduler.running:

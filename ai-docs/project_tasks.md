@@ -1,119 +1,64 @@
 # Pickleball Tournament Platform - Project Tasks
 
-## Tournament Bracket Enhancement
+## Bug Fixes
 
-### Requirements
+1. [✅] **Payment Rejection Issue**
+   - Problem: Payment rejection happens to the wrong user (e.g., when rejecting someone from women's doubles, it affects someone from men's doubles)
+   - Priority: High
+   - Files to check: (app\templates\organizer\verify_payments.html, app\templates\organizer\view_registration.html,
+   app\templates\organizer\view_registrations.html, app\templates\organizer\manage_tournament\manage_registrations.html), app\organizer\registration_routes.py, payment verification and rejection logic
 
-1. Enhance bracket generation and visualization with team/player coding
-   - Assign code numbers to teams/players (A1, B2, etc. for group stage)
-   - Show TBD matches as "A1 vs B2" for future matches
-   - Implement coding for knockout stage (1, 2, 3, 4 for quarter matches)
-   - Display 1 vs 2 for incomplete semi matches
-   - Make sure bracket styling matches PPA bracket reference images
+2. [ ] **Mobile UI Issues - Category Management**
+   - Problem: Manage category tabs not working correctly on mobile devices
+   - Details: Match filtering and search option tabs should be in a grid on mobile, but tabs are currently overflowing past their container
+   - Priority: Medium
+   - Files to check: app\templates\organizer\manage_tournament\manage_category.html
 
-2. Implement seeding functionality
-   - Create a page for organizers to view the participant list with their seeds
-   - Allow organizers to drag and drop teams/players to different seeds
-   - Implement back-end to store and use the seed changes
+3. [ ] **Group Stage Scores Display**
+   - Problem: Group stage scores need improvement on mobile view
+   - Requirements:
+     - Show scores in mobile page for Group stage similar to desktop version
+     - Add tiebreaker stats for both desktop and mobile (hidden by default with toggle)
+     - Add tabs to filter by groups
+   - Priority: Medium
+   - Files to check: app\templates\tournament\bracket.html
 
-3. Implement tiebreak rules for groups
-   - Primary: Head-to-head record with other tied players
-   - Secondary: Number of points
-   - Update the group standing calculation logic
+4. [ ] **Incorrect Round Details**
+   - Problem: Live scoring and match detail showing wrong round details (e.g., group stages match from the GROUP_KNOCKOUT not showing correctly)
+   - Priority: High
+   - Files to check: Match model, (app\templates\tournament\live_scoring.html, app\templates\tournament\match_detail.html)
 
-4. Add support for byes in brackets
-   - Handle scenarios where 2 teams per group from 5 groups advance (10 players in round of 16) (The numbers given is just an example, please handle generically for all cases)
-   - Give top 6 seeds byes to quarters (free entry) (The numbers given is just an example, please handle generically for all cases)
-   - Implement the logic for bye allocation
+5. [ ] **Tournament/Category Editing Issue**
+   - Problem: Potential bug in edit tournament/category/prizes functionality
+   - Details: An input exists that wipes out all category details
+   - Priority: High
+   - Files to check: (app\templates\organizer\edit_categories.html, app\templates\organizer\edit_prizes.html, app\templates\organizer\edit_tournament.html) and routes
 
-5. Simplify category configuration
-   - Make it so only number of groups and teams advancing per group are necessary
-   - Calculate teams per group programmatically
-   - Update the relevant templates and routes
+6. [ ] **Image Aspect Ratio Problem**
+   - Problem: Images throughout platform don't maintain aspect ratio
+   - Example: Tournament banner images
+   - Solution: Fix all images to maintain proper aspect ratio
+   - Priority: Medium
+   - Files to check: Image upload handlers, all template files which has the <img> tag - CSS for image display
 
-6. Implement bulk match editing
-   - Create an interface for organizers to edit multiple matches at once
-   - Add a confirmation step for review before saving changes
+## Feature Implementations
 
-### Current Progress
+1. [ ] **Admin Account Management**
+   - Feature: Admin should be able to create accounts, create tournaments, and assign referee and organizer roles to tournaments
+   - Priority: High
+   - Files to check: Admin routes, user management logic, tournament assignment functionality
 
-❓ = Not started  
-🔄 = In progress  
-✅ = Completed
+## Testing Tasks
 
-✅ Implement team/player coding system in brackets
-✅ Create match visualization with code-based future matches (A1 vs B2)
-✅ Implement knockout stage coding (1, 2, 3, 4)
-✅ Update bracket visualization to match PPA bracket design
-✅ Create seeding UI for drag and drop functionality
-✅ Implement back-end for storing seed changes
-✅ Update tiebreaking logic for group standings
-✅ Implement bye logic for incomplete brackets
-✅ Simplify category configuration inputs
-✅ Implement bulk match editing functionality
-✅ Add confirmation step for bulk edits
+1. [ ] **Comprehensive Feature Testing**
+   - Test edit tournament functionality
+   - Test edit category functionality
+   - Test edit prizes functionality
+   - Identify any additional bugs or issues
+   - Priority: Medium
 
-### Implementation Tasks Breakdown
-
-#### 1. Team/Player Coding System
-
-- ✅ Update the `tournament.py` helpers to assign codes based on group/position
-- ✅ Modify the bracket generation code to include these codes
-- ✅ Update `bracket.html` template to show codes for TBD matches
-- ✅ Update `bracket-visualization.js` to handle and display codes
-- ✅ Create thorough unit and integration tests _generate_cross_group_seeding in `tournament.py`.
-
-#### 2. Seeding Interface
-
-- ✅ Create new route and template for seeding management
-- ✅ Implement drag and drop UI with JavaScript
-- ✅ Update the back-end to store the seed changes
-- ✅ Integrate with existing bracket generation code
-- ✅ Consolidate JavaScript into HTML template for better Jinja2 integration
-
-#### 3. Tiebreak Implementation
-
-- ✅ Update the `_calculate_group_positions` method in `bracket_service.py`
-- ✅ Add head-to-head comparison as primary tiebreaker
-- ✅ Use point differential as secondary tiebreaker
-- ✅ Add tests for the new tiebreaking logic
-
-#### 4. Bye Logic
-
-- ✅ Update bracket generation in `tournament.py` to handle byes
-- ✅ Modify the visualization to properly display byes
-- ✅ Ensure the top seeds get byes when appropriate
-- ✅ Add tests for the bye allocation logic
-
-#### 5. Simplified Category Configuration
-
-- ✅ Update category registration logic to calculate teams per group
-- ✅ Modify `category_routes.py` to handle the simplified inputs
-- ✅ Update `tournament.py` to calculate teams per group
-
-#### 6. Bulk Match Editing
-
-- ✅ Design and implement UI for editing multiple matches
-- ✅ Create new route for handling bulk updates
-- ✅ Add confirmation step before applying changes
-- ✅ Update templates and JavaScript for the new functionality
-
-### Notes
-
-- Reference the PPA bracket images for design inspiration
-- Look at existing bracket generation logic in `tournament.py` and `bracket_service.py`
-- Build upon the existing code where possible
-- Add tests for all new functionality
-
-### Recent Updates
-
-- Added support for generating knockout brackets without completed group stage
-- Enhanced position codes for all rounds of knockout matches, not just semis and finals
-- Added automatic code generation for TBD matches in all tournament rounds
-- Added test to verify knockout bracket generation works without completed group standings
-- All TBD matches now display appropriate position codes (e.g., "A1 vs B2", "QF1 vs QF2")
-- Implemented seeding interface with drag and drop functionality for reordering participants
-- Added backend for storing seed changes and integrating with bracket generation
-- Enhanced tiebreaking logic with head-to-head record as primary tiebreaker and point differential as secondary
-- Implemented intelligent bye allocation for incomplete brackets that prioritizes top seeds
-- Added comprehensive tests for bye allocation logic
+## Notes
+- ✅ symbol will be used to mark completed tasks
+- All fixes should follow coding-preferences.mdc and workflow-preferences.mdc
+- Ensure thorough testing after each fix
+- Document any additional issues discovered during implementation

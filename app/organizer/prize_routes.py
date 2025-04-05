@@ -93,7 +93,7 @@ def edit_prizes(id):
 
             flash('Tournament prizes updated successfully!', 'success')
             # Redirect back to tournament management or detail page
-            return redirect(url_for('organizer.tournament_detail', id=tournament.id))
+            return redirect(url_for('organizer.edit_prizes', id=tournament.id))
 
         except ValueError as e:
              flash(f'Invalid input for prizes: {e}', 'danger')
