@@ -39,7 +39,7 @@
     }
     
     /* Mobile responsiveness */
-    @media (max-width: 640px) {
+    @media (max-width: 1024px) {
         .matches-container {
             max-height: none;
             overflow-x: auto;
@@ -50,10 +50,74 @@
         }
         .filter-tabs {
             margin-bottom: 1rem;
-            overflow-x: auto;
-            max-width: 100%;
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            width: 100%;
+        }
+        .filter-tab {
+            text-align: center;
             white-space: nowrap;
-            padding-bottom: 0.25rem;
+        }
+        .search-container {
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+        .search-container input {
+            width: 100%;
+        }
+        /* Responsive table styles */
+        .mobile-table {
+            display: block;
+        }
+        .mobile-table thead {
+            display: none; /* Hide table headers on mobile */
+        }
+        .mobile-table tbody {
+            display: block;
+        }
+        .mobile-table tr {
+            display: block;
+            margin-bottom: 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+        }
+        .mobile-table td {
+            display: flex;
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+        .mobile-table td:last-child {
+            border-bottom: none;
+        }
+        .mobile-table td:before {
+            content: attr(data-label);
+            font-weight: 600;
+            width: 120px;
+            min-width: 120px;
+        }
+        /* Participants display styling */
+        .mobile-table td[data-label="Participants"] {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .mobile-table td[data-label="Participants"] div {
+            margin-bottom: 0.375rem;
+            max-width: 100%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            padding-left: 0;
+        }
+        .mobile-table td[data-label="Participants"] div:nth-child(2) {
+            margin: 0.375rem 0;
+            padding: 0.125rem 0.5rem;
+            display: inline-block;
+            background-color: #f9fafb;
+            border-radius: 9999px;
+            font-weight: 500;
+            align-self: flex-start;
         }
     }
 </style>
@@ -395,26 +459,22 @@
     {% if matches %}
         <!-- Match filtering and search options -->
         <div class="flex justify-between items-center mb-4 filter-controls">
-            <div class="flex items-center space-x-4">
-                <div class="flex space-x-2 filter-tabs">
+            <div class="flex items-center space-x-4 w-full sm:w-auto">
+                <div class="flex space-x-2 filter-tabs sm:flex-nowrap">
                     <button class="filter-tab px-3 py-1 rounded-md active" data-filter="all">All</button>
-                    {% if groups %}
-                        <button class="filter-tab px-3 py-1 rounded-md bg-gray-100" data-filter="group">Group Stage</button>
-                    {% endif %}
-                    <button class="filter-tab px-3 py-1 rounded-md bg-gray-100" data-filter="knockout">Knockout</button>
                     <button class="filter-tab px-3 py-1 rounded-md bg-gray-100" data-filter="completed">Completed</button>
                     <button class="filter-tab px-3 py-1 rounded-md bg-gray-100" data-filter="pending">Pending</button>
+                    {% if not is_referee_only %}
+                    <a href="{{ url_for('organizer.bulk_edit_matches', id=tournament.id, category_id=category.id) }}" class="inline-flex items-center px-3 py-1 border border-gray-300 text-sm leading-5 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Bulk Edit Matches
+                    </a>
+                    {% endif %}                    
                 </div>
-                
-                {% if not is_referee_only %}
-                <a href="{{ url_for('organizer.bulk_edit_matches', id=tournament.id, category_id=category.id) }}" class="inline-flex items-center px-3 py-1 border border-gray-300 text-sm leading-5 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Bulk Edit Matches
-                </a>
-                {% endif %}
             </div>
+
             <div class="search-container">
                 <span class="search-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -423,6 +483,51 @@
                 </span>
                 <input type="text" id="match-search" placeholder="Search player name..." class="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
+        </div>
+
+        <!-- Stage filter dropdown -->
+        <div class="mb-4 w-full md:max-w-xs">
+            <label for="stage-filter" class="block text-sm font-medium text-gray-700 mb-1">Filter by Stage</label>
+            <select id="stage-filter" class="p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="all">All Stages</option>
+                {% if groups %}
+                    <optgroup label="Group Stage">
+                        {% for group in groups %}
+                            <option value="group-{{ group.name }}">Group {{ group.name }}</option>
+                        {% endfor %}
+                    </optgroup>
+                {% endif %}
+                {% set knockout_matches = matches|selectattr('stage.name', 'eq', 'KNOCKOUT')|list %}
+                {% if knockout_matches %}
+                    <optgroup label="Knockout Stage">
+                        {% set rounds = knockout_matches|groupby('round')|list|sort(attribute='grouper')|reverse %}
+                        {% for round_group in rounds %}
+                            {% if round_group.grouper == 1 %}
+                                {% set round_name = 'Final' %}
+                            {% elif round_group.grouper == 1.5 %}
+                                {% set round_name = '3rd Place' %}
+                            {% elif round_group.grouper == 2 %}
+                                {% set round_name = 'Semifinals' %}
+                            {% elif round_group.grouper == 3 %}
+                                {% set round_name = 'Quarterfinals' %}
+                            {% elif round_group.grouper == 4 %}
+                                {% set round_name = 'Round of 16' %}
+                            {% elif round_group.grouper == 5 %}
+                                {% set round_name = 'Round of 32' %}
+                            {% elif round_group.grouper == 6 %}
+                                {% set round_name = 'Round of 64' %}
+                            {% else %}
+                                {% set round_name = 'Round ' ~ round_group.grouper %}
+                            {% endif %}
+                            <option value="round-{{ round_group.grouper }}">{{ round_name }}</option>
+                        {% endfor %}
+                    </optgroup>
+                {% endif %}
+                {% set playoff_matches = matches|selectattr('stage.name', 'eq', 'PLAYOFF')|list %}
+                {% if playoff_matches %}
+                    <option value="playoff">3rd Place Playoff</option>
+                {% endif %}
+            </select>
         </div>
 
         <!-- Matches container with maximum height and scrollability -->
@@ -436,7 +541,7 @@
                         <div class="group-section mb-4 matches-group" data-group="{{ group.name }}">
                             <h4 class="bg-blue-50 text-blue-700 px-4 py-2 rounded-t-lg font-medium">Group {{ group.name }}</h4>
                             
-                            <table class="min-w-full divide-y divide-gray-200 border-x border-b">
+                            <table class="min-w-full divide-y divide-gray-200 border-x border-b md:table mobile-table">
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
@@ -453,14 +558,14 @@
                                     {% set group_matches = matches|selectattr('stage.name', 'eq', 'GROUP')|selectattr('group.id', 'eq', group.id)|list %}
                                     {% if group_matches %}
                                         {% for match in group_matches %}
-                                            <tr class="match-row {% if match.completed %}bg-green-50 completed-match{% else %}pending-match{% endif %} group-match" 
+                                            <tr class="match-row {% if match.completed %}bg-green-50 completed-match{% else %}bg-gray-100 pending-match{% endif %} group-match" 
                                                 data-player1="{{ match.player1.full_name if match.player1 else '' }}" 
                                                 data-player2="{{ match.player2.full_name if match.player2 else '' }}"
                                                 data-team1="{{ (match.team1.player1.full_name + ' ' + match.team1.player2.full_name) if match.team1 else '' }}"
                                                 data-team2="{{ (match.team2.player1.full_name + ' ' + match.team2.player2.full_name) if match.team2 else '' }}">
-                                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">{{ match.id }}</td>
-                                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">Match {{ match.match_order }}</td>
-                                                <td class="px-3 py-4 whitespace-nowrap text-sm">
+                                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900" data-label="ID">{{ match.id }}</td>
+                                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Match">Match {{ match.match_order }}</td>
+                                                <td class="px-3 py-4 whitespace-nowrap text-sm" data-label="Participants">
                                                     {% if match.is_doubles %}
                                                         <div class="text-gray-900">
                                                             {% if match.team1 %}
@@ -495,7 +600,7 @@
                                                         </div>
                                                     {% endif %}
                                                 </td>
-                                                <td class="px-3 py-4 whitespace-nowrap text-sm">
+                                                <td class="px-3 py-4 whitespace-nowrap text-sm" data-label="Score">
                                                     {% if match.scores.all() %}
                                                         {% for score in match.scores %}
                                                             <div class="text-gray-900">{{ score.player1_score }}-{{ score.player2_score }}</div>
@@ -504,21 +609,21 @@
                                                         <span class="text-gray-500">Not played</span>
                                                     {% endif %}
                                                 </td>
-                                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Court">
                                                     {% if match.court %}
                                                         {{ match.court }}
                                                     {% else %}
                                                         <span class="text-gray-500">TBD</span>
                                                     {% endif %}
                                                 </td>
-                                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Time">
                                                     {% if match.scheduled_time %}
                                                         {{ match.scheduled_time.strftime('%d/%m/%Y %H:%M') }}
                                                     {% else %}
                                                         <span class="text-gray-500">TBD</span>
                                                     {% endif %}
                                                 </td>
-                                                <td class="px-3 py-4 whitespace-nowrap text-sm">
+                                                <td class="px-3 py-4 whitespace-nowrap text-sm" data-label="Status">
                                                     {% if match.completed %}
                                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                                             Completed
@@ -542,7 +647,7 @@
                                                         {% endif %}
                                                     </div>
                                                 </td>
-                                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500" data-label="Actions">
                                                     <a href="{{ url_for('organizer.update_match', id=tournament.id, match_id=match.id) }}" class="text-indigo-600 hover:text-indigo-900">
                                                         Edit
                                                     </a>
@@ -590,7 +695,7 @@
                         <div class="round-section mb-4 matches-round" data-round="{{ round_group.grouper }}">
                             <h4 class="bg-purple-50 text-purple-700 px-4 py-2 rounded-t-lg font-medium">{{ round_name }}</h4>
                             
-                            <table class="min-w-full divide-y divide-gray-200 border-x border-b">
+                            <table class="min-w-full divide-y divide-gray-200 border-x border-b md:table mobile-table">
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
@@ -605,14 +710,14 @@
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
                                     {% for match in round_group.list %}
-                                        <tr class="match-row {% if match.completed %}bg-green-50 completed-match{% else %}pending-match{% endif %} knockout-match" 
+                                        <tr class="match-row {% if match.completed %}bg-green-50 completed-match{% else %}bg-gray-100 pending-match{% endif %} knockout-match" 
                                             data-player1="{{ match.player1.full_name if match.player1 else '' }}" 
                                             data-player2="{{ match.player2.full_name if match.player2 else '' }}"
                                             data-team1="{{ (match.team1.player1.full_name + ' ' + match.team1.player2.full_name) if match.team1 else '' }}"
                                             data-team2="{{ (match.team2.player1.full_name + ' ' + match.team2.player2.full_name) if match.team2 else '' }}">
-                                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">{{ match.id }}</td>
-                                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">Match {{ match.match_order + 1 }}</td>
-                                            <td class="px-3 py-4 whitespace-nowrap text-sm">
+                                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900" data-label="ID">{{ match.id }}</td>
+                                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Match">Match {{ match.match_order + 1 }}</td>
+                                            <td class="px-3 py-4 whitespace-nowrap text-sm" data-label="Participants">
                                                 {% if match.is_doubles %}
                                                     <div class="text-gray-900">
                                                         {% if match.team1 %}
@@ -647,7 +752,7 @@
                                                     </div>
                                                 {% endif %}
                                             </td>
-                                            <td class="px-3 py-4 whitespace-nowrap text-sm">
+                                            <td class="px-3 py-4 whitespace-nowrap text-sm" data-label="Score">
                                                 {% if match.scores.all() %}
                                                     {% for score in match.scores %}
                                                         <div class="text-gray-900">{{ score.player1_score }}-{{ score.player2_score }}</div>
@@ -656,21 +761,21 @@
                                                     <span class="text-gray-500">Not played</span>
                                                 {% endif %}
                                             </td>
-                                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Court">
                                                 {% if match.court %}
                                                     {{ match.court }}
                                                 {% else %}
                                                     <span class="text-gray-500">TBD</span>
                                                 {% endif %}
                                             </td>
-                                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Time">
                                                 {% if match.scheduled_time %}
                                                     {{ match.scheduled_time.strftime('%d/%m/%Y %H:%M') }}
                                                 {% else %}
                                                     <span class="text-gray-500">TBD</span>
                                                 {% endif %}
                                             </td>
-                                            <td class="px-3 py-4 whitespace-nowrap text-sm">
+                                            <td class="px-3 py-4 whitespace-nowrap text-sm" data-label="Status">
                                                 {% if match.completed %}
                                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                                         Completed
@@ -694,7 +799,7 @@
                                                     {% endif %}
                                                 </div>
                                             </td>
-                                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500" data-label="Actions">
                                                 <a href="{{ url_for('organizer.update_match', id=tournament.id, match_id=match.id) }}" class="text-indigo-600 hover:text-indigo-900">
                                                     Edit
                                                 </a>
@@ -717,7 +822,7 @@
                     <div class="playoff-section">
                         <h4 class="bg-green-50 text-green-700 px-4 py-2 rounded-t-lg font-medium">3rd Place Match</h4>
                         
-                        <table class="min-w-full divide-y divide-gray-200 border-x border-b">
+                        <table class="min-w-full divide-y divide-gray-200 border-x border-b md:table mobile-table">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
@@ -732,14 +837,14 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 {% for match in playoff_matches %}
-                                    <tr class="match-row {% if match.completed %}bg-green-50 completed-match{% else %}pending-match{% endif %} playoff-match" 
+                                    <tr class="match-row {% if match.completed %}bg-green-50 completed-match{% else %}bg-gray-100 pending-match{% endif %} playoff-match" 
                                         data-player1="{{ match.player1.full_name if match.player1 else '' }}" 
                                         data-player2="{{ match.player2.full_name if match.player2 else '' }}"
                                         data-team1="{{ (match.team1.player1.full_name + ' ' + match.team1.player2.full_name) if match.team1 else '' }}"
                                         data-team2="{{ (match.team2.player1.full_name + ' ' + match.team2.player2.full_name) if match.team2 else '' }}">
-                                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">{{ match.id }}</td>
-                                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">3rd Place</td>
-                                        <td class="px-3 py-4 whitespace-nowrap text-sm">
+                                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900" data-label="ID">{{ match.id }}</td>
+                                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Match">3rd Place</td>
+                                        <td class="px-3 py-4 whitespace-nowrap text-sm" data-label="Participants">
                                             {% if match.is_doubles %}
                                                 <div class="text-gray-900">
                                                     {% if match.team1 %}
@@ -774,7 +879,7 @@
                                                 </div>
                                             {% endif %}
                                         </td>
-                                        <td class="px-3 py-4 whitespace-nowrap text-sm">
+                                        <td class="px-3 py-4 whitespace-nowrap text-sm" data-label="Score">
                                             {% if match.scores.all() %}
                                                 {% for score in match.scores %}
                                                     <div class="text-gray-900">{{ score.player1_score }}-{{ score.player2_score }}</div>
@@ -783,21 +888,21 @@
                                                 <span class="text-gray-500">Not played</span>
                                             {% endif %}
                                         </td>
-                                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Court">
                                             {% if match.court %}
                                                 {{ match.court }}
                                             {% else %}
                                                 <span class="text-gray-500">TBD</span>
                                             {% endif %}
                                         </td>
-                                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Time">
                                             {% if match.scheduled_time %}
                                                 {{ match.scheduled_time.strftime('%d/%m/%Y %H:%M') }}
                                             {% else %}
                                                 <span class="text-gray-500">TBD</span>
                                             {% endif %}
                                         </td>
-                                        <td class="px-3 py-4 whitespace-nowrap text-sm">
+                                        <td class="px-3 py-4 whitespace-nowrap text-sm" data-label="Status">
                                             {% if match.completed %}
                                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                                     Completed
@@ -821,7 +926,7 @@
                                                 {% endif %}
                                             </div>
                                         </td>
-                                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500" data-label="Actions">
                                             <a href="{{ url_for('organizer.update_match', id=tournament.id, match_id=match.id) }}" class="text-indigo-600 hover:text-indigo-900">
                                                 Edit
                                             </a>
@@ -859,6 +964,9 @@
         const roundSections = document.querySelectorAll('.matches-round');
         const playoffSection = document.querySelector('.playoff-stage-matches');
         
+        // Get stage filter select
+        const stageFilter = document.getElementById('stage-filter');
+        
         // Apply filter when tab is clicked
         filterTabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -872,21 +980,30 @@
                 
                 // Apply filter
                 const filter = tab.getAttribute('data-filter');
-                applyFilters(filter, searchInput.value);
+                const stage = stageFilter.value;
+                applyFilters(filter, searchInput.value, stage);
             });
+        });
+        
+        // Apply filter when stage dropdown changes
+        stageFilter.addEventListener('change', () => {
+            const activeFilter = document.querySelector('.filter-tab.active').getAttribute('data-filter');
+            const stage = stageFilter.value;
+            applyFilters(activeFilter, searchInput.value, stage);
         });
         
         // Apply search filter when input changes
         searchInput.addEventListener('input', () => {
             const activeFilter = document.querySelector('.filter-tab.active').getAttribute('data-filter');
-            applyFilters(activeFilter, searchInput.value);
+            const stage = stageFilter.value;
+            applyFilters(activeFilter, searchInput.value, stage);
         });
         
-        // Function to apply both type and search filters
-        function applyFilters(typeFilter, searchQuery) {
+        // Function to apply type, search, and stage filters
+        function applyFilters(typeFilter, searchQuery, stageFilter) {
             searchQuery = searchQuery.toLowerCase();
             
-            // Then filter rows by match type and search query
+            // Filter rows by match type, search query, and stage
             matchRows.forEach(row => {
                 // Get player/team names for search
                 const player1 = row.getAttribute('data-player1').toLowerCase();
@@ -897,11 +1014,7 @@
                 
                 // Check if row matches type filter
                 let matchesTypeFilter = true;
-                if (typeFilter === 'group') {
-                    matchesTypeFilter = row.classList.contains('group-match');
-                } else if (typeFilter === 'knockout') {
-                    matchesTypeFilter = row.classList.contains('knockout-match') || row.classList.contains('playoff-match');
-                } else if (typeFilter === 'completed') {
+                if (typeFilter === 'completed') {
                     matchesTypeFilter = row.classList.contains('completed-match');
                 } else if (typeFilter === 'pending') {
                     matchesTypeFilter = row.classList.contains('pending-match');
@@ -909,9 +1022,25 @@
                 
                 // Check if row matches search query
                 const matchesSearch = searchQuery === '' || allNames.includes(searchQuery);
+                
+                // Check if row matches stage filter
+                let matchesStageFilter = true;
+                if (stageFilter !== 'all') {
+                    if (stageFilter.startsWith('group-')) {
+                        const groupName = stageFilter.replace('group-', '');
+                        const groupSection = row.closest('.matches-group');
+                        matchesStageFilter = groupSection && groupSection.getAttribute('data-group') === groupName;
+                    } else if (stageFilter.startsWith('round-')) {
+                        const roundNumber = stageFilter.replace('round-', '');
+                        const roundSection = row.closest('.matches-round');
+                        matchesStageFilter = roundSection && roundSection.getAttribute('data-round') === roundNumber;
+                    } else if (stageFilter === 'playoff') {
+                        matchesStageFilter = row.classList.contains('playoff-match');
+                    }
+                }
 
-                // Show/hide row based on both filters
-                if (matchesTypeFilter && matchesSearch) {
+                // Show/hide row based on all filters
+                if (matchesTypeFilter && matchesSearch && matchesStageFilter) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';

@@ -8,11 +8,16 @@
    - Files to check: (app\templates\organizer\verify_payments.html, app\templates\organizer\view_registration.html,
    app\templates\organizer\view_registrations.html, app\templates\organizer\manage_tournament\manage_registrations.html), app\organizer\registration_routes.py, payment verification and rejection logic
 
-2. [ ] **Mobile UI Issues - Category Management**
+2. [✅] **Mobile UI Issues - Category Management**
    - Problem: Manage category tabs not working correctly on mobile devices
    - Details: Match filtering and search option tabs should be in a grid on mobile, but tabs are currently overflowing past their container
    - Priority: Medium
    - Files to check: app\templates\organizer\manage_tournament\manage_category.html
+   - Additional improvements:
+     - Added stage filtering via dropdown menu instead of tabs
+     - Enhanced mobile table view below 1024px to prevent horizontal scrolling
+     - Fixed participants display on mobile by styling the "vs" element appropriately
+     - Removed redundant Group Stage and Knockout tabs from the filtering options
 
 3. [ ] **Group Stage Scores Display**
    - Problem: Group stage scores need improvement on mobile view
